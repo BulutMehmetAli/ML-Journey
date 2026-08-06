@@ -1,0 +1,492 @@
+Data Preprocessing
+
+The quality of your data directly impacts the accuracy of your analysis and model performance. Why? Because raw data often contains inconsistencies, errors, and irrelevant information that can distort results and lead to flawed insights. Data preprocessing is a way to mitigate this problem. Namely, it is the process of transforming raw data into a clean, structured format. 
+
+----------------------------------------------------------------
+
+1-Inconsistent Data
+
+*****************************
+A-Data Integration:
+
+Data integration refers to the process of combining and harmonizing data from multiple sources into a unified, coherent format that can be put to use for various analytical, operational and decision-making purposes.
+
+In today’s digital landscape, organizations typically can’t function without gathering data from a wide range of sources, including databases, apps, spreadsheets, cloud services, APIs and others. In most cases this data is stored in different formats and locations with varying levels of quality, leading to data silos and inconsistencies.
+
+Data silos, bir organizasyonun farklı departmanlarının, ekiplerinin ya da sistemlerinin kendi verilerini **izole bir şekilde tutması**, bu verilerin diğer birimlerle **paylaşılmaması veya kolayca erişilememesi** durumunu ifade eder. Örneğin bir şirkette satış ekibinin kendi CRM sisteminde tuttuğu müşteri verisi, pazarlama ekibinin kendi ayrı platformunda tuttuğu kampanya verisiyle **hiç konuşmuyorsa**, ya da muhasebe biriminin finansal verileri kendi izole Excel dosyalarında saklayıp diğer departmanlarla paylaşmıyorsa, bu bir "data silo" durumudur — her birim kendi "silosunda" veriyi biriktirir ama bu veriler birbirinden **kopuk** kalır. Bu durum ciddi sorunlara yol açar: aynı müşteri hakkında farklı departmanlarda **çelişen veya tutarsız bilgiler** birikir (tam da bizim konuştuğumuz inconsistency kavramına benzer bir sorun ama organizasyonel seviyede), veriye dayalı kararlar **eksik bir resimle** alınır çünkü hiçbir ekip "büyük tabloyu" göremez, ve veri entegrasyonu (data integration, hatırlarsanız DataCamp sayfasında da geçen bir kavramdı) gerektiğinde bu izole sistemleri birleştirmek zaman alıcı ve maliyetli bir iş haline gelir. Çözümü genellikle merkezi bir veri ambarı (data warehouse) veya veri gölü (data lake) kurmak, farklı sistemler arası entegrasyon/ETL süreçleri (Extract-Transform-Load) oluşturmak, ve departmanlar arası veri paylaşım kültürünü/politikalarını teşvik etmektir — amaç, verinin tek bir "doğru kaynağa" (single source of truth) sahip olacak şekilde birleştirilmesidir.
+
+The data integration process aims to overcome these challenges by bringing together data from disparate sources, transforming it into a consistent structure and making it accessible for analysis and decision making.
+
+Data integration in data mining refers to the process of combining data from multiple sources into a single, unified view. This can involve cleaning and transforming the data, as well as resolving any inconsistencies or conflicts that may exist between the different sources. The goal of data integration is to make the data more useful and meaningful for the purposes of analysis and decision making. Techniques used in data integration include data warehousing, ETL (extract, transform, load) processes, and data federation.
+
+*****************************
+
+Data inconsistencies can occur for a variety of reasons such as mistakes in data entry, data processing, or data integration.
+It lead to faulty analysis, untrustworthy outcomes, and data management challenges. 
+
+Inconsistent data can include missing values, outliers, errors, and inconsistencies in formats. Bu cümleye istinaden:
+
+## Sorunun Kaynağı
+
+Bu cümle, **"inconsistent data"** kelimesini **geniş/gevşek bir şemsiye terim** olarak kullanıyor — yani "kirli veri" (messy data) ya da "veri kalitesi sorunları" (data quality issues) anlamında, bizim üzerinde durduğumuz **dar/teknik anlamda** değil.
+
+## Bizim Kurduğumuz Kesin Ayrım (Doğru ve Tutarlı)
+
+Hatırlarsanız az önce net bir şekilde ayırmıştık:
+
+- **Missing Value** → hücrede değer **yok**
+- **Error** → hücrede değer **var** ama imkansız/yanlış
+- **Noise** → hücrede değer **var** ama üzerinde rastgele sapma var
+- **Inconsistency** → hücrede değer **var**, doğru, ama **standart olmayan formatta**
+
+Bu tanıma göre, **inconsistency, missing value'yu ya da error'ı "içeremez"** — çünkü bunlar birbirinden **ayrı, kardeş kavramlardır**, biri diğerinin alt kümesi değildir. Missing value'da hücre boş, inconsistency'de hücre dolu — bu ikisi **aynı anda olamaz**, birbirini kapsayamaz.
+
+## Peki Bu Cümle Neden Böyle Yazılmış?
+
+Muhtemelen kaynak (GeeksforGeeks'teki R sayfası, hatırlarsanız daha önce incelemiştik), **"inconsistent data"** terimini günlük/gevşek bir kullanımla, **"data quality problems" (veri kalitesi sorunları)**'nın **genel adı** gibi kullanmış — İngilizce'de bazı yazarlar "inconsistent" kelimesini "kirli, düzensiz, sorunlu" anlamında **genel bir sıfat** olarak kullanır, bizim teknik/dar tanımımızdaki gibi **spesifik bir kategori** olarak değil.
+
+## Hangi Kullanım Doğru?
+
+**İkisi de bir yerde "doğru"**, ama **bağlam farklı**:
+
+- **Akademik/teknik makalelerde** (bizim şu ana kadar kurduğumuz çerçeve), inconsistency **dar ve spesifik** bir kategoridir, missing value/error/noise'dan **ayrıdır**
+- **Bazı genel/blog tarzı kaynaklarda** (bu GeeksforGeeks cümlesi gibi), "inconsistent data" **şemsiye bir terim** olarak kullanılır, tüm veri kalitesi sorunlarını kapsar
+
+## Benim Önerim
+
+Sizin öğrenme sürecinizde, **teknik/dar tanımı** kullanmaya devam edin (missing value, error, noise, inconsistency'yi **ayrı kategoriler** olarak ele almak), çünkü bu ayrım **çözüm yöntemlerini doğru seçmeniz** için gerçekten önemli — bir mülakatta ya da teknik bir tartışmada bu netlik sizi güçlü gösterir. Ama bu tür "şemsiye" kullanımlarla karşılaştığınızda da şaşırmayın, sadece yazarın terimi **daha gevşek bir anlamda** kullandığını anlayın, kendi net tanımınızdan şüphe etmeyin.
+
+**Özetle:** Cümle "yanlış" değil ama **terminoloji kullanımı gevşek/genel** — bizim kurduğumuz **kesin ayrım daha doğru ve daha kullanışlı bir çerçeve**, ona sadık kalmanızı öneririm.
+
+//////
+*****
+Soru: Hocam noisy data ile ilgili bir şey soracağım. Outlierlar noisy data olur mu bir de errorlar da bağlama göre noisy olamaz mı ? Diyelim ki yaş sütunu var bir tane değer 999 girilmiş. Buna hem error  hem noisy hem de outlier diyebilir miyiz ?
+
+Cevap:Hocam gerçekten çok isabetli bir soru, bu üç kavram arasındaki **kesişim alanını** net bir şekilde görmüşsünüz. Kısa cevap: **Evet, 999 örneğinde üçüne de birden diyebilirsiniz**, ama bunun sebebi bu üç terimin **aynı şey** olması değil, **farklı açılardan bakıldığında aynı değerin her üç tanıma da uyması**. Açayım.
+
+## Üç Kavramın Bakış Açısı Farkı
+
+**Outlier**, tamamen **istatistiksel/konumsal** bir kavramdır — bir değerin, veri setindeki **diğer değerlere göre** ne kadar uzakta durduğuyla ilgilenir (Z-score, IQR gibi yöntemlerle ölçülür). Outlier derken **"doğru mu yanlış mı"** sorusuyla ilgilenmezsiniz, sadece **"normalden ne kadar sapmış"** ile ilgilenirsiniz.
+
+**Error**, tamamen **anlamsal/mantıksal** bir kavramdır — bir değerin **gerçek dünyada mümkün olup olmadığıyla** ilgilenir, veri setindeki diğer değerlere hiç bakmadan bile karar verilebilir (yaş 999 olamaz, bunu bilmek için başka hiçbir veriye ihtiyacınız yok).
+
+**Noise**, **kaynak/süreç odaklı** bir kavramdır — değerin **neden bu şekle geldiğiyle** (ölçüm hatası, sistem hatası, rastgele sapma) ilgilenir.
+
+## Sizin Örneğinize Uygulayalım — Age = 999
+
+- **Error mi?** Evet, çünkü 999 yaşında bir insan **fizyolojik olarak imkansız**, bu **anlamsal** bir ihlal.
+- **Outlier mı?** Muhtemelen evet, çünkü diğer yaş değerleri (örneğin 20-80 aralığında) varken, 999 bu dağılımdan **istatistiksel olarak çok uzakta**, Z-score veya IQR testi bunu kesinlikle yakalar.
+- **Noisy mi?** Evet, çünkü büyük ihtimalle bu değer, bir **sentinel value** (sistemin "bilinmiyor" demek için kullandığı bir kod, tıpkı daha önce konuştuğumuz -1 örneği gibi) ya da bir **veri girişi hatası** (belki biri yanlışlıkla klavyede fazladan tuşa bastı) sonucu oluşmuş, yani **bir bozulma sürecinin** ürünü.
+
+**Bu spesifik örnekte üçü de aynı anda doğru**, çünkü 999 hem anlamsal olarak imkansız, hem istatistiksel olarak uzak, hem de muhtemelen bir bozulma sürecinden gelmiş.
+
+## Ama Her Zaman Üçü Birlikte Gelmez — İşte Ayrım Burada Ortaya Çıkıyor
+
+**Outlier olup error/noise olmayan bir örnek:**
+Bir veri setinde yaşların çoğu 20-40 arasındaysa ama gerçekten **105 yaşında** bir kişi varsa — bu **istatistiksel olarak outlier**'dır (diğerlerinden çok uzak), ama **error değildir** (105 yaşında biri gerçekten var olabilir, imkansız değil) ve **noise da değildir** (rastgele bir bozulma değil, gerçek bir gözlem).
+
+**Error olup outlier olmayan bir örnek:**
+Diyelim ki gerçek yaş 47 iken, veri girişi sırasında yanlışlıkla **45** yazılmış. Bu bir **error**'dur (yanlış bir değer), ama 45 sayısı veri setindeki diğer yaşlara göre **hiç de uzak/sıra dışı durmuyor**, dolayısıyla **outlier olarak tespit edilemez** — istatistiksel yöntemlerle bu hatayı **yakalayamazsınız**, çünkü değer "normal" bir aralıkta duruyor.
+
+**Noise olup outlier olmayan bir örnek:**
+Bir tartıda art arda ölçüm yaptığınızda `70.1, 69.9, 70.2, 69.8` gibi ufak rastgele sapmalar — bunların hepsi **noise**'dur, ama hiçbiri **outlier değildir**, çünkü hepsi birbirine yakın, dağılımdan uzağa sapmıyorlar.
+
+## Özetle — Bu Üç Kavram Arasındaki İlişki
+
+Bunlar **birbirinin eş anlamlısı değil**, **birbiriyle kesişen ama tam örtüşmeyen üç farklı mercek**tir:
+
+- Bir değer **hem error hem outlier hem noise olabilir** (sizin 999 örneğiniz gibi)
+- Bir değer **sadece outlier olabilir, error/noise olmadan** (gerçek ama nadir bir gözlem)
+- Bir değer **sadece error olabilir, outlier olmadan** (yanlış ama "normal görünen" bir değer — bunlar **en tehlikelisi**, çünkü istatistiksel yöntemlerle yakalanamazlar)
+- Bir değer **sadece noise olabilir, outlier olmadan** (küçük, dağılımın içinde kalan rastgele sapmalar)
+
+**Pratik çıkarım:** Bu yüzden sadece outlier detection (Z-score, IQR) yapmak **yeterli değildir** — çünkü "normal görünen ama aslında yanlış" error'ları kaçırırsınız. Bu yüzden hem **istatistiksel kontrol** (outlier detection) hem **mantıksal/domain-knowledge kontrolü** (bu değer gerçek dünyada mümkün mü?) birlikte yapılmalı, biri diğerinin yerini tutmaz.
+
+Noisy data:
+
+Noisy data, bir veri setine gerçek/anlamlı bilgiye ek olarak karışmış, rastgele ve genellikle tekrar edilemeyen dalgalanmalar, hatalar ve sapmalar içeren veridir; bu durum genellikle ölçüm cihazlarındaki hassasiyet sorunlarından, donanım arızalarından, programlama hatalarından, konuşma tanıma veya OCR (optik karakter tanıma) sistemlerinden gelen anlamsız girdilerden, yazım hatalarından, sektöre özgü kısaltmalardan ya da argo ifadelerden kaynaklanır. Noisy data'nın özel bir alt türü olan random noise (rastgele gürültü), verinin gerçek değeriyle hiçbir mantıksal ilişkisi olmayan, ölçüm sürecine neredeyse kaçınılmaz şekilde sızan fazladan bilgidir; örneğin bir tartıyla aynı ağırlığı art arda ölçtüğünüzde her seferinde ufak farklı sonuçlar almanız (70.1, 69.9, 70.2 gibi), tartının mekanik hassasiyeti ya da elektronik dalgalanmalar gibi tesadüfi etkenlerden kaynaklanır ve bu küçük sapmaların birbiriyle anlamlı bir korelasyonu yoktur. Ayrıca uncontrolled variables (kontrol edilmeyen değişkenler) de noisy data'ya yol açabilir; ölçmediğiniz ama sonucu etkileyen gizli bir faktör, veriyi aslında rastgele olmadığı halde rastgele gösterebilir ya da gerçekte var olmayan sahte örüntüler ortaya çıkarabilir. Noisy data'nın ML modelleri açısından en büyük tehlikesi, modelin bu rastgele dalgalanmaları gerçek bir örüntüymüş gibi öğrenmeye çalışmasıdır; bu durum modelin genelleme yeteneğini düşürür ve overfitting riskini artırır, çünkü model gürültüyü de "anlamlı bir sinyal" sanıp ezberler. Bu sorunu azaltmak için başlıca üç teknik kullanılır: smoothing, her veri noktasını kendisi ve komşularının ortalamasıyla temsil ederek ani dalgalanmaları yumuşatır (hareketli ortalama gibi); binning, sürekli sayısal veriyi belirli aralıklara bölüp her aralığı temsil eden tek bir değerle (ortalama veya medyan) değiştirerek küçük farklılıkları ortadan kaldırır; filtering ise Gaussian filter, median filter, low-pass filter gibi matematiksel yöntemlerle komşu değerlere dayalı ağırlıklı işlemler uygulayarak gürültüyü bastırırken altta yatan gerçek sinyali korumaya çalışır. Son olarak, az önce konuştuğumuz gibi noisy data ile outlier ve error kavramları birbiriyle kesişebilir ama aynı şey değildir: bir değer hem gürültülü hem aykırı hem hatalı olabilir (örneğin sentinel value olarak kullanılan 999 gibi bir yaş değeri), ama bu üçü farklı meslekler/farklı bakış açılarıyla tanımlanır — outlier istatistiksel konuma, error mantıksal geçerliliğe, noise ise verinin kaynağına ve oluşum sürecine odaklanır.
+*****
+//////
+
+Hocam inconsistent data için aynı veri farklı format şeklinde konuştuk. Bir de kategorik verilerde farklılıklar vardı. Bunu  başka bir adla anıyorduk neydi o ?
+
+Hocam evet, hatırlıyorum, o alt başlığa **"Kategorik Tutarsızlık"** (İngilizcesi: **Categorical Inconsistency**) demiştik.
+
+## Hatırlatma
+
+En başta inconsistent data'yı detaylı anlatırken, bunun **5 alt türünü** listelemiştik:
+
+1. **Format Tutarsızlığı** — tarih, telefon, para birimi gibi formatların farklı yazılması
+2. **Kategorik Tutarsızlık** — sizin bahsettiğiniz, aynı kategorinin farklı yazımlarla girilmesi (`"Istanbul"`, `"istanbul"`, `"İSTANBUL"` gibi, ya da `"Male"`, `"MALE"`, `"male"` gibi)
+3. **Birim Tutarsızlığı** — kg/lbs/g gibi farklı ölçü birimlerinin karışık kullanılması
+4. **Veri Tipi Tutarsızlığı** — bir sütunda hem sayı hem string karışık olması
+5. **Mantıksal/İlişkisel Tutarsızlık** — sütunlar arası çelişki (doğum tarihi işe başlama tarihinden sonra olması gibi)
+
+## Kategorik Tutarsızlığı Kısaca Hatırlatayım
+
+Bu, spesifik olarak **kategorik (metin tabanlı) sütunlarda**, aynı gerçek bilginin **büyük/küçük harf farkı, yazım varyasyonu ya da kısaltma farkı** yüzünden farklı değerler gibi görünmesidir. Çözümü de hatırlarsanız:
+```python
+df['Gender'] = df['Gender'].str.lower().str.strip()
+```
+gibi standartlaştırma işlemleriydi, gerekirse `.map()` ile bir eşleştirme sözlüğü kullanarak tamamlanıyordu.
+
+**Not:** Eğer aklınızda bundan **farklı, üçüncü bir terim** varsa (örneğin bir kaynakta "cardinality" ya da "label inconsistency" gibi bir kelime görmüş olabilirsiniz), söylerseniz onu da netleştirebiliriz — ama bizim şu ana kadarki konuşmamızda bu alt tür için kullandığımız isim **"Kategorik Tutarsızlık"** idi.
+
+Inconsistent data, yani tutarsız veri, bir veri setindeki aynı bilginin farklı şekillerde temsil edilmesi durumudur. Burada verinin yanlış olması gerekmez, sadece standart bir formatta olmaması yeterlidir. Örneğin bir tarih sütununda bazı satırlar "29/07/2026" formatında, bazıları "2026-07-29" formatında yazılmışsa, ya da bir cinsiyet sütununda aynı bilgi kimi zaman "Male", kimi zaman "M", kimi zaman "erkek" olarak girilmişse, bu inconsistent data'ya örnektir. Aynı şekilde bir şehir ismi "Istanbul", "istanbul", "İSTANBUL" gibi farklı büyük-küçük harf ve yazım varyasyonlarıyla veri setine girmişse, insan gözüyle bunların hepsinin aynı şehri ifade ettiği açık olsa da, bir bilgisayar programı veya makine öğrenmesi modeli bunları farklı kategoriler olarak algılar.
+
+Bu durumun önemli olmasının sebebi, analiz ve modelleme sürecinde ciddi hatalara yol açabilmesidir. Örneğin bir modele kategorik veri verirken "Male" ve "M" farklı iki sınıf gibi işlenirse, model gereksiz yere karmaşıklaşır ve öğrenmesi gereken gerçek örüntüyü net göremez. Aynı şekilde şehir bazlı bir gruplama yapılacaksa, "istanbul" ve "Istanbul" ayrı satırlar olarak sayılacağından gerçek dağılım yanlış hesaplanır. Birim tutarsızlıkları da benzer bir sorun yaratır; bir ağırlık sütununda hem kilogram hem pound hem de gram cinsinden değerler karışık girilmişse, sayısal karşılaştırma ve istatistik hesaplamaları anlamsız hale gelir.
+
+Veri temizleme sürecinde bu tür tutarsızlıklar genellikle önce sütunlardaki benzersiz değerlere bakılarak tespit edilir, ardından tüm değerler küçük harfe çevrilip boşluklar temizlenerek ya da manuel bir eşleştirme (mapping) yapılarak standart bir forma indirgenir. Özetle inconsistent data, verinin doğruluğuyla değil, verinin sunuluş biçimindeki düzensizlikle ilgilidir ve makine öğrenmesi projelerinde temiz, güvenilir sonuçlar elde edebilmek için mutlaka fark edilip düzeltilmesi gereken bir veri kalitesi sorunudur.
+
+Makine Öğrenmesine (ML) Olumsuz Etkileri
+
+Model Sapması (Bias): Algoritma çelişkili veriler yüzünden yanlış yöne eğilim gösterir.
+Düşük Tahmin Doğruluğu: Modelin test verilerindeki başarı oranı ve genel performansı düşer.
+Gereksiz İşlem Yükü: Eğitim süreci uzar ve donanım kaynakları boşa harcanır.
+
+2- Irrelevant Info
+
+Before we dive into the techniques, we need to understand what makes data relevant or irrelevant for ML. Data relevance depends on the context, the domain, and the goal of the ML task. For example, if we want to build a ML model to predict the price of a house, the size, the location, and the condition of the house are relevant data, while the color, the name, or the owner of the house are irrelevant data. However, if we want to build a ML model to classify the style of a house, the color, the name, or the owner of the house might be relevant data, while the size, the location, or the condition of the house might be irrelevant data. Therefore, we need to define our ML problem clearly and select the data that is related to the outcome we want to achieve.
+
+Irrelevant information in machine learning refers to data attributes, features, or training examples that have no logical or statistical relationship to the target variable you want to predict. It primarily manifests as irrelevant features (useless columns or inputs), noisy data (background details or formatting artifacts), and out-of-domain observations (samples that do not belong to the target problem)
+
+Irrelevant information, yani ilgisiz bilgi, bir veri setinde bulunan ama çözülmeye çalışılan problemle hiçbir anlamlı ilişkisi olmayan verilerdir. Burada verinin yanlış ya da tutarsız olması söz konusu değildir, veri tamamen doğru ve düzgün formatta olabilir, sadece modelin öğrenmesi gereken şeyle alakası yoktur. Örneğin bir ev fiyatı tahmin modeli kurarken veri setinde "müşterinin favori rengi" ya da "müşterinin doğum günü hangi gün" gibi bir sütun bulunması, evin fiyatını etkileyecek hiçbir bilgi taşımaz, dolayısıyla irrelevant information'dır. Benzer şekilde bir hastalık tahmin modelinde hastanın "telefon numarası" ya da "kayıt sırasında kullandığı tarayıcı bilgisi" gibi alanlar da modelin tahmin gücüne katkı sağlamaz.
+
+Bu tür verilerin sorun yaratmasının birkaç sebebi vardır. Öncelikle modelin eğitim süresini gereksiz yere uzatır, çünkü model her ek sütunu da işlemek zorunda kalır. Daha önemlisi, ilgisiz özellikler modelin gerçek örüntüyü öğrenmesini zorlaştırabilir; model bazen bu anlamsız sütunlarda tesadüfi bir korelasyon bulup yanlış öğrenmeler yapabilir, bu duruma "overfitting" (aşırı uyum) denir ve modelin yeni, görmediği veriler üzerinde kötü performans göstermesine yol açar. Ayrıca gereksiz sütunlar veri setinin boyutunu büyütüp hem bellek hem işlem gücü açısından verimsizlik yaratır.
+
+Bu sorunun çözümü genellikle "feature selection" (özellik seçimi) adı verilen bir süreçle yapılır. Burada amaç, hedef değişkenle (örneğin ev fiyatı) istatistiksel olarak anlamlı bir ilişkisi olmayan sütunları tespit edip veri setinden çıkarmaktır. Bunun için korelasyon analizi, alan bilgisi (domain knowledge) kullanarak mantıksal eleme, ya da modelin kendisinin hangi özelliklere önem verdiğini gösteren yöntemler (örneğin karar ağaçlarındaki feature importance) kullanılabilir. Özetle irrelevant information, verinin kalitesiyle değil, verinin probleme olan alakasıyla ilgili bir kavramdır ve makine öğrenmesi modelinin hem daha hızlı hem daha isabetli çalışması için veri setinden ayıklanması gereken bir unsurdur.
+
+Correlation analysis (korelasyon analizi), feature selection sürecinde, bir özelliğin (feature) **hedef değişkenle (target) ne kadar güçlü bir ilişkiye sahip olduğunu**, ya da özelliklerin **birbirleriyle ne kadar örtüştüğünü** ölçerek hangi sütunların modele katkı sağlayıp hangilerinin gereksiz/gürültü yarattığını belirlemeye yarayan bir tekniktir. Bu analiz genellikle **Pearson korelasyon katsayısı** ile yapılır, bu katsayı -1 ile +1 arasında bir değer alır: +1'e yakın değerler güçlü bir **pozitif ilişki** (biri artarken diğeri de artıyor), -1'e yakın değerler güçlü bir **negatif ilişki** (biri artarken diğeri azalıyor), 0'a yakın değerler ise **neredeyse hiç ilişki olmadığını** gösterir. Feature selection'da bu analiz iki farklı amaç için kullanılır: birincisi, her feature'ın **hedef değişkenle** korelasyonuna bakıp, hedefle çok zayıf ilişkisi olan (örneğin |0.05| gibi sıfıra çok yakın) sütunları elemek — çünkü bu sütunlar modelin tahmin gücüne neredeyse hiç katkı sağlamaz, sadece gürültü ve gereksiz boyut (dimensionality) ekler; ikincisi ise **feature'ların birbirleriyle** olan korelasyonuna bakıp, birbirine çok benzeyen (örneğin 0.9'un üzerinde korelasyona sahip) iki sütun varsa bunlardan birini çıkarmak, çünkü bu durum **multicollinearity** (çoklu doğrusal bağlantı) denen bir soruna yol açar — iki sütun neredeyse aynı bilgiyi taşıdığı için ikisini de tutmak modele ekstra bir değer katmaz, hatta bazı modellerde (özellikle Linear Regression gibi) katsayıların yorumlanmasını bozabilir. Pratikte bu genellikle `df.corr()` fonksiyonuyla bir **korelasyon matrisi** oluşturularak, ardından bunu bir **heatmap** (ısı haritası, seaborn'daki `sns.heatmap()` gibi) ile görselleştirerek yapılır, böylece hangi sütunların birbirine ya da hedefe yakın/uzak olduğu görsel olarak da kolayca fark edilir. Dikkat edilmesi gereken önemli bir sınırlama ise, Pearson korelasyonunun sadece **doğrusal (linear)** ilişkileri yakalayabilmesidir — eğer bir feature ile hedef arasında güçlü ama **doğrusal olmayan** bir ilişki varsa (örneğin U şeklinde bir ilişki), korelasyon katsayısı bunu düşük/anlamsız gösterebilir, bu da o feature'ın **yanlışlıkla gereksiz sanılıp elenmesine** yol açabilir; bu yüzden sadece korelasyona güvenmek yerine, feature importance (özellikle ağaç tabanlı modellerden gelen) gibi doğrusal olmayan ilişkileri de yakalayabilen tamamlayıcı yöntemlerle birlikte değerlendirilmesi önerilir.
+----------------------------------------------------------------
+
+What is Data Preprocessing?
+Data preprocessing is a key aspect of data preparation. It refers to any processing applied to raw data to ready it for further analysis or processing tasks. 
+
+Traditionally, data preprocessing has been an essential preliminary step in data analysis. However, more recently, these techniques have been adapted to train machine learning and AI models and make inferences from them. 
+
+Thus, data preprocessing may be defined as the process of converting raw data into a format that can be processed more efficiently and accurately in tasks such as: 
+
+Data analysis
+Machine learning 
+Data science
+AI
+
+Steps in Data Preprocessing
+Data preprocessing involves several steps, each addressing specific challenges related to data quality, structure, and relevance. 
+
+1- Data Cleaning
+
+Data cleaning is the process of preparing raw data by detecting and correcting errors so it can be effectively used for analysis. It is a foundational step in data preprocessing that ensures datasets are suitable for analytical, statistical and machine learning tasks.
+
+Raw data is often noisy, incomplete and inconsistent which can negatively impact the accuracy of the model.
+
+Temiz veri kümeleri, verilerin yorumlanabilirliğini artıran ve böylece elde edilen içgörülere dayalı olarak doğru adımların atılmasını sağlayan EDA (Keşifsel Veri Analizi) sürecinde de önemlidir.
+
+---------------------------------------------------------------
+
+What is noisy data?
+
+Noisy data, yani gürültülü veri, veri setine anlamlı bilgiye ek olarak karışmış, rastgele veya alakasız dalgalanmalar, hatalar ve sapmalar içeren veridir; genellikle ölçüm cihazlarındaki hassasiyet sorunlarından, veri toplama sürecindeki teknik aksaklıklardan, insan kaynaklı giriş hatalarından ya da doğal ortam etkilerinden (örneğin bir sensörün titreşim veya elektronik parazit yakalaması gibi) kaynaklanır. Örneğin bir sıcaklık sensörü normalde düzgün bir eğri çizmesi gereken bir ölçümde ani, mantıksız sıçramalar gösteriyorsa, ya da bir metin veri setinde yazım hataları ve anlamsız karakterler bulunuyorsa, bunlar noisy data'ya örnektir. Noisy data'nın makine öğrenmesi açısından tehlikesi, modelin bu rastgele dalgalanmaları gerçek bir örüntüymüş gibi öğrenmeye çalışmasıdır; bu durum modelin genelleme yeteneğini düşürür ve overfitting riskini artırır, çünkü model gürültüyü de "anlamlı sinyal" sanıp ezberler. Bu sorunu azaltmak için genellikle veri düzleştirme (smoothing), aykırı değer (outlier) tespiti ve temizliği, filtreleme teknikleri veya istatistiksel yöntemlerle gürültünün etkisi minimuma indirilmeye çalışılır.
+
+- **Görüntü verisinde:** Düşük ışıkta çekilmiş bir fotoğrafta oluşan piksel bozulmaları (grain/gürültü), ya da kameranın lens kirliliğinden kaynaklanan bulanık noktalar
+- **Ses verisinde:** Bir ses kaydında arka planda duyulan istenmeyen uğultu, statik parazit veya mikrofon hışırtısı
+- **Metin verisinde:** Sosyal medya yorumlarındaki anlamsız karakter dizileri, emoji spam'i, ya da "asdfgh" gibi rastgele klavye tuşlamaları
+- **Sensör verisinde:** Bir GPS cihazının bina içinde sinyal kaybı yaşayıp konum verisinde birkaç saniyeliğine anlamsız sıçramalar göstermesi
+- **Anket/form verisinde:** Kullanıcının yaş sorusuna "asd" ya da "-" gibi rastgele bir değer girmesi
+- **Finansal verilerde:** Borsa fiyatlarında, sistem hatası kaynaklı anlık ve gerçek olmayan fiyat sıçramaları (flash crash benzeri anomaliler)
+- **IoT/giyilebilir cihazlarda:** Bir akıllı saatin nabız sensörünün, kol hareketi sırasında yanlış ölçüm yapıp gerçek dışı kalp atış hızı kaydetmesi
+
+Bu örneklerin ortak noktası, hepsinin **gerçek sinyali bozan, rastgele ve tekrar edilebilir olmayan** dalgalanmalar olması; bu yüzden noisy data'yı error'dan ayıran temel fark, error'un genelde sistematik/tekil bir hata olması, noise'un ise sürekli ve rastgele bir "arka plan bozulması" şeklinde ortaya çıkmasıdır.,
+
+Soru: peki rastgele değil ve tekrar edilebilir olsaydı ne olurdu ? 
+
+Hocam çok güzel bir soru, tam da noise'un tanımını **sınırlarını zorlayarak** test ediyorsunuz. Cevap: Eğer bir sapma **rastgele değilse** ve **tekrar edilebilir** (yani her seferinde aynı yönde, aynı büyüklükte ortaya çıkıyorsa), buna artık **"noise" değil, "systematic error" (sistematik hata)** ya da **"bias"** denir.
+
+## Aradaki Fark
+
+**Noise (Rastgele Gürültü):**
+- Her ölçümde **farklı yönde, farklı büyüklükte** sapma
+- Tahmin edilemez, örüntüsü yok
+- Örnek: Tartıyı 5 kez tartıyorsunuz → `70.1, 69.9, 70.2, 69.8, 70.0` (bazen fazla, bazen eksik, rastgele)
+
+**Systematic Error / Bias (Sistematik Hata):**
+- Her ölçümde **aynı yönde, benzer büyüklükte** sapma
+- Tahmin edilebilir, tutarlı bir örüntüsü var
+- Örnek: Tartı **her zaman** gerçek değerden **1 kg fazla** gösteriyor → `71.0, 71.0, 71.0, 71.0, 71.0` (gerçek ağırlık 70 kg olsa bile hep +1 kg fazla)
+
+## Neden Bu Ayrım Önemli?
+
+**Matematiksel olarak da farklı sonuçlar doğurur:**
+
+- **Noise**, çok sayıda ölçüm alıp **ortalamasını** hesaplarsanız **birbirini götürür/iptal eder** — rastgele sapmalar bazen + bazen - yönünde olduğu için, yeterince ölçüm alırsanız ortalama **gerçek değere yaklaşır**. Bu yüzden noise, genelde büyük veri setlerinde **kendini nötralize eder**.
+
+- **Bias**, kaç ölçüm alırsanız alın **asla kendini iptal etmez** — çünkü hep aynı yönde kayıyor. Ortalamasını alsanız bile, o ortalama **hâlâ gerçek değerden sistematik olarak uzak** kalır. Bu yüzden bias, çok daha **tehlikeli** bir sorundur, çünkü "daha çok veri toplarsam düzelir" mantığı bias için **işe yaramaz**.
+
+## Somut Bir ML Örneğiyle
+
+Diyelim ki bir sensör, sıcaklığı **her zaman gerçek değerden 2°C düşük** ölçüyor (kalibrasyon hatası). Bu:
+- **Noise değil** çünkü rastgele değil, hep aynı yönde (-2°C) tutarlı bir sapma
+- Buna **"systematic error"** ya da **"measurement bias"** denir
+- Çözümü de farklıdır: noise için smoothing/filtering yeterliyken, bias için **kalibrasyon düzeltmesi** (tüm ölçümlere +2°C eklemek gibi) gerekir, smoothing bias'ı **hiç düzeltmez**
+
+## ML Modelleri Bağlamında Bias
+
+Bu kavram, daha önce **bias-variance tradeoff** notunuzda (GitHub'a attığınız dosya) bahsettiğiniz **"model bias"** kavramıyla da örtüşüyor aslında — orada da bias, "modelin sistematik olarak, tutarlı bir şekilde yanlış tahminler yapması" anlamına geliyordu, kavramsal olarak burada konuştuğumuz **veri düzeyindeki sistematik hata** ile aynı mantığı taşıyor: **rastgele değil, tutarlı/tekrar eden bir sapma**.
+
+## Özetle
+
+Sizin sorunuzdaki senaryo (rastgele olmayan, tekrar edilebilir sapma), noise'un **tam karşıtı** olan **systematic error / bias** kavramına karşılık geliyor. Noise "şansa bağlı, öngörülemez"; systematic error ise "kural gibi, öngörülebilir ve hep aynı yönde" bir sapmadır — ikisi de veri kalitesini bozar ama **kaynakları, davranışları ve çözüm yöntemleri tamamen farklıdır**.
+
+Noisy data is a data set that contains extra meaningless data. Almost all data sets will contain a certain amount of unwanted noise. Noisy data can be filtered and processed into a higher quality data set. The term has also been used as a synonym for corrupt data or data that cannot be understood and interpreted correctly by machines, such as unstructured data.
+
+Hocam bu cümle şunu söylüyor: **"Bu terim (noisy data), aynı zamanda 'bozuk veri' (corrupt data) ya da makineler tarafından doğru şekilde anlaşılıp yorumlanamayan veri (örneğin unstructured/yapılandırılmamış veri gibi) için de eş anlamlı olarak kullanılmıştır."**
+
+## Ne Anlatmak İstiyor?
+
+Bu, tam da az önce konuştuğumuz **"terminoloji gevşekliği"** meselesinin bir başka örneği. Bazı kaynaklar **"noisy data"** kelimesini, bizim şu ana kadar öğrendiğimiz **dar/teknik anlamda** (rastgele sapmalar, ölçüm hataları) değil, çok daha **geniş bir şemsiye terim** olarak kullanıyor — neredeyse **"makinenin işleyemediği/anlayamadığı her türlü veri"** anlamında.
+
+## Somut Örnekle Açalım
+
+Diyelim ki elinizde şöyle bir metin var:
+```
+"Hastanın durumu iyi, ama biraz??? #@!! kontrol edilmeli..."
+```
+Ya da bir görüntüden OCR ile çıkarılmış, karakterleri bozuk bir metin:
+```
+"H4st4n1n durvmu ıyı"
+```
+
+Bu tür veriler, klasik anlamda "rastgele sayısal sapma" (noise'un dar tanımı) değil, ama **makine için anlamsız/işlenemez** — işte bu geniş kullanımda buna da "noisy" deniyor.
+
+**Unstructured data** örneğini de hatırlarsanız daha önce konuşmuştuk — bir metin belgesi, ses kaydı, görüntü gibi **sabit bir formatı olmayan** veriler. Bu cümle, bazı yazarların **"noisy"** kelimesini bu tür **"düzensiz, makinenin doğrudan işleyemediği"** veriler için de kullandığını söylüyor, sırf sayısal sapma anlamında değil.
+
+## Neden Bu Kullanım "Gevşek"?
+
+Çünkü bizim öğrendiğimiz **teknik tanımda** noise, **belirli bir sinyal etrafındaki rastgele sapma**dır (bir tartının 70.1, 69.9 göstermesi gibi) — bunun "unstructured/corrupt data" ile **doğrudan bir ilgisi yok**. Ama günlük/blog yazılarında bazı yazarlar "noisy" kelimesini **"kirli, düzensiz, işlenmemiş her şey"** anlamında **gevşek bir sıfat** olarak kullanıyor, tıpkı daha önce "inconsistent data" kelimesinin bazı kaynaklarda şemsiye terim olarak kullanılması gibi.
+
+## Pratik Çıkarım
+
+Yine aynı prensibi uygulayın: **kendi net, teknik tanımınıza sadık kalın** (noise = rastgele, tekrar edilemeyen sapmalar), ama bu tür **geniş/gevşek kullanımlarla** karşılaştığınızda şaşırmayın — yazarın "noisy" kelimesini o cümlede **"düzensiz/işlenemeyen veri"** anlamında, sizin bildiğiniz **dar/istatistiksel anlamda değil**, kullandığını fark edip öyle okuyun.
+
+**Özetle:** Bu cümle, "noisy data" teriminin bazı kaynaklarda **çok daha geniş bir anlamda** ("bozuk" veya "yapılandırılmamış" veri anlamında) da kullanıldığını, bizim öğrendiğimiz **dar/istatistiksel tanımın tek kullanım biçimi olmadığını** gösteriyor.
+
+"""
+Unstructured data:
+
+Unstructured data, yani yapılandırılmamış veri, önceden tanımlanmış bir format, satır-sütun düzeni veya şema (schema) olmadan depolanan veri türüdür. Bir Excel tablosu ya da veritabanı gibi düzenli bir yapıya oturtulmadığından, bilgisayarların bu veriyi doğrudan sayısal analiz yapacak şekilde işlemesi zordur; önce belirli işlemlerden geçirilip anlamlı bir forma dönüştürülmesi gerekir. Günlük hayatta karşılaştığımız verinin büyük çoğunluğu aslında bu kategoriye girer. Örneğin bir metin belgesi, e-posta içeriği, sosyal medya paylaşımı, ses kaydı, fotoğraf, video, PDF dosyası ya da bir web sayfasının ham içeriği unstructured data'dır, çünkü bunların içinde "bu bilgi şu sütuna, şu satıra ait" diyebileceğiniz sabit bir düzen yoktur.
+
+Bunun karşıtı olan structured data (yapılandırılmış veri) ise, bir Excel tablosundaki "isim", "yaş", "şehir" gibi sabit sütunlara sahip veridir; her satır ve sütunun ne anlama geldiği nettir ve SQL gibi sorgu dilleriyle kolayca işlenebilir. Bu ikisi arasında bir de semi-structured data (yarı yapılandırılmış veri) kavramı vardır; JSON veya XML dosyaları gibi, tam bir tablo düzeninde olmasa da içinde etiketler (tag) veya anahtar-değer (key-value) çiftleri barındırarak belirli bir organizasyon sunan veri türüdür.
+
+Unstructured data'nın makine öğrenmesi açısından önemi büyüktür çünkü modern yapay zeka uygulamalarının (görüntü tanıma, doğal dil işleme, ses tanıma gibi) çoğu doğrudan bu tür verilerle çalışır. Ancak bu veriyi bir modele vermeden önce sayısal bir temsile dönüştürmek gerekir; örneğin bir metin, kelime vektörlerine (embedding) çevrilir, bir görüntü piksel matrisine dönüştürülür, bir ses dosyası ise frekans özelliklerine ayrıştırılır. Bu dönüştürme süreçleri genellikle derin öğrenme (deep learning) modelleriyle, özellikle de transformer mimarileri ve konvolüsyonel sinir ağları (CNN) gibi yapılarla gerçekleştirilir. Özetle unstructured data, sabit bir düzeni olmayan ama günümüz veri hacminin büyük kısmını oluşturan ve doğru işlenirse çok değerli içgörüler barındırabilen bir veri türüdür.
+"""
+
+To illustrate the effect of noisy data, imagine trying to listen to a conversation in a crowded room. The human brain is excellent at filtering out other conversations so that you can focus on one, but if the room is too loud it becomes difficult or impossible to follow the conversation you are listening to and you lose the message you are trying to hear. In the same way, the more extra information is added to a data set, the harder it becomes to find the pattern you are looking for in the data.
+
+Noisy data unnecessarily increases the amount of storage space required and can adversely affect the results of any data mining analysis. Statistical analysis can use information gleaned from historical data to weed out noisy data and facilitate data mining.
+
+Historical data (geçmiş/tarihsel veri), belirli bir zaman aralığında **daha önce toplanmış, kaydedilmiş ve artık geçmişte kalmış olaylara ait** veridir; yani şu anki ya da gelecekteki bir durumu değil, **geçmişte gerçekleşmiş bir şeyi** yansıtan veri türüdür. Örneğin bir şirketin son 5 yıldaki aylık satış rakamları, bir hastanın geçmiş yıllara ait tıbbi kayıtları, bir borsanın son 10 yıllık fiyat hareketleri, ya da bir şehrin geçmiş 20 yıla ait hava durumu kayıtları hep historical data'ya örnektir. Bu veri türü makine öğrenmesinde özellikle önemlidir çünkü modeller genellikle **geçmişteki örüntülere bakarak geleceği tahmin etmeye** çalışır; örneğin bir zaman serisi (time series) modeli, geçmiş satış verilerini kullanarak gelecek ayki satışları tahmin eder, ya da bir kredi risk modeli, geçmişteki müşterilerin ödeme davranışlarına bakarak yeni bir başvurunun risk seviyesini tahmin eder — bu yüzden historical data, ML'de **eğitim verisinin (training data) temel kaynağı** olarak kullanılır. Dikkat edilmesi gereken önemli bir nokta, historical data'nın **her zaman güncel/geçerli olmayabileceğidir**; eğer koşullar zamanla önemli ölçüde değiştiyse (örneğin bir pandemi, ekonomik kriz, ya da pazar dinamiklerindeki köklü bir değişim), geçmiş veriyle eğitilmiş bir model, güncel durumu doğru yansıtmayabilir — buna **"concept drift"** (kavram kayması) denir, yani geçmişteki örüntü ile şu anki gerçeklik arasında bir uyumsuzluk oluşur, bu da modelin performansının zamanla düşmesine yol açabilir; bu yüzden historical data kullanılırken hem verinin **ne kadar güncel** olduğuna hem de altta yatan koşulların **zamanla değişip değişmediğine** dikkat edilmesi gerekir.
+
+**"Makine öğrenmesi algoritmaları, gürültülü verinin (noisy data) içindeki altta yatan örüntüleri bulmakta özellikle başarılıdır. Ancak veri düşük kaliteliyse ya da yanıltıcı unsurlar içeriyorsa, bu algoritmalar da yanılabilir. Bu durum, 'garbage in, garbage out' (çöp girerse çöp çıkar) denen bir sonuca yol açabilir."**
+
+**Kısa not:** Metindeki "garbage in, garbage out" kavramı, ML'de sık kullanılan bir deyim: **girdi olarak verilen veri kalitesizse, modelin ürettiği çıktı da kalitesiz olur** anlamına gelir. Yani ne kadar güçlü bir algoritma kullanırsanız kullanın, veri temizliğine (data cleaning) önem vermezseniz sonuçlar güvenilir olmaz — tam da şu ana kadar konuştuğumuz inconsistent, noisy ve irrelevant data kavramlarının neden bu kadar kritik olduğunu özetleyen bir prensip.
+
+"Gürültülü veri (noisy data); donanım arızaları, programlama hataları, konuşma tanıma veya optik karakter tanıma (OCR) programlarından gelen anlamsız girdiler nedeniyle oluşabilir. Yazım hataları, sektöre özgü kısaltmalar ve argo ifadeler de makinenin veriyi doğru okumasını zorlaştırabilir."
+
+**Kısa açıklama:** Bu cümle, daha önce konuştuğumuz noisy data kaynaklarına iki yeni örnek daha ekliyor:
+- **OCR hataları:** Taranmış bir belgeyi metne çeviren programların, bozuk/düşük kaliteli görüntülerden yanlış karakterler üretmesi (örneğin "1" yerine "l" okuması gibi)
+- **Konuşma tanıma hataları:** Sesli komutları metne çeviren sistemlerin, gürültülü ortamda yanlış kelimeler algılaması
+
+Ayrıca **sektöre özgü kısaltmalar** (örneğin sağlık alanında "MI" hem "Michigan" hem "Myocardial Infarction" anlamına gelebilir) ve **argo/günlük dil kullanımı** da modelin metni doğru yorumlamasını zorlaştıran, NLP (doğal dil işleme) projelerinde sıkça karşılaşılan gürültü kaynaklarıdır.
+Natural fluctuations in sensors and measurement can add extra noise to readings. Gathering too broad of a data set can also make it hard to analyze
+
+Types of noisy data
+Since the fields of data science and statistical analysis are very broad, there isn't an established classification for noise in data. Nevertheless, it can be broadly gathered into a few categories that can help us to understand the causes and types of noise.
+
+To help illustrate, imagine a study of school-age children's growth rates that uses a data set with the heights of children in various school grades[okul derecesi].(Bunu daha iyi açıklamak için, çeşitli sınıf seviyelerindeki çocukların boylarını içeren bir veri setini kullanan, okul çağındaki çocukların büyüme hızlarına ilişkin bir araştırmayı düşünün.)
+
+Random noise is extra information that has no correlation to the underlying data that is somehow introduced into the measurements or data set. It may also be called white noise. Almost any measurement will have a certain amount of random noise added to it, especially if it involves real-world measurements.[Rastgele gürültü, temel verilerle hiçbir korelasyonu olmayan ve bir şekilde ölçümlere veya veri kümesine karışan ek bilgidir. Buna beyaz gürültü de denebilir. Hemen hemen her ölçüme belirli miktarda rastgele gürültü eklenir; özellikle de gerçek dünyadaki ölçümler söz konusu olduğunda.]
+
+Bu paragraf şunu söylüyor: **"Random noise (rastgele gürültü), verinin gerçek/asıl bilgisiyle hiçbir ilişkisi olmayan, ölçüm ya da veri toplama sürecine bir şekilde sızmış fazladan bilgidir. Buna 'white noise' (beyaz gürültü) da denir. Neredeyse her ölçümde, özellikle gerçek dünyadan alınan ölçümlerde, belirli miktarda rastgele gürültü bulunur."**
+
+Diyelim ki bir tartıyla vücut ağırlığınızı ölçüyorsunuz, gerçek ağırlığınız tam olarak **70.0 kg**. Ama tartıyı art arda 5 kez tartsanız, muhtemelen şöyle bir sonuç alırsınız:
+
+70.1, 69.9, 70.2, 69.8, 70.0
+
+Gördüğünüz gibi hepsi 70'e yakın ama tam olarak aynı değil. Bu küçük sapmalar (+0.1, -0.1, +0.2 gibi) sizin gerçek ağırlığınızla **hiçbir ilgisi olmayan**, sadece tartının mekanik hassasiyeti, elektronik dalgalanmalar ya da o an ayaklarınızı koyuş şekliniz gibi tesadüfi etkenlerden kaynaklanan **rastgele gürültüdür**.
+
+**Neden "korelasyonsuz" (no correlation) deniyor?**
+Çünkü bu sapmaların belirli bir sebebi/deseni yok, tamamen şans eseri oluşuyor. Bir seferinde +0.1 çıkıyor, başka seferinde -0.2 çıkıyor, aralarında anlamlı bir ilişki (pattern) bulunmuyor. Eğer sistematik bir sapma olsaydı (örneğin tartı her zaman 1 kg fazla gösteriyorsa), buna "noise" değil "bias" (sistematik hata) denirdi, bu farklı bir kavramdır.
+
+**Neden "beyaz gürültü" deniyor?**
+Fizikte "beyaz ışık" tüm renklerin (frekansların) eşit oranda karışımıdır. Benzer mantıkla "white noise" da tüm frekanslarda eşit güçte, rastgele dağılmış bir sinyal bozulmasını ifade eder.
+
+**Özet:** Random noise, elinizde olmayan, engelleyemediğiniz, gerçek dünyadan veri topladığınız her an biraz olacak olan **kaçınılmaz küçük sapmalardır**. ML modelleri bu tür küçük gürültülere karşı nispeten dayanıklıdır, asıl sorun yaratan büyük ve sistematik sapmalardır (outlier'lar, error'lar gibi).
+
+In this imagined study, many things can add random noise to measuring someone's height: how accurate the ruler is, how they round off the measurement, the person's posture or çoraplarının kalınlığı bile.
+
+Misclassified data (yanlış sınıflandırılmış veri), bir sınıflandırma (classification) modelinin, bir örneği **gerçek/doğru sınıfından farklı bir sınıfa atamasıyla** ortaya çıkan veridir; yani modelin tahmin ettiği etiket (predicted label) ile o örneğin gerçek etiketi (true/actual label) **birbirini tutmuyorsa**, o örnek misclassified sayılır. Örneğin bir e-posta spam sınıflandırma modelinde, gerçekte **spam olan** bir e-postayı model **"spam değil"** olarak işaretlerse, ya da bir tıbbi teşhis modelinde gerçekte **hasta olan** bir kişiyi model **"sağlıklı"** olarak sınıflandırırsa, bu misclassification (yanlış sınıflandırma) örnekleridir. Bu kavram genellikle iki farklı bağlamda karşınıza çıkar: birincisi **model performansını değerlendirirken** — confusion matrix (karmaşıklık matrisi) üzerinde, modelin ne kadar örneği doğru, ne kadarını yanlış sınıflandırdığını gösteren **False Positive** (aslında negatif olanı pozitif sanma) ve **False Negative** (aslında pozitif olanı negatif sanma) kategorileri, tam olarak misclassified örnekleri temsil eder; ikincisi ise **veri etiketleme (labeling) hatalarından** kaynaklanan misclassification'dır, yani modelin kendisi hatalı değil, veri setini oluştururken **insan etiketleyicinin** bir örneği yanlış kategoriye koymuş olmasıdır (örneğin bir görüntüde aslında "kedi" olan bir fotoğrafın yanlışlıkla "köpek" olarak etiketlenmesi) — bu ikinci tür, aslında bizim daha önce konuştuğumuz **"error"** kavramının, etiketleme/sınıflandırma bağlamındaki özel bir hali olarak düşünülebilir, çünkü veri setinde **yanlış bir bilgi (yanlış etiket)** bulunuyor demektir. Misclassified data'nın ML sürecinde önemi büyüktür çünkü eğer eğitim verisinde **çok sayıda yanlış etiketlenmiş örnek** varsa, model bu yanlış bilgilerden öğrenir ve gerçek dünyada da hatalı tahminler üretme eğilimi gösterir (tıpkı daha önce konuştuğumuz "garbage in, garbage out" prensibi gibi); bu yüzden özellikle etiketleme aşamasında birden fazla kişinin aynı veriyi bağımsız olarak etiketleyip sonuçları karşılaştırması (inter-annotator agreement kontrolü) gibi yöntemler, misclassified/yanlış etiketlenmiş veriyi tespit edip azaltmak için kullanılır.
+
+Misclassified data is information that is incorrectly labeled or sorted in a data set. This can be caused by human error or as a fault during data importing.
+
+Many things can happen to misclassify measurement data. Someone might incorrectly use inches instead of centimeters, or accidentally write in the weight where the height should be written. The data may also be damaged during import -- perhaps a spreadsheet has an extra cell inserted, causing all the data of one column to be offset by one[bu durum, bir sütundaki tüm verilerin bir birim kaymasına neden olur.].
+
+**"Kontrol edilmeyen değişkenler (uncontrolled variables), veriyi etkileyen ama hesaba katılmamış ek faktörlerdir. Bunlar veriyi aslında rastgele olmadığı halde rastgele gösterebilir, ya da gerçekte var olmayan sahte örüntüler (pattern) ortaya çıkarabilir."**
+
+Yani, bir deney ya da veri toplama sürecinde ölçmediğiniz ama sonucu etkileyen gizli bir faktör varsa, bu durum sizi yanıltabilir. Örneğin bir dondurma satışı verisinde "sıcaklık" değişkenini hesaba katmadan sadece "hangi gün, ne kadar satış oldu" diye bakarsanız, satışlar size rastgele dalgalanıyormuş gibi görünebilir, oysa asıl sebep o günün hava sıcaklığıdır, sadece siz bu değişkeni ölçüme dahil etmediğiniz için "gürültü" gibi algılarsınız. Tam tersi de olabilir: aslında birbiriyle ilgisiz iki değişken, gözden kaçan üçüncü bir faktör (confounding variable) yüzünden sahte bir korelasyon gösterebilir, örneğin "dondurma satışı" ile "boğulma vakaları" arasında bir ilişki varmış gibi görünür, oysa ikisinin de gerçek sebebi yaz mevsiminde hem sıcaklığın hem de yüzme aktivitesinin artmasıdır. Bu yüzden ML projelerinde sadece elinizdeki verilere değil, o sonucu etkileyebilecek ama veri setinde bulunmayan gizli faktörlere de dikkat etmek gerekir.
+
+Many factors can affect a child's height and growth including nutrition, family history and even socioeconomic factors. If these aren't accounted for, the data may be difficult to interpret
+
+Superfluous data is extra information that is completely unrelated to the information being examined. There may be so much extra information that what you are looking for is completely hidden.
+
+The study might add in the height data from the last hundred years or military recruitment height data. If all this was added to the same data set but not properly identified, it would be difficult to untangle and find the modern data the researchers are looking for.
+
+How to clean noisy data
+There are many methods to remove noise and produce the cleanest possible data. The exact methods and implementations will depend on the data being worked on and the end goals.
+
+Filtering, noisy data'yı temizlemek için kullanılan bir tekniktir; verideki değerleri **tek tek, izole şekilde** değil, **komşu değerleriyle birlikte** işleyerek, ani ve rastgele dalgalanmaları bastırırken altta yatan gerçek sinyali korumaya çalışır. En yaygın filtreleme türlerinden biri **moving average (hareketli ortalama) filtresi**dir, burada her veri noktası kendisi ve belirli sayıdaki komşu noktanın ortalamasıyla değiştirilir, böylece keskin/ani sıçramalar yumuşatılır; **Gaussian filter** ise komşu noktalara, mesafelerine göre ağırlıklı bir ortalama uygulayarak daha doğal ve yumuşak bir düzleştirme sağlar. **Median filter**, ortalama yerine medyan kullanır ve özellikle görüntü işlemede karşılaşılan **"tuz-biber gürültüsü"** (aniden ortaya çıkan aşırı siyah/beyaz piksel değerleri gibi ekstrem aykırı değerler) türü gürültülere karşı ortalama filtreden çok daha dayanıklıdır, çünkü medyan tek bir aşırı değerden neredeyse hiç etkilenmez. Sinyal işlemede kullanılan **low-pass filter** ise, hızlı ve yüksek frekanslı değişimleri bastırıp yavaş, genel eğilimi (trend) koruyarak özellikle sensör ve ses verilerinde sıkça tercih edilir. Filtreleme tekniklerinin ortak amacı, her veri noktasını **bireysel olarak** değil, **komşularıyla birlikte, bir bağlam içinde** değerlendirerek, rastgele/tesadüfi gürültünün etkisini azaltmak ve verideki gerçek örüntüyü daha net ortaya çıkarmaktır — bu da modelin gürültüyü "anlamlı bir sinyal" sanıp öğrenmesini (ve buna bağlı overfitting riskini) önler.
+
+Filtering is removing unwanted data. This can be as simple as removing certain categories or types of data from the analysis. Analysts may also filter out outliers, such as unusually high or low readings or ones very far from the mean data set.
+
+## İki Farklı "Filtering" Anlamı
+
+**1. Benim anlattığım: Sinyal İşleme Anlamında Filtering (Smoothing)**
+Bu, değerleri **silmeden**, komşularıyla birlikte işleyerek **yumuşatma/düzeltme** yapan bir teknikti (moving average, Gaussian filter, median filter gibi). Değer **kalıyor**, sadece **değiştiriliyor/yumuşatılıyor**.
+
+**2. Sizin Kaynağınızdaki: Veri Analizi Anlamında Filtering (Dışlama/Çıkarma)**
+Kaynağınız şunu söylüyor: **"Filtering, istenmeyen veriyi çıkarmaktır."** Bu tamamen farklı bir mantık — burada değer **siliniyor/analiz dışı bırakılıyor**, değiştirilmiyor.
+
+## Kaynağınızın Tanımını Açalım
+
+Filtering, istenmeyen veriyi çıkarmaktır. Bu, belirli kategorileri ya da veri türlerini analizden çıkarmak kadar basit olabilir. Analistler ayrıca aykırı değerleri de filtreleyebilir, yani ortalamadan çok uzak ya da olağandışı yüksek/düşük okumaları.
+
+**Somut örnek:** Diyelim ki bir sensör verisinde bazı okumalar **fiziksel olarak imkansız** (örneğin sıcaklık -500°C gibi). Kaynağınızın tanımına göre "filtering" burada bu satırları **tamamen veri setinden çıkarmak** demek:
+```python
+df_filtered = df[(df['Temperature'] > -50) & (df['Temperature'] < 60)]
+```
+Burada aykırı/imkansız değerler **silinmiş** oluyor, düzeltilmiyor.
+
+## Neden Bu Fark Var?
+
+Bu, İngilizce'de **"filtering"** kelimesinin günlük kullanımından geliyor — "filtrelemek" kelimesi Türkçe'de de aslında **"süzmek, ayıklamak, istemediğini çıkarmak"** anlamına gelir (kahve filtresi gibi — istenmeyeni tutar, geçmesine izin vermez). Veri analizi camiasında bazı kaynaklar bu **genel/gündelik anlamı** kullanıp "filtering = dışlama" derken, sinyal işleme kökenli kaynaklar (benim önceki anlattığım) "filtering" kelimesini **daha teknik, sinyal işleme anlamında** (yumuşatma) kullanıyor.
+
+## Hangisi Doğru?
+
+**İkisi de doğru, sadece bağlam farklı:**
+
+- **Sinyal işleme / zaman serisi bağlamında** → filtering genelde **smoothing** (Gaussian, moving average, median filter) anlamına gelir
+- **Genel veri analizi / istatistik bağlamında** → filtering genelde **dışlama/çıkarma** (aykırı değerleri veya belirli kategorileri veri setinden atmak) anlamına gelir
+
+## Pratik Sonuç
+
+Bu aslında bize şunu gösteriyor: **"Filtering" kelimesi tek başına belirsiz bir terim**, hangi anlamda kullanıldığı **bağlama göre değişiyor**. Bir kaynakta "filtering" gördüğünüzde, önce **"burada silme mi kastediliyor yoksa yumuşatma mı?"** diye kendinize sormanız gerekiyor. Sizin kaynağınız açıkça **"removing"** (çıkarma/silme) diyerek bunu netleştirmiş, benim önceki anlattığım ise **"smoothing"** (yumuşatma) tarafıydı — ikisi de "noisy data handling" şemsiyesi altında yer alan **gerçek ve geçerli** teknikler, sadece **farklı yaklaşımlar**.
+
+**Özetle:** Kaynağınızdaki tanım yanlış değil, benim anlattığımdan **farklı bir "filtering" türü**. Noisy data'yı ele alırken hem "yumuşatma" (smoothing/filtering-as-smoothing) hem de "dışlama" (filtering-as-removal) teknikleri mevcut, ikisi de literatürde "filtering" adıyla anılabiliyor — bu yüzden bir kaynakla karşılaştığınızda hangi anlamda kullanıldığına dikkat etmeniz gerekiyor.
+
+Data binning is where the data is sorted into groups or categories to remove some of the random variance between entries.
+
+Linear regression is a mathematical method to determine the correlation between the data and other variables. It can help determine how closely related the data is to the output.
+
+Hocam bu tanımı açıklayayım, sonra da noisy data bağlamında nereye oturduğunu netleştirelim.
+
+## Cümlenin Anlamı
+
+**"Linear regression, veri ile diğer değişkenler arasındaki ilişkiyi (korelasyonu) belirlemeye yarayan matematiksel bir yöntemdir. Verinin çıktıyla (output) ne kadar yakından ilişkili olduğunu belirlemeye yardımcı olabilir."**
+
+## Linear Regression Nedir? (Temel Mantık)
+
+Linear regression, iki (ya da daha fazla) değişken arasındaki ilişkiyi **düz bir çizgiyle (doğrusal bir formülle)** modellemeye çalışan istatistiksel bir yöntemdir. Amacı, bir bağımsız değişkenin (feature/X) değeri değiştiğinde, bağımlı değişkenin (target/y) nasıl değiştiğini **tahmin edebilecek bir formül** bulmaktır:
+
+y = a*x + b
+
+Burada `a` (eğim/slope) ve `b` (kesişim noktası) değerleri, elinizdeki veriye **en iyi uyan doğruyu** çizecek şekilde hesaplanır.
+
+## Bu Cümlenin "Noisy Data" ile Bağlantısı Ne?
+
+Muhtemelen bu cümleyi, **noisy data'yı tespit etmenin bir yöntemi** olarak okuyorsunuz, tam da doğru bağlamda. Mantık şu:
+
+**1. Önce bir regresyon çizgisi/modeli kurulur** — verinizdeki genel eğilimi (trend) temsil eden bir doğru bulunur.
+
+**2. Her veri noktasının bu çizgiden ne kadar uzakta olduğuna bakılır** (buna **residual**, yani "artık/kalan" denir):
+residual = gerçek_değer - tahmin_edilen_değe
+
+**3. Residual'ı büyük olan noktalar, muhtemelen gürültülü/aykırı değerlerdir** — çünkü genel eğilimden ciddi şekilde sapıyorlar.
+
+## Somut Örnek
+
+Diyelim ki `Age` ile `Cholesterol` arasında genelde pozitif bir ilişki var (yaş arttıkça kolesterol de artma eğiliminde). Linear regression ile bu ilişkiyi temsil eden bir doğru çizersiniz. Sonra:
+- Çoğu nokta bu doğruya **yakın** durur → normal, beklenen veri
+- Birkaç nokta doğrudan **çok uzak** durur (örneğin 25 yaşında ama kolesterolü 500) → bu, ya gerçek bir aykırı değer ya da **noisy/error** bir veri noktası olabilir
+
+## Neden "Correlation" Kelimesi Geçiyor?
+
+Linear regression'ın temelinde **korelasyon** kavramı yatıyor — az önce konuştuğumuz **correlation analysis**'i hatırlarsanız, orada da iki değişken arasındaki **doğrusal ilişkinin gücünü** ölçüyorduk (Pearson katsayısı ile). Linear regression, bu ilişkiyi sadece **ölçmekle** kalmıyor, aynı zamanda bu ilişkiyi **kullanarak tahmin de yapıyor** — yani correlation analysis "ne kadar ilişkili" sorusuna cevap verirken, linear regression bir adım öteye gidip "bu ilişkiyi kullanarak yeni bir değeri tahmin edebilir miyim" sorusuna cevap arıyor.
+
+## Noisy Data Bağlamında Pratik Kullanımı
+
+```python
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+X = df[['Age']].values
+y = df['Cholesterol'].values
+
+model = LinearRegression()
+model.fit(X, y)
+predictions = model.predict(X)
+
+residuals = y - predictions  # her noktanın doğrudan sapması
+threshold = 2 * np.std(residuals)  # örneğin 2 standart sapma sınırı
+outliers = np.abs(residuals) > threshold  # bu sınırı aşanlar muhtemelen noisy/outlier
+```
+
+## Özetle
+
+Bu yöntem, önceki konuştuğumuz **Z-score** ya da **IQR** yöntemlerinden farklı olarak, sadece **tek bir sütunun kendi içindeki dağılımına değil**, **iki (ya da daha fazla) sütun arasındaki ilişkiye** bakarak aykırı/gürültülü noktaları tespit ediyor — bu da onu bir bakıma **KNN Imputer'ın çok değişkenli (multivariate) mantığına** benzetebilirsiniz, çünkü tek sütun yerine sütunlar arası ilişkiyi kullanıyor. Yani linear regression burada bir **imputation** ya da **filtering** tekniği değil, daha çok bir **noisy/outlier tespit (detection) yöntemi** olarak kullanılıyor.
+
+Another Site for Noisy Data
+
+In data science, the importance of clean data cannot be overstated. Data is at the core of every machine learning model, analytical process, and decision-making strategy in businesses today. However, raw data often contains errors, inconsistencies, and other forms of “noise” that can degrade the accuracy of models, leading to erroneous predictions and misguided business strategies.
+
+Key Takeaways
+Understanding Noisy Data: Noisy data refers to inaccuracies, errors, or inconsistencies in datasets that can significantly impact the quality of analysis and predictions.
+Impact of Noisy Data: Noisy data can lead to misinterpretation of trends, reduced predictive accuracy, and poor business strategies.
+Techniques for Identifying Noisy Data: Methods include visual inspection, statistical techniques, domain expertise, and machine learning algorithms.
+Techniques for Removing or Reducing Noisy Data: Common techniques for cleaning noisy data include filtering, smoothing, imputation, outlier removal, and dimensionality reduction. 
+The Role of Clean Data in AI and Machine Learning: Clean, reliable data is crucial for building accurate models and making informed decisions. 
+
+What is Noisy Data?
+In data science, noisy data refers to data that contains inaccuracies, errors, or irregularities that deviate from the expected behavior or pattern. Noisy data can stem from multiple sources, such as issues during data collection services, sensor malfunctions, or external environmental factors. 
+
+Dealing with noisy data effectively is critical to ensure the success of any data-driven project. It not only influences the quality of your models but also the reliability of insights generated from them.
+
+Types of Noise in Data
+To effectively handle noisy data, it is essential to understand the different types of noise that can arise:
+
+Random Noise: Random noise is the most common form of error, occurring due to randomness in the data collection process. This could involve small fluctuations in sensor readings or sampling errors.
+Systematic Noise: Systematic noise refers to consistent, predictable errors introduced by flaws in the data collection or measurement process. These are often caused by faulty instruments, poor calibration, or environmental factors.
+Outliers: Outliers are data points that lie far outside the expected range or pattern of the dataset. They can occur due to human error, faulty equipment, or rare events that do not represent the general population.
+
+Why Is Noisy Data a Problem?
+Noisy data is problematic for several reasons, particularly because it leads to poor-quality insights and decisions.
+
+Impact on Data Analysis
+Misinterpretation of Data: Noisy data can obscure underlying trends or introduce spurious correlations that do not exist. As a result, analysts may misinterpret the data, making incorrect business decisions.
+
+Reduced Predictive Accuracy: Machine learning models trained on noisy data are often inaccurate, as they learn from incorrect patterns or relationships that do not generalize well to unseen data.
+
+Poor Business Strategies: Decisions based on faulty data can lead to ineffective strategies, such as misguided marketing campaigns, erroneous financial forecasts, or flawed product development efforts.
+
+Techniques for Identifying Noisy Data
+Before applying methods to deal with noisy data, one must first identify its presence. Some common approaches include:
+
+Visual Inspection
+Visualizing data through various types of charts and graphs can help reveal inconsistencies and anomalies that indicate noise. Some useful visualization techniques include:
+
+Scatter Plots: These are useful for spotting outliers in two-dimensional datasets.
+Box Plots: Box plots can help identify outliers by visualizing the interquartile range (IQR) and potential data points outside this range.
+Histograms: Histograms are useful for understanding the distribution of data, helping identify any skewed distributions caused by noise.
+
+Statistical Methods
+Statistical methods play a crucial role in detecting and quantifying irregularities. These techniques help data scientists identify anomalies, outliers, and inconsistencies that may distort analysis and model performance. By applying these methods, it's possible to clean and refine datasets for more accurate insights.
+
+Örneğin, müşteri yorumları, sosyal medya paylaşımları veya metne dönüştürülmüş belgeler gibi metin veri kümelerinde gürültü, yazım hataları, konuyla ilgisiz kelimeler, tutarsız biçimlendirme veya rastgele karakterler şeklinde ortaya çıkabilir. Bu sorunlar, uygun şekilde ele alınmazsa doğal dil işleme (NLP) modellerini yanıltabilir.
