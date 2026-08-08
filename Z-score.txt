@@ -391,6 +391,58 @@ Hatırlarsanız IQR yöntemi **medyan ve çeyrekler (quartile)** kullanıyordu, 
 ## Özetle
 
 "Z-score outlier'lara karşı sensitive" derken kastedilen, **outlier'ı bulma başarısının düşük olması değil**, **outlier'ların kendisinin, Z-score'u hesaplamak için kullanılan mean ve standart sapmayı bozarak, kendini gizleyebilmesi/maskeleyebilmesi**. Yani bir nevi **"outlier'ı avlamaya çalışırken, avın kendisi silahınızı (mean/std) bozuyor"** diyebilirsiniz — bu paradoks, Z-score'un en bilinen zayıflığıdır ve IQR'ın neden bazı durumlarda tercih edildiğini açıklar.
+
+1. Z-Score Her Zaman "Bozuk" Değil — Sadece Belirli Koşullarda
+
+Az önceki örnekte tek bir aşırı outlier (200), küçük bir veri setinde (6 eleman) mean/std'yi ciddi şekilde bozdu. Ama gerçek hayattaki senaryolar genelde böyle uç değil:
+
+Veri seti büyükse (örneğin 10.000 satır), birkaç outlier'ın mean/std üzerindeki etkisi çok küçülür — çünkü ortalama, binlerce "normal" değerin arasında birkaç aşırı değere karşı matematiksel olarak daha dayanıklı hale gelir (etkisi seyrelir).
+Veri gerçekten normal dağılıma yakınsa ve outlier sayısı azsa (%1-2 gibi), Z-score genelde makul sonuçlar verir, masking effect'in etkisi sınırlı kalır.
+
+Yani Z-score'un "flawed" olması evrensel bir kural değil, belirli koşullarda (küçük veri, çok/aşırı outlier, çarpık dağılım) ortaya çıkan bir risk.
+
+2. Z-Score'un Avantajları, Zayıflığını Dengeliyor
+
+Z-score'un kullanılmaya devam etmesinin sebebi, hiçbir yöntemin mükemmel olmaması, her yöntemin kendi trade-off'u olması:
+
+Hesaplama açısından çok hafif/hızlı — büyük veri setlerinde bile anlık sonuç verir
+Yorumlanabilir — "3 standart sapma uzakta" demek, istatistikçiler için evrensel, net bir dil
+Normal dağılıma uyan veri için (ki birçok doğal ölçüm gerçekten buna yakındır) gayet güvenilir
+
+3. Bu Zayıflığı Bilerek, "Düzeltilmiş" Versiyonları da Var
+
+İşte tam bu masking effect sorununu bildikleri için, istatistikçiler Modified Z-Score (Düzeltilmiş Z-Score) diye bir alternatif geliştirmişler:
+
+Modified Z = 0.645 * (x-median) / MAD
+
+Burada mean yerine medyan, standart sapma yerine MAD (Median Absolute Deviation) kullanılıyor — ikisi de outlier'lara karşı çok daha dayanıklı (robust), çünkü medyan tabanlı. Yani "Z-score'un mantığını (standartlaştırma) koru, ama içindeki kırılgan bileşenleri (mean, std) daha sağlam olanlarla değiştir" mantığıyla çalışıyor.
+
+from scipy.stats import median_abs_deviation
+
+median = df['Age'].median()
+mad = median_abs_deviation(df['Age'])
+modified_z = 0.6745 * (df['Age'] - median) / mad
+outliers = df[np.abs(modified_z) > 3.5]  # genelde 3.5 eşiği kullanılır
+
+4. En Önemli Cevap — Hiçbir Yöntem "Tek Başına Yeterli" Değil
+
+Gerçek pratikte, deneyimli veri bilimciler tek bir yönteme güvenmez. Z-score'u kullanırken genelde:
+
+Önce verinin dağılımına bakılır (histogram/boxplot ile) — eğer aşırı çarpık/outlier yoğunsa, Z-score yerine IQR veya Modified Z-Score tercih edilir
+Z-score, normal dağılıma yakın, temiz veri setlerinde ilk tercih olarak kullanılır çünkü hızlı ve basittir
+Şüpheli durumlarda birden fazla yöntem (Z-score + IQR + görsel inceleme) birlikte kullanılır, sonuçlar karşılaştırılır.
+
+Özetle — Sizin Sorunuza Doğrudan Cevap
+
+Z-score, "her zaman yanılacağı bilinen bozuk bir yöntem" değil, "belirli koşullarda (aşırı/çok outlier, küçük veri, çarpık dağılım) güvenilirliğini kaybedebilen" bir yöntem. Bu zayıflık bilinen ve dokümante edilmiş bir durum, bu yüzden:
+
+Veri biliminde "kör güven" yerine "veriye göre yöntem seçme" prensibi var (dağılıma bakıp Z-score mu IQR mu karar verilir)
+Zayıflığı bilinen bu soruna karşı Modified Z-Score gibi düzeltilmiş versiyonlar geliştirilmiş
+3 Ve en önemlisi, basit/hızlı olması, birçok "temiz" veri setinde onu hâlâ ilk tercih yapan pratik bir avantaj sağlıyor — sorun sadece aşırı/çok sayıda outlier olan uç senaryolarda ortaya çıkıyor, her veri setinde değil.
+
+Kısacası: Kullanılmaya devam ediliyor çünkü zayıflığı evrensel değil, koşullu; ve bu koşullu zayıflığı bilen istatistikçiler, ya alternatif yöntemlere geçiyor ya da Z-score'un kendisini düzeltilmiş versiyonlarla (Modified Z-Score gibi) kullanıyor.
+
+
 ----------------
 Önemli Bir Sınırlama — Normal Dağılım Varsayımı
 
@@ -398,7 +450,7 @@ Z-Score'un en kritik zayıflığı: bu yöntem, verinin normal dağılıma (Gaus
 
 Ortalama, birkaç aşırı yüksek değer tarafından yukarı çekilir
 Standart sapma da şişer
-Bu durumda gerçek outlier'lar bile düşük Z-score alıp fark edilmeyebilir, ya da normal değerler yanlışlıkla outlier gibi görünebilir
+Bu durumda gerçek outlier'lar bile düşük Z-score alıp fark edilmeyebilir, ya da normal değerler yanlışlıkla outlier gibi görünebilir.
 
 Bu yüzden çarpık dağılımlarda Z-Score yerine daha önce konuştuğumuz IQR yöntemi tercih edilir, çünkü IQR medyan/çeyrekler tabanlı çalıştığı için outlier'lardan (ve çarpıklıktan) çok daha az etkilenir.
 
@@ -412,20 +464,110 @@ Z-Score kullanmadan önce, verinizin dağılımına bakmak iyi bir alışkanlık
 import seaborn as sns
 sns.histplot(df['Age'], kde=True)  # çan eğrisine benziyor mu diye görsel kontrol
 
+Simetrik, ortada tepe yapan bir eğri görüyorsanız → normale yakın. Çarpık (bir tarafa uzun kuyruklu) görünüyorsa → normal değil.
+
+Q-Q Plot (Quantile-Quantile Plot) — En Güvenilir Görsel Yöntem
+Verinizin teorik normal dağılımla ne kadar örtüştüğünü gösteren bir grafik. Noktalar düz bir çizgi üzerinde diziliyorsa veri normale yakındır; noktalar çizgiden sapıyorsa (özellikle uçlarda kıvrılıyorsa) veri normal değildir.
+
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+
+stats.probplot(df['Age'], dist="norm", plot=plt)
+plt.show()
+
+Box Plot
+Medyanın kutunun ortasına yakın olup olmadığına, "bıyıkların" (whiskers) simetrik olup olmadığına bakarsınız — asimetrik bir box plot, çarpık bir dağılıma işaret eder.
+
+2. İstatistiksel Testler (Kesin/Sayısal Kanıt)
+
+Shapiro-Wilk Testi — En Yaygın Kullanılan
+Özellikle küçük-orta boyutlu veri setlerinde (n < 5000) tercih edilir.
+
+from scipy.stats import shapiro
+
+stat, p_value = shapiro(df['Age'])
+print(p_value)
+
+Yorumlanması: Sıfır hipotezi "veri normal dağılıma uyar" şeklindedir. p-değeri > 0.05 ise, normallik varsayımını reddetmezsiniz (veri normale yakın kabul edilir). p-değeri < 0.05 ise, veri normal dağılıma uymuyor demektir.
+
+D'Agostino ve Pearson Testi
+Daha büyük veri setlerinde Shapiro-Wilk'e göre biraz daha tercih edilir.
+
+from scipy.stats import normaltest
+
+stat, p_value = normaltest(df['Age'])
+
+Kolmogorov-Smirnov Testi
+Verinizi teorik bir normal dağılımla karşılaştıran, biraz daha genel amaçlı bir test.
+
+3. Sayısal Ölçütler — Skewness (Çarpıklık) ve Kurtosis (Basıklık)
+
+Bunlar, dağılımın normale ne kadar yakın olduğunu tek bir sayı ile özetler:
+
+python
+df['Age'].skew()      # çarpıklık
+df['Age'].kurtosis()  # basıklık
+
+Skewness (Çarpıklık) yorumlanması:
+
+0'a yakın → simetrik, normale yakın
+Pozitif → sağa çarpık (uzun kuyruk sağda, örneğin gelir verisi gibi)
+Negatif → sola çarpık
+
+Kurtosis (Basıklık) yorumlanması:
+
+0'a yakın (Fisher tanımında) → normal dağılıma benzer "sivrilik"
+Yüksek → daha sivri, uçları daha kalın (aşırı değer riski daha yüksek)
+Düşük → daha yayvan/düz
+Pratik Öneri — Hangisini Kullanmalı?
+
+Genelde tek bir yönteme güvenmek yerine kombinasyon önerilir:
+
+Önce hızlı bir histogram/Q-Q plot ile görsel bir izlenim edinin
+Sonra Shapiro-Wilk testi ile bunu sayısal olarak doğrulayın
+skew() ile çarpıklık derecesine de bakıp, ne kadar "sapma" olduğuna dair ek bir fikir edinin
+python
+# Hızlı, kapsamlı bir kontrol
+import seaborn as sns
+from scipy.stats import shapiro
+
+sns.histplot(df['Age'], kde=True)
+print("Skewness:", df['Age'].skew())
+stat, p = shapiro(df['Age'])
+print("Shapiro p-value:", p)
+
+Özetle: Görsel kontrol için histogram ve Q-Q plot, sayısal/kesin kanıt için Shapiro-Wilk testi, ve ek bir gösterge olarak skewness/kurtosis değerlerine bakarak verinizin normal dağılıma uyup uymadığını değerlendirebilirsiniz. Eğer normale yakınsa Z-score güvenle kullanılabilir, değilse IQR ya da Modified Z-Score gibi daha dayanıklı yöntemlere yönelmeniz gerekir.
+
 Özetle: Z-Score, bir noktanın ortalamadan kaç standart sapma uzakta olduğunu ölçen, normal dağılım varsayımına dayanan bir outlier/noise tespit yöntemidir; basit ve yaygın kullanılır ama çarpık dağılımlarda güvenilirliğini kaybeder, bu durumlarda IQR yöntemine yönelmek daha sağlıklıdır.
 
+sklearn.preprocessing.StandardScaler, teknik olarak sample standart sapmasını değil, population standart sapmasını kullanır (ddof=0), pandas'ın .std() fonksiyonu ise varsayılan olarak sample (ddof=1) kullanır. Büyük veri setlerinde bu fark ihmal edilebilir düzeydedir, ama çok küçük veri setlerinde elle hesapladığınız Z-score ile StandardScaler çıktısı arasında ufak bir sayısal fark görebilirsiniz — bu bir hata değil, sadece hangi std formülünün kullanıldığına dair bir detay.
 
+----------------- Bir diğer kaynak:
 
+Many machine learning algorithms perform better or converge faster when features are on a relatively similar scale. Algorithms that compute distances between data points (like K-Nearest Neighbors) or rely on gradient descent optimization (like linear regression, logistic regression, neural networks) are particularly sensitive to the scale of input features. If one feature ranges from 0 to 1 and another ranges from 0 to 1,000,000, the algorithm might incorrectly assign more importance to the feature with the larger range simply due to its scale, not its predictive value.
 
+Standardization, often referred to as Z-score scaling, is a common and effective technique to address this. It transforms your data such that it has a mean (μ) of 0 and a standard deviation (σ) of 1.
 
+The transformation for each value x in a feature is calculated using the following formula:
 
+Z = (x-μ) / σ
 
+Where:
 
+x is the original feature value.
+μ is the mean of the feature column.
+σ is the standard deviation of the feature column.
+Z is the standardized feature value.
 
+Each transformed value represents the number of standard deviations the original value was away from the mean. Values greater than the mean will be positive, values less than the mean will be negative, and a value equal to the mean will be zero.
 
+Implementing Standardization with Scikit-learn
+Scikit-learn provides a convenient transformer class, StandardScaler, within its preprocessing module. Like other Scikit-learn transformers, it follows the fit and transform pattern.
 
+Fit: The fit method calculates the mean (μ) and standard deviation (σ) for each feature in the training data. These calculated parameters are stored within the scaler object. It's important to only fit the scaler on the training data to prevent data leakage from the test set.
+Transform: The transform method uses the learned μ and  σ (from the fit step) to apply the standardization formula to the data, creating the scaled features. You will use this method on both the training data and, later, on any new data (like the validation or test set) before feeding it to your model.
 
-
+Standardization changes the scale of the data but preserves the shape of its distribution. If a feature was skewed before standardization, it will still be skewed afterwards, just on a different scale.
 
 
 
