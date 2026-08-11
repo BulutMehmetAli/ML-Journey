@@ -1,3 +1,130 @@
+## Noisy Data (Gürültülü Veri)
+
+Noisy data, veri setine anlamlı bilgiye ek olarak karışmış, **rastgele ve genellikle tekrar edilemeyen dalgalanmalar, hatalar ve sapmalar** içeren veridir; genellikle ölçüm cihazlarındaki hassasiyet sorunlarından, donanım arızalarından, programlama hatalarından, konuşma tanıma veya OCR (optik karakter tanıma) programlarından gelen anlamsız girdilerden, yazım hatalarından, sektöre özgü kısaltmalardan ya da argo ifadelerden kaynaklanır. Noisy data'nın özel bir alt türü olan **random noise (rastgele gürültü)**, verinin gerçek/asıl bilgisiyle hiçbir ilişkisi olmayan, ölçüm sürecine kaçınılmaz şekilde sızan fazladan bilgidir; örneğin bir tartıyla aynı ağırlığı art arda ölçtüğünüzde her seferinde ufak farklı sonuçlar almanız, tartının mekanik hassasiyeti gibi tesadüfi etkenlerden kaynaklanır ve bu sapmaların birbiriyle anlamlı bir korelasyonu yoktur. Ayrıca **uncontrolled variables (kontrol edilmeyen değişkenler)** de noisy data'ya yol açabilir; ölçmediğiniz ama sonucu etkileyen gizli bir faktör, veriyi aslında rastgele olmadığı halde rastgele gösterebilir ya da gerçekte var olmayan sahte örüntüler ortaya çıkarabilir (örneğin dondurma satışı ile boğulma vakaları arasındaki sahte korelasyonun asıl sebebinin yaz mevsimi olması gibi). Noisy data'nın ML modelleri açısından tehlikesi, modelin bu rastgele dalgalanmaları gerçek bir örüntüymüş gibi öğrenmeye çalışması, bu da genelleme yeteneğini düşürüp overfitting riskini artırmasıdır. Bu sorunu azaltmak için başlıca üç teknik kullanılır: **smoothing**, her veri noktasını kendisi ve komşularının ortalamasıyla temsil ederek ani dalgalanmaları yumuşatır (hareketli ortalama gibi); **binning**, sürekli sayısal veriyi belirli aralıklara bölüp her aralığı temsil eden tek bir değerle (ortalama, medyan) değiştirerek küçük farklılıkları ortadan kaldırır; **filtering** ise Gaussian filter, median filter, low-pass filter gibi matematiksel yöntemlerle komşu değerlere dayalı ağırlıklı işlemler uygulayarak gürültüyü bastırırken altta yatan gerçek sinyali korumaya çalışır.
+
+//////
+*****
+Soru: Hocam noisy data ile ilgili bir şey soracağım. Outlierlar noisy data olur mu bir de errorlar da bağlama göre noisy olamaz mı ? Diyelim ki yaş sütunu var bir tane değer 999 girilmiş. Buna hem error  hem noisy hem de outlier diyebilir miyiz ?
+
+Cevap:Hocam gerçekten çok isabetli bir soru, bu üç kavram arasındaki **kesişim alanını** net bir şekilde görmüşsünüz. Kısa cevap: **Evet, 999 örneğinde üçüne de birden diyebilirsiniz**, ama bunun sebebi bu üç terimin **aynı şey** olması değil, **farklı açılardan bakıldığında aynı değerin her üç tanıma da uyması**. Açayım.
+
+## Üç Kavramın Bakış Açısı Farkı
+
+**Outlier**, tamamen **istatistiksel/konumsal** bir kavramdır — bir değerin, veri setindeki **diğer değerlere göre** ne kadar uzakta durduğuyla ilgilenir (Z-score, IQR gibi yöntemlerle ölçülür). Outlier derken **"doğru mu yanlış mı"** sorusuyla ilgilenmezsiniz, sadece **"normalden ne kadar sapmış"** ile ilgilenirsiniz.
+
+**Error**, tamamen **anlamsal/mantıksal** bir kavramdır — bir değerin **gerçek dünyada mümkün olup olmadığıyla** ilgilenir, veri setindeki diğer değerlere hiç bakmadan bile karar verilebilir (yaş 999 olamaz, bunu bilmek için başka hiçbir veriye ihtiyacınız yok).
+
+**Noise**, **kaynak/süreç odaklı** bir kavramdır — değerin **neden bu şekle geldiğiyle** (ölçüm hatası, sistem hatası, rastgele sapma) ilgilenir.
+
+## Sizin Örneğinize Uygulayalım — Age = 999
+
+- **Error mi?** Evet, çünkü 999 yaşında bir insan **fizyolojik olarak imkansız**, bu **anlamsal** bir ihlal.
+- **Outlier mı?** Muhtemelen evet, çünkü diğer yaş değerleri (örneğin 20-80 aralığında) varken, 999 bu dağılımdan **istatistiksel olarak çok uzakta**, Z-score veya IQR testi bunu kesinlikle yakalar.
+- **Noisy mi?** Evet, çünkü büyük ihtimalle bu değer, bir **sentinel value** (sistemin "bilinmiyor" demek için kullandığı bir kod, tıpkı daha önce konuştuğumuz -1 örneği gibi) ya da bir **veri girişi hatası** (belki biri yanlışlıkla klavyede fazladan tuşa bastı) sonucu oluşmuş, yani **bir bozulma sürecinin** ürünü.
+
+**Bu spesifik örnekte üçü de aynı anda doğru**, çünkü 999 hem anlamsal olarak imkansız, hem istatistiksel olarak uzak, hem de muhtemelen bir bozulma sürecinden gelmiş.
+
+## Ama Her Zaman Üçü Birlikte Gelmez — İşte Ayrım Burada Ortaya Çıkıyor
+
+**Outlier olup error/noise olmayan bir örnek:**
+Bir veri setinde yaşların çoğu 20-40 arasındaysa ama gerçekten **105 yaşında** bir kişi varsa — bu **istatistiksel olarak outlier**'dır (diğerlerinden çok uzak), ama **error değildir** (105 yaşında biri gerçekten var olabilir, imkansız değil) ve **noise da değildir** (rastgele bir bozulma değil, gerçek bir gözlem).
+
+**Error olup outlier olmayan bir örnek:**
+Diyelim ki gerçek yaş 47 iken, veri girişi sırasında yanlışlıkla **45** yazılmış. Bu bir **error**'dur (yanlış bir değer), ama 45 sayısı veri setindeki diğer yaşlara göre **hiç de uzak/sıra dışı durmuyor**, dolayısıyla **outlier olarak tespit edilemez** — istatistiksel yöntemlerle bu hatayı **yakalayamazsınız**, çünkü değer "normal" bir aralıkta duruyor.
+
+**Noise olup outlier olmayan bir örnek:**
+Bir tartıda art arda ölçüm yaptığınızda `70.1, 69.9, 70.2, 69.8` gibi ufak rastgele sapmalar — bunların hepsi **noise**'dur, ama hiçbiri **outlier değildir**, çünkü hepsi birbirine yakın, dağılımdan uzağa sapmıyorlar.
+
+## Özetle — Bu Üç Kavram Arasındaki İlişki
+
+Bunlar **birbirinin eş anlamlısı değil**, **birbiriyle kesişen ama tam örtüşmeyen üç farklı mercek**tir:
+
+- Bir değer **hem error hem outlier hem noise olabilir** (sizin 999 örneğiniz gibi)
+- Bir değer **sadece outlier olabilir, error/noise olmadan** (gerçek ama nadir bir gözlem)
+- Bir değer **sadece error olabilir, outlier olmadan** (yanlış ama "normal görünen" bir değer — bunlar **en tehlikelisi**, çünkü istatistiksel yöntemlerle yakalanamazlar)
+- Bir değer **sadece noise olabilir, outlier olmadan** (küçük, dağılımın içinde kalan rastgele sapmalar)
+
+**Pratik çıkarım:** Bu yüzden sadece outlier detection (Z-score, IQR) yapmak **yeterli değildir** — çünkü "normal görünen ama aslında yanlış" error'ları kaçırırsınız. Bu yüzden hem **istatistiksel kontrol** (outlier detection) hem **mantıksal/domain-knowledge kontrolü** (bu değer gerçek dünyada mümkün mü?) birlikte yapılmalı, biri diğerinin yerini tutmaz.
+
+Noisy data:
+
+Noisy data, bir veri setine gerçek/anlamlı bilgiye ek olarak karışmış, rastgele ve genellikle tekrar edilemeyen dalgalanmalar, hatalar ve sapmalar içeren veridir; bu durum genellikle ölçüm cihazlarındaki hassasiyet sorunlarından, donanım arızalarından, programlama hatalarından, konuşma tanıma veya OCR (optik karakter tanıma) sistemlerinden gelen anlamsız girdilerden, yazım hatalarından, sektöre özgü kısaltmalardan ya da argo ifadelerden kaynaklanır. Noisy data'nın özel bir alt türü olan random noise (rastgele gürültü), verinin gerçek değeriyle hiçbir mantıksal ilişkisi olmayan, ölçüm sürecine neredeyse kaçınılmaz şekilde sızan fazladan bilgidir; örneğin bir tartıyla aynı ağırlığı art arda ölçtüğünüzde her seferinde ufak farklı sonuçlar almanız (70.1, 69.9, 70.2 gibi), tartının mekanik hassasiyeti ya da elektronik dalgalanmalar gibi tesadüfi etkenlerden kaynaklanır ve bu küçük sapmaların birbiriyle anlamlı bir korelasyonu yoktur. Ayrıca uncontrolled variables (kontrol edilmeyen değişkenler) de noisy data'ya yol açabilir; ölçmediğiniz ama sonucu etkileyen gizli bir faktör, veriyi aslında rastgele olmadığı halde rastgele gösterebilir ya da gerçekte var olmayan sahte örüntüler ortaya çıkarabilir. Noisy data'nın ML modelleri açısından en büyük tehlikesi, modelin bu rastgele dalgalanmaları gerçek bir örüntüymüş gibi öğrenmeye çalışmasıdır; bu durum modelin genelleme yeteneğini düşürür ve overfitting riskini artırır, çünkü model gürültüyü de "anlamlı bir sinyal" sanıp ezberler. Bu sorunu azaltmak için başlıca üç teknik kullanılır: smoothing, her veri noktasını kendisi ve komşularının ortalamasıyla temsil ederek ani dalgalanmaları yumuşatır (hareketli ortalama gibi); binning, sürekli sayısal veriyi belirli aralıklara bölüp her aralığı temsil eden tek bir değerle (ortalama veya medyan) değiştirerek küçük farklılıkları ortadan kaldırır; filtering ise Gaussian filter, median filter, low-pass filter gibi matematiksel yöntemlerle komşu değerlere dayalı ağırlıklı işlemler uygulayarak gürültüyü bastırırken altta yatan gerçek sinyali korumaya çalışır. Son olarak, az önce konuştuğumuz gibi noisy data ile outlier ve error kavramları birbiriyle kesişebilir ama aynı şey değildir: bir değer hem gürültülü hem aykırı hem hatalı olabilir (örneğin sentinel value olarak kullanılan 999 gibi bir yaş değeri), ama bu üçü farklı meslekler/farklı bakış açılarıyla tanımlanır — outlier istatistiksel konuma, error mantıksal geçerliliğe, noise ise verinin kaynağına ve oluşum sürecine odaklanır.
+
+Hocam tabii, bu üçlü ayrımı tekrar, tam ve kapsamlı bir şekilde toparlayayım — GitHub notlarınıza ekleyebileceğiniz şekilde net yazacağım.
+
+## 1. Error (Hata)
+
+**Tanım:** Bir değerin **gerçek dünyada mantıksal veya fiziksel olarak imkansız** olması. Bakış açısı: **anlamsal/mantıksal geçerlilik**.
+
+**Nasıl tespit edilir?** Diğer verilere hiç bakmadan, **tek başına** karar verilebilir — "yaş 999 olabilir mi?" sorusuna cevap vermek için istatistik gerekmez, sadece **domain bilgisi/mantık** yeterlidir.
+
+**Örnekler:**
+- `Age = -5` veya `Age = 999`
+- `Blood_Pressure = 0`
+- Bir doğum tarihinin gelecekte olması
+- Yazım hataları (`"mistke"` gibi)
+
+**Nasıl düzeltilir?** Ya doğru değere düzeltilir, ya da (bilinmiyorsa) gerçek `NaN`'a çevrilip missing value olarak ele alınır.
+
+---
+
+## 2. Noise (Gürültü)
+
+**Tanım:** Veriye, ölçüm/kayıt sürecinde karışan **rastgele, genellikle tekrar edilemeyen** dalgalanmalar. Bakış açısı: **kaynak/oluşum süreci**.
+
+**Nasıl tespit edilir?** Değerin **kendisinin mantıklı olup olmadığına değil**, verinin **nereden ve nasıl** geldiğine bakarsınız — sensör mü, insan girişi mi, OCR mi, konuşma tanıma mı?
+
+**Örnekler:**
+- Bir tartıda art arda ölçümlerin `70.1, 69.9, 70.2` gibi küçük farklar göstermesi (random noise)
+- OCR'ın bir belgeyi tararken karakterleri yanlış okuması
+- Kontrol edilmeyen bir değişkenin (uncontrolled variable) sonucu etkileyip sahte bir dalgalanma yaratması
+
+**Nasıl düzeltilir?** Smoothing (hareketli ortalama), binning, filtering (Gaussian/median filter) gibi tekniklerle **yumuşatılır**, silinmez.
+
+---
+
+## 3. Outlier (Aykırı Değer)
+
+**Tanım:** Bir değerin, veri setindeki **diğer değerlere göre istatistiksel olarak çok uzakta** durması. Bakış açısı: **istatistiksel konum/dağılım**.
+
+**Nasıl tespit edilir?** Değerin **doğru mu yanlış mı** olduğuyla ilgilenmez, sadece **"normal aralığın ne kadar dışında"** olduğuna bakar — Z-score, IQR, KNN distance gibi **matematiksel yöntemlerle** ölçülür.
+
+**Örnekler:**
+- Çoğu yaş 20-40 arasındayken, gerçekten var olan **105 yaşında** bir kişi (bu geçerli bir gözlem olabilir, error değil)
+- Bir gelir dağılımında, diğerlerinden çok yüksek olan ama **gerçek** bir CEO maaşı
+
+**Nasıl düzeltilir?** Duruma göre değişir — gerçek bir outlier'sa **dokunulmayabilir** (gerçek bilgi taşıyor), error/noise kaynaklıysa **düzeltilir/silinir**. Bu yüzden outlier tespiti **kendi başına yeterli değil**, arkasındaki sebebin (error mi, noise mu, gerçek mi) araştırılması gerekir.
+
+## Üçünün Bakış Açısı Farkını Tek Cümlede Özetlersek
+
+| Kavram | Soruyor ki... |
+| **Error** | "Bu değer **mantıken/gerçekte mümkün mü**?" |
+| **Noise** | "Bu değer **nereden geldi, hangi süreçten bozularak çıktı**?" |
+| **Outlier** | "Bu değer **diğerlerine göre ne kadar uzakta**?" |
+
+## Neden Kesişebiliyorlar? (Age = 999 Örneği)
+
+Bir değer **aynı anda üçü de olabilir**, çünkü bunlar **birbirini dışlayan kategoriler değil, farklı mercekler**:
+
+- `Age = 999` → **Error** (yaş 999 olamaz, mantıken imkansız) + **Noise** (muhtemelen bir sentinel value/sistem hatasından kaynaklanıyor) + **Outlier** (diğer yaşlara göre istatistiksel olarak çok uzak)
+
+Ama bir değer **sadece birini** de taşıyabilir:
+- Sadece **Error**: Gerçek yaş 47 iken, veri girişinde 45 yazılmış — mantıken **her ikisi de mümkün**, istatistiksel olarak **hiç uzak değil**, sadece **yanlış**.
+- Sadece **Noise**: Tartının 70.1/69.9 göstermesi — **mantıken mümkün**, **istatistiksel olarak uzak değil**, sadece **rastgele bir sapma**.
+- Sadece **Outlier**: Gerçekten var olan 105 yaşındaki bir kişi — **mantıken mümkün**, **bozulma sürecinden gelmiyor**, ama **istatistiksel olarak nadir/uzak**.
+
+---
+
+**Özetle, notlarınıza eklemeniz için üç kelimelik anahtar:**
+- **Error** → "Mantıken imkansız mı?"
+- **Noise** → "Süreç bozuldu mu?"
+- **Outlier** → "İstatistiksel olarak uzak mı?"
+
+Bu üç soru, herhangi bir şüpheli değerle karşılaştığınızda size **hangi kategoriye girdiğini** ve dolayısıyla **hangi çözüm yöntemini** kullanmanız gerektiğini gösteriyor.
+
+*****
+//////
+
 Z-score:
 
 Varyans Nedir?
@@ -683,7 +810,336 @@ Standardization is a foundational technique for preparing numerical features. By
 Conclusion
 Effectively handling noisy data is a cornerstone of successful machine-learning projects. The presence of noise can significantly hinder model performance, leading to inaccurate predictions and unreliable insights. However, by employing a systematic approach to identify, clean, and transform your data, you can mitigate the adverse effects of noise and enhance the overall quality of your datasets.
 
+-------------------------------------------------
 
+Interquartile Range in Statistics
+
+The Interquartile Range (IQR) tells us how spread out the middle 50% of the data is. It is less affected by extreme values and gives a better idea of how tightly or loosely the central data points are grouped. It is calculated using the first quartile (Q1) and third quartile (Q3).
+
+Focuses only on the central portion of the data.
+Not affected much by outliers, unlike the full range.
+Gives a clear view of how values are arranged around the median.
+
+Interquartile Range (Çeyrekler Açıklığı) Nedir?
+
+IQR, bir veri setinin ortadaki %50'lik kısmının ne kadar yayıldığını gösteren bir ölçüdür. Yani en uçtaki (en düşük %25 ve en yüksek %25) değerleri görmezden gelip, sadece verinin merkezindeki, "tipik" kısmın ne kadar dağınık ya da toplu olduğuna bakar.
+
+Quartile (Çeyrek) Kavramını Önce Anlayalım
+
+Bir veri setini küçükten büyüğe sıraladığınızda, bu diziyi 4 eşit parçaya bölen 3 nokta vardır:
+
+Q1 (Birinci Çeyrek) → verinin %25'i bu noktanın altında kalır
+Q2 (İkinci Çeyrek) → bu aslında medyandır, verinin %50'si altında kalır
+Q3 (Üçüncü Çeyrek) → verinin %75'i bu noktanın altında kalır
+
+IQR Formülü
+
+IQR=Q3−Q1
+
+Bu, Q1 ile Q3 arasındaki mesafeyi hesaplar — yani verinin ortadaki %50'lik diliminin genişliğini gösterir (%25'ten %75'e kadar olan aralık).
+
+Somut Bir Örnekle Gösterelim
+
+Diyelim ki 8 kişilik bir sınıfın notları (sıralanmış):
+
+[40, 45, 50, 55, 60, 65, 70, 95]
+
+Q1 hesabı (alt yarının medyanı, yani [40, 45, 50, 55]'in medyanı):
+
+Q1=(45+50)/2 =47.5
+
+Q3 hesabı (üst yarının medyanı, yani [60, 65, 70, 95]'in medyanı):
+
+Q3 = (65+70)/2 = 67.5
+
+IQR:
+
+IQR=67.5−47.5=20
+
+Bu, notların ortadaki %50'lik kısmının 20 puanlık bir aralıkta (47.5 ile 67.5 arası) toplandığını gösteriyor.
+
+Neden "Extreme Values'tan Daha Az Etkileniyor"? (Cümledeki İkinci İddia)
+
+Dikkat ederseniz, veri setinde 95 gibi bir aşırı değer var, ama bu değer IQR hesabına hiç girmedi — çünkü IQR sadece Q1 ve Q3'e (yani ortadaki bölüme) bakıyor, en uçtaki değerlere (min, max) hiç dokunmuyor. Bu yüzden 95 yerine 200 ya da 9999 olsaydı bile, IQR (20) hiç değişmezdi — çünkü Q1 ve Q3, veri setinin %25 ve %75'lik noktalarıdır, bunlar aşırı uç değerlerden izole kalır.
+
+Bu, tam olarak daha önce konuştuğumuz Z-score'un zayıflığıyla (outlier'ların mean/std'yi bozarak kendini gizlemesi, "masking effect") taban tabana zıt bir özellik — IQR, bu tür bir bozulmaya karşı dayanıklı (robust).
+
+"Focuses Only on the Central Portion" Ne Demek?
+
+Bu, IQR'ın bilinçli bir tercihle sadece merkezi %50'ye odaklandığını, uçlardaki %25+%25'lik (toplam %50) kısmı kasıtlı olarak dışarıda bıraktığını vurguluyor. Bu "dışarıda bırakma", IQR'ı aykırı değerlere karşı dayanıklı yapan asıl mekanizma.
+
+"Gives a Clear View of How Values Are Arranged Around the Median" Ne Demek?
+
+Medyan (Q2), verinin tam ortası. IQR, bu ortanın etrafındaki (Q1'den Q3'e kadar) dağılımı gösterdiği için, size "medyan civarında değerler ne kadar sıkışık ya da yayılmış" sorusuna net bir cevap veriyor:
+
+Küçük IQR → medyan çevresindeki değerler birbirine yakın, homojen
+Büyük IQR → medyan çevresindeki değerler birbirinden uzak, dağınık
+IQR'ın Outlier Tespitindeki Rolü (Hatırlatma)
+
+Daha önce konuştuğumuz gibi, IQR ayrıca outlier belirleme sınırları kurmak için de kullanılır:
+
+Alt Sınır=Q1−1.5×IQR
+Üst Sınır=Q3+1.5×IQR
+
+Bu sınırların dışında kalan değerler outlier olarak işaretlenir. Bizim örneğimizde:
+
+Alt Sınır = 47.5 - 1.5×20 = 17.5
+Üst Sınır = 67.5 + 1.5×20 = 97.5
+
+Q1 = df['Age'].quantile(0.25)
+Q3 = df['Age'].quantile(0.75)
+IQR = Q3 - Q1
+
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+outliers = df[(df['Age'] < lower_bound) | (df['Age'] > upper_bound)]
+
+Özetle: IQR, verinin ortadaki %50'lik dilimini (Q1'den Q3'e kadar) ölçen bir yayılım göstergesidir; en uç değerlere (min-max) hiç bakmadığı için outlier'lardan etkilenmez, bu da onu Z-score'a göre daha dayanıklı bir yöntem yapar — özellikle çarpık (skewed) dağılımlarda ya da aşırı uç değerler içeren veri setlerinde tercih edilme sebebi tam olarak budur.
+
+Quartiles
+Quartiles divide the dataset into four equal parts:
+
+Q1 (First Quartile): Separates the lowest 25% of the data
+Q2 (Second Quartile / Median): Middle value of the dataset
+Q3 (Third Quartile): Separates the highest 25% of the data
+The IQR captures the range between Q1 and Q3, representing the middle 50% of the distribution.
+
+It tells us how spread out the central 50% of the data is, which helps to gauge the data's variability without being influenced by outliers.[Bu, verilerin ortadaki %50’lik kısmının ne kadar dağınık olduğunu gösterir; bu da uç değerlerden etkilenmeden verilerin değişkenliğini ölçmeye yardımcı olur.]
+
+How to Calculate the Interquartile Range
+Step 1: Sort the data in ascending order
+Step 2: Find the median (Q2)
+Step 3: Split the dataset into two halves
+
+Q1 = median of lower half
+Q3 = median of upper half
+
+Step 4: Calculate IQR
+
+IQR = Q3 - Q1
+
+Semi-Interquartile Range (Quartile Deviation) Nedir?
+
+Bu, IQR'ın yarısını alarak elde edilen bir ölçüdür — adının içinde geçen "semi" kelimesi zaten "yarı" anlamına geliyor.
+
+Quartile Deviation= IQR / 2
+
+Neden Böyle Bir Ölçüye İhtiyaç Var?
+
+Bunu, standart sapma ile varyans arasındaki ilişkiye benzer bir mantıkla düşünebilirsiniz — IQR, Q1 ile Q3 arasındaki toplam mesafeyi gösterirken, Quartile Deviation bunun yarısını alarak, medyanın her iki tarafına ortalama ne kadar yayıldığını gösteren bir "yarıçap" gibi düşünülür.
+
+Somut Örnekle Gösterelim
+
+Önceki örneğimizi hatırlayın:
+
+Q1 = 47.5, Q3 = 67.5
+IQR = 67.5 - 47.5 = 20
+
+QD = 20/2 = 10
+
+Bunun anlamı: medyanın (bizim örnekte medyan yaklaşık olarak 57.5 civarında olurdu) her iki yönüne yaklaşık 10 birim yayılmış bir merkezi bölge olduğunu gösteriyor — sanki medyandan sağa 10, soldan 10 birim uzanan bir "yarıçap" gibi.
+
+Neden "Yarıçap" Benzetmesi Yapılıyor?
+
+Eğer dağılım simetrikse (medyan tam ortada, Q1 ve Q3 medyandan eşit uzaklıktaysa), Quartile Deviation, medyanın her iki tarafına yaklaşık olarak eşit mesafede bir aralık tanımlar:
+
+Medyan - QD    ...    Medyan    ...    Medyan + QD
+
+Bu da ona standart sapmanın çeyrek tabanlı bir "kardeşi" gibi bir rol veriyor — standart sapma "ortalamadan tipik sapma"yı gösterirken, Quartile Deviation "medyandan tipik sapma"yı gösteriyor (kabaca).
+
+Ne Zaman Kullanılır?
+
+Pratikte, Quartile Deviation, IQR'a göre çok daha az kullanılır — modern veri analizinde/ML'de neredeyse hep doğrudan IQR tercih edilir (özellikle outlier tespitinde 1.5 × IQR formülü standarttır, 1.5 × 2 × QD şeklinde kullanılmaz). Quartile Deviation daha çok klasik/geleneksel istatistik ders kitaplarında, "yayılım ölçüleri" konusunu tam bir liste halinde anlatırken (range, IQR, quartile deviation, variance, standard deviation gibi) teorik bütünlük için bahsedilen bir kavramdır.
+
+Quartile Deviation (Semi-IQR), sadece IQR'ın 2'ye bölünmüş hali — kavramsal olarak yeni bir bilgi eklemiyor, sadece IQR'ı "medyan etrafındaki tipik yarı-mesafe" şeklinde yorumlamanın bir yolu. Pratik ML/veri analizi çalışmalarınızda muhtemelen doğrudan IQR'ı kullanmaya devam edeceksiniz, Quartile Deviation'ı bilmeniz yeterli ama üzerinde derinleşmenize gerek yok — bu, daha çok "istatistik terminolojisini tam bilmek" için faydalı bir ek bilgi.
+
+Soru:Dağılımın median etrafında  ne kadar dağıldığını görmemiz bize ne gibi fayda sunar ?
+
+Hocam gerçekten temel bir soru, ve cevabı bizim şu ana kadar konuştuğumuz **hemen her şeyle** bağlantılı. Birkaç açıdan faydasını anlatayım.
+
+## 1. "Normal" ile "Anormal" Arasındaki Sınırı Çizebilmenizi Sağlar
+
+Medyan etrafındaki dağılımı bilmeden, bir değerin **"normal mi yoksa aykırı mı"** olduğuna karar veremezsiniz. Hatırlarsanız IQR'dan outlier sınırlarını türetiyorduk:
+```
+Alt Sınır = Q1 - 1.5×IQR
+Üst Sınır = Q3 + 1.5×IQR
+```
+Bu sınırlar, **"medyan etrafındaki tipik yayılımı"** bilmeden hesaplanamaz. Yani dağılımı anlamak, doğrudan **"bu bir hata mı, gerçek bir gözlem mi?"** sorusuna cevap vermenizi sağlıyor — tam da bizim `Age = 999` örneğinde yaptığımız gibi.
+
+## 2. Veriyi "Tek Bir Sayıyla" Değil, Gerçek Yapısıyla Anlamanızı Sağlar
+
+Sadece **ortalama/medyan** bilmek yeterli değil — iki farklı veri seti **aynı medyana** sahip olsa bile, biri çok **sıkışık/homojen**, diğeri çok **dağınık/değişken** olabilir. Bu ayrımı görmezseniz, verinizi yanlış yorumlarsınız.
+
+**Somut örnek:** İki hastane düşünün, ikisinin de hastalarının **medyan yaşı 45**. Ama:
+- Hastane A: yaşlar 40-50 arasında sıkışık (dar dağılım)
+- Hastane B: yaşlar 5-90 arasında çok yayılmış (geniş dağılım)
+
+Medyan **aynı** olsa da, bu iki hastane **tamamen farklı hasta popülasyonlarına** hizmet ediyor — bu bilgi olmadan yanlış bir genelleme yaparsınız.
+
+## 3. Hangi İstatistiksel/ML Yöntemini Seçeceğinize Karar Vermenizi Sağlar
+
+Hatırlarsanız Z-score konuşmamızda, "veri normal dağılıma uyuyor mu" sorusunun **hangi outlier tespit yöntemini** (Z-score mu, IQR mu) kullanacağınızı belirlediğini konuşmuştuk. Dağılımın şeklini ve yayılımını bilmek, **doğru aracı seçmenizi** sağlıyor — yanlış yöntemi seçerseniz (örneğin çarpık veride Z-score kullanırsanız), sonuçlarınız **yanıltıcı** çıkar.
+
+## 4. Modelin Güvenilirliğini Değerlendirmenizi Sağlar
+
+ML bağlamında, bir modelin **tahmin güvenilirliği**, genelde eğitim verisinin **dağılımıyla** ilişkilidir. Eğer bir özelliğin (feature) dağılımı çok **geniş/dağınık** ise, model o özellik için **daha belirsiz/az güvenilir** tahminler üretebilir; dar/sıkışık bir dağılımda ise model o bölgede **daha kararlı** tahminler yapar. Bu, özellikle **prediction interval** (tahmin aralığı) hesaplarken kritik bir bilgi.
+
+## 5. Karar Verme Süreçlerinde "Tipik Durumu" Anlamanızı Sağlar
+
+Gerçek hayattaki karar süreçlerinde, sadece **"ortalama"** değil, **"tipik aralık"** bilmek çok daha faydalıdır. Örneğin bir e-ticaret şirketi "ortalama teslimat süremiz 3 gün" derse, bu **tek başına yeterli bir bilgi değildir** — eğer teslimatların **%50'si 2-4 gün arasında** ise (dar IQR) bu güvenilir bir vaat; ama teslimatların **%50'si 1-10 gün arasında** yayılıyorsa (geniş IQR), "3 gün" ortalaması **yanıltıcı** bir beklenti yaratır, müşteri memnuniyetsizliği doğurabilir.
+
+## Sizin Şu Ana Kadarki Öğrenim Sürecinize Bağlayalım
+
+Bu, aslında baştan beri konuştuğumuz her şeyin **temel motivasyonu**: veri kalitesi sorunlarını (error, noise, outlier) tespit etmek için önce **"normal olan neye benziyor"** sorusuna cevap vermeniz gerekiyor. Medyan etrafındaki dağılımı anlamak, size işte bu **"normal"in tanımını** veriyor — bu tanım olmadan, hiçbir veri kalitesi kontrolü (Z-score, IQR, residual analysis) **anlamlı bir referans noktasına** sahip olamaz.
+
+**Özetle:** Dağılımın medyan etrafında ne kadar yayıldığını bilmek, size **"normal" ile "anormal"i ayırt etme gücü**, **verinin gerçek yapısını (sadece tek bir sayıyla değil) anlama**, **doğru istatistiksel yöntemi seçme** ve **modelin/kararların güvenilirliğini değerlendirme** imkanı veriyor — kısacası, veriyi **yüzeysel bir özet sayı** yerine, **gerçek davranışıyla** anlamanızı sağlıyor.
+
+Applications of the Interquartile Range (IQR)
+
+The Interquartile Range (IQR) has a variety of applications across different fields which includes:
+
+Outlier Detection: IQR is used in finance, healthcare and quality control to detect outliers. Data points that fall outside the range Q1 - 1.5×IQR to
+Q3 + 1.5×IQR are considered outliers.
+
+Measure of Variability for Skewed Distributions: Unlike the range, IQR is not sensitive to extreme values or outliers. It is useful for measuring variability in skewed datasets helps in providing a better representation of spread.
+
+Data Summary and Comparison: It acts as a tool for summarizing data when the dataset is non-normally distributed. It provides a focused view of the data's central 50% which offers valuable insights into data spread and central tendency.
+
+Predictive Data Analysis: IQR can be applied in predictive analytics where understanding the distribution of data plays an important role in model accuracy and prediction reliability.
+
+Central Tendency: While the mean can be skewed by extreme values, it focuses on the central 50% of the data which provides a clearer understanding of its true distribution.
+
+Soru:Bir datasetteki verilerin median etrafında sıkışık olması veya gevşek olması sonucunda ne olur ?
+
+Hocam bunu somut sonuçlarıyla anlatayım.
+
+## Median Etrafında Sıkışık (Dar Dağılım) Olması Durumunda
+
+**1. Veri "tahmin edilebilir/tutarlı" olur**
+Değerlerin çoğu birbirine yakın olduğu için, yeni bir gözlemin de **medyana yakın** çıkması yüksek ihtimaldir. Bu, modelin (ya da sizin) o özellik hakkında **güvenli tahminler** yapmasını kolaylaştırır.
+
+**2. Outlier tespiti daha keskin/hassas olur**
+Dar bir dağılımda, normalden biraz sapan bile bir değer **belirgin bir şekilde göze çarpar** — çünkü "normal" aralık zaten dar, dışına çıkan bir değer kolayca fark edilir.
+
+**3. Modelin o özellik için güven aralığı daralır**
+ML bağlamında, model bu tür bir özelliği kullanarak yaptığı tahminlerde **daha az belirsizlik (variance)** taşır, çünkü veri zaten kendi içinde tutarlı.
+
+**Örnek:** Bir fabrikada üretilen vidaların çapı, medyan etrafında çok sıkışıksa (örneğin hepsi 5.0mm ± 0.1mm), bu **kalite kontrolünün iyi çalıştığının** göstergesidir — üretim süreci **tutarlı ve güvenilir**.
+
+## Median Etrafında Gevşek/Dağınık (Geniş Dağılım) Olması Durumunda
+
+**1. Veri "heterojen/tutarsız" olur, tek bir "tipik değer" ile özetlenemez**
+Medyanı bilmeniz tek başına yeterli değildir, çünkü gerçek değerler medyandan **çok uzaklara** yayılabilir. "Ortalama/medyan böyle" demek, gerçekte **yanıltıcı bir basitleştirme** olur.
+
+**2. Outlier tespiti zorlaşır**
+Dağılım zaten geniş olduğu için, gerçekten "anormal" olan bir değer ile sadece "biraz uzak ama normal" olan bir değeri **ayırt etmek zorlaşır** — sınır bulanıklaşır.
+
+**3. Modelin tahmin güveni düşer**
+Model, bu özellik için **daha geniş bir belirsizlik aralığıyla** çalışmak zorunda kalır, tahminleri daha az kesin/güvenilir olur.
+
+**4. Alt grupların (subgroup) varlığına işaret edebilir.**
+Genellikle **çok geniş bir dağılım**, aslında verinizin **tek bir homojen grup değil, birden fazla farklı alt grubun karışımı** olduğunu gösterir. Örneğin bir hastane verisinde yaş dağılımı çok genişse, bu muhtemelen hem **pediatri** hem **geriatri** hastalarının aynı veri setinde karıştığı anlamına gelir — belki bu iki grubu **ayrı ayrı analiz etmek** daha doğru olur.
+
+**Örnek:** Aynı fabrika örneğine dönersek, eğer vida çapları medyan etrafında çok dağınıksa (bazıları 3mm, bazıları 8mm), bu **üretim sürecinde ciddi bir tutarsızlık/kalite sorunu** olduğunun işaretidir — makine kalibrasyonu bozuk olabilir, ya da birden fazla farklı vida modeli yanlışlıkla aynı veri setine karışmış olabilir.
+
+## Sizin İçin Pratik Sonuç — Karar Verme Açısından
+
+Bu bilgi size şunu söyler:
+
+- **Dar dağılım** → veriye **güvenebilirsiniz**, tek bir özet değer (medyan/ortalama) genelde **temsil edici**dir, modeliniz bu özellikte **kararlı** tahminler yapar
+- **Geniş dağılım** → tek bir özet değere **güvenmemeniz** gerekir, verinin **neden bu kadar dağınık olduğunu araştırmanız** (alt gruplar mı var, veri kalitesi sorunu mu var, gerçekten mi çeşitli bir popülasyon) gerekir, ve modeliniz bu özellikte muhtemelen **daha az güvenilir** tahminler üretecektir
+
+**Özetle:** Median etrafındaki sıkışıklık/gevşeklik, size verinin **"ne kadar güvenilir bir şekilde tek bir sayıyla özetlenebileceğini"** ve **"ne kadar tahmin edilebilir/tutarlı"** olduğunu söylüyor — dar dağılım güven ve tutarlılık, geniş dağılım ise dikkat ve daha derin araştırma gerektiren bir sinyal.
+
+Soru:Bir datasetin skewed olduğunu görselleştirmeden nasıl anlayabiliriz?
+
+Hocam görselleştirmeden, sadece **sayısal/istatistiksel** yöntemlerle skewness'i tespit etmenin birkaç yolu var.
+
+## 1. Skewness Katsayısı (En Direkt Yöntem)
+
+```python
+df['Age'].skew()
+```
+
+Bu, **Pearson'ın moment katsayısı** denen bir formülle hesaplanır ve size **tek bir sayı** verir:
+
+- **0'a yakın** (genelde -0.5 ile +0.5 arası) → **simetrik**, skewed değil
+- **Pozitif (> 0.5)** → **sağa çarpık (right/positive skew)** — kuyruk sağda uzun, çoğu değer solda toplanmış
+- **Negatif (< -0.5)** → **sola çarpık (left/negative skew)** — kuyruk solda uzun, çoğu değer sağda toplanmış
+
+**Genel kabul gören eşikler:**
+| Değer | Yorum |
+|---|---|
+| -0.5 ile +0.5 | Yaklaşık simetrik |
+| -1 ile -0.5 veya +0.5 ile +1 | Orta düzey çarpık |
+| < -1 veya > +1 | Yüksek düzey çarpık |
+
+## 2. Mean vs Median Karşılaştırması (En Sezgisel Yöntem)
+
+Görselleştirmeden bile, sadece **iki sayıyı karşılaştırarak** hızlı bir fikir edinebilirsiniz:
+
+```python
+mean = df['Age'].mean()
+median = df['Age'].median()
+print(mean, median)
+```
+
+**Mantık:**
+- **Mean ≈ Median** → dağılım **simetrik**
+- **Mean > Median** → **sağa çarpık** (birkaç yüksek değer ortalamayı yukarı çekiyor)
+- **Mean < Median** → **sola çarpık** (birkaç düşük değer ortalamayı aşağı çekiyor)
+
+**Neden böyle oluyor?** Mean, **her değerden etkilenir** (özellikle uç değerlerden), medyan ise sadece **"ortadaki sırayı"** önemser. Bir kuyruk (uzun uç) varsa, mean o yöne **çekilir**, medyan ise yerinde kalır — aradaki fark, size çarpıklığın **yönünü** gösterir.
+
+## 3. Statistical Test — D'Agostino's K² Testi
+
+Bu, hem skewness hem kurtosis'i birlikte değerlendirip, dağılımın **normallikten ne kadar saptığını** istatistiksel olarak test eder:
+
+```python
+from scipy.stats import normaltest
+
+stat, p_value = normaltest(df['Age'])
+print(p_value)
+```
+
+**p-değeri < 0.05** ise, dağılım **normal değildir** (çarpık ya da başka bir sapma var) diyebilirsiniz.
+
+## 4. Quartile'lara Bakarak (Q1, Median, Q3 Arasındaki Mesafeler)
+
+```python
+Q1 = df['Age'].quantile(0.25)
+median = df['Age'].median()
+Q3 = df['Age'].quantile(0.75)
+
+print(median - Q1, Q3 - median)
+```
+
+**Mantık:** Simetrik bir dağılımda, medyan ile Q1 arasındaki mesafe, medyan ile Q3 arasındaki mesafeye **yaklaşık eşit** olmalı. Eğer bu iki mesafe **çok farklıysa**, bu çarpıklığa işaret eder:
+- `(Q3 - median) > (median - Q1)` → sağa çarpık
+- `(Q3 - median) < (median - Q1)` → sola çarpık
+
+## 5. `describe()` ile Hızlı Genel Bakış
+
+```python
+df['Age'].describe()
+```
+
+Bu, min, max, mean, quartile'ları bir arada gösterir — mean'in medyana (Q2, yani 50. percentile) göre konumuna bakarak hızlı bir fikir edinebilirsiniz, tek tek hesaplamanıza gerek kalmaz.
+
+---
+
+## Pratik Öneri — Hangi Yöntemi Kullanmalı?
+
+En hızlı ve pratik kombinasyon:
+```python
+print("Skewness:", df['Age'].skew())
+print("Mean:", df['Age'].mean(), "Median:", df['Age'].median())
+```
+
+**Skewness katsayısı** size **kesin, sayısal bir değer** verirken, **mean-median karşılaştırması** size aynı sonucu **daha sezgisel/hızlı** bir şekilde gösterir — ikisi genelde aynı yöne işaret eder, birbirini doğrulamak için birlikte kullanılabilirler.
+
+-------------------------------------------------
 
 
 
