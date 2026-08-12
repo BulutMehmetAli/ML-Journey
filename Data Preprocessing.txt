@@ -490,3 +490,514 @@ Statistical Methods
 Statistical methods play a crucial role in detecting and quantifying irregularities. These techniques help data scientists identify anomalies, outliers, and inconsistencies that may distort analysis and model performance. By applying these methods, it's possible to clean and refine datasets for more accurate insights.
 
 Örneğin, müşteri yorumları, sosyal medya paylaşımları veya metne dönüştürülmüş belgeler gibi metin veri kümelerinde gürültü, yazım hataları, konuyla ilgisiz kelimeler, tutarsız biçimlendirme veya rastgele karakterler şeklinde ortaya çıkabilir. Bu sorunlar, uygun şekilde ele alınmazsa doğal dil işleme (NLP) modellerini yanıltabilir.
+
+Here are some commonly used statistical techniques for identifying noise:
+
+Z-scores: A Z-score measures how many standard deviations a data point is from the mean[Z-skoru, bir veri noktasının ortalamadan kaç standart sapma uzaklıkta olduğunu ölçer]. Data points with Z-scores above 3 or below -3 are typically considered outliers.
+Interquartile Range (IQR): The IQR is the range between the first (25th percentile) and third (75th percentile) quartiles. Data points falling outside 1.5 times the IQR are typically considered outliers.
+Variance: High variance within a dataset can indicate noise, as data should ideally have low variance unless there is a valid reason for high fluctuations.
+
+Hocam bu ifadeyi detaylıca açıklayayım, hem doğru yönlerini hem de dikkatli okunması gereken kısımlarını.
+
+## Cümlenin İddiası
+
+**"Bir veri setindeki yüksek varyans, gürültüye (noise) işaret edebilir, çünkü veri idealde düşük varyansa sahip olmalıdır — tabii yüksek dalgalanmalar için geçerli bir sebep yoksa."**
+
+## Mantığın Temeli
+
+Bu ifade, şu sezgiye dayanıyor: Eğer bir süreç/ölçüm **kararlı ve tutarlı** ise (örneğin bir fabrikada üretilen aynı model vidaların çapı), bu ölçümlerin **birbirine yakın** çıkması beklenir — düşük varyans. Eğer beklenenden **çok daha fazla** yayılım (yüksek varyans) görüyorsanız, bu şu anlama gelebilir: **ölçüm sürecine bir bozukluk/rastgelelik karışmış** — yani noise.
+
+## Somut Örnekle Açalım
+
+**Senaryo 1 — Düşük Varyans (Beklenen, Normal)**
+Bir fabrika her gün ürettiği vida çapını ölçüyor: `[5.01, 4.99, 5.00, 5.02, 4.98]` mm. Varyans **çok küçük**, bu **iyi bir işaret** — üretim süreci **tutarlı ve kaliteli**.
+
+**Senaryo 2 — Yüksek Varyans (Şüpheli, Muhtemelen Noise)**
+Aynı fabrika, aynı model vida için: `[5.01, 2.30, 8.75, 4.99, 15.20]` mm ölçmüş. Bu **beklenmedik derecede yüksek** bir yayılım — muhtemelen ölçüm cihazında bir arıza var, ya da veri girişinde hatalar oluşmuş, yani **noise/error** karışmış olabilir.
+
+## "Unless There Is a Valid Reason" Kısmı Çok Kritik — Bu İfadenin En Önemli Uyarısı
+
+Cümlenin bu son kısmı, **iddiayı büyük ölçüde dengeleyen** çok önemli bir kayıt düşüyor: **yüksek varyans HER ZAMAN noise değildir, bazen bu tamamen doğal/beklenen bir durumdur.**
+
+**Somut örnek — yüksek varyansın "geçerli bir sebebi" olan durumlar:**
+
+- **Gelir verisi:** Bir ülkedeki insanların gelirleri doğal olarak **çok yüksek varyansa** sahiptir (bazıları çok az kazanır, bazıları çok fazla) — bu **noise değil, gerçek bir sosyoekonomik gerçekliktir**
+- **Farklı gruplardan oluşan veri:** Bir hastane verisinde hem yeni doğan bebeklerin hem de 90 yaşındaki hastaların yaşı varsa, yaş varyansı **doğal olarak yüksek** olur — bu bir hata değil, popülasyonun **gerçek çeşitliliği**
+- **Mevsimsel/döngüsel veriler:** Bir dondurma satış verisinde, yaz-kış arasındaki satış farkı **büyük bir varyans** yaratır, ama bu **beklenen, mantıklı bir dalgalanmadır**, noise değildir
+
+## Peki Bu İfadeyi Nasıl Doğru Yorumlamalıyız?
+
+Bu cümle size **kesin bir kural değil**, **bir "kırmızı bayrak" (red flag) sinyali** veriyor: *"Yüksek varyans gördüğünüzde, bunun sebebini araştırın."* Eğer araştırdığınızda:
+
+- **Mantıklı bir açıklama bulursanız** (farklı gruplar, doğal çeşitlilik, mevsimsellik) → bu **gerçek veri**, noise değil, dokunmayın
+- **Mantıklı bir açıklama bulamazsanız** (aynı, homojen bir grubun ölçümü olması gerekirken beklenmedik dalgalanma varsa) → bu muhtemelen **noise**, temizlemeniz gerekir
+
+## Bu, Daha Önce Konuştuğumuz "Domain Expertise" ile Doğrudan Bağlantılı
+
+Hatırlarsanız domain expertise konusunu konuşurken, "istatistiğin tek başına yeterli olmadığını, alan bilgisinin devreye girmesi gerektiğini" söylemiştik — işte bu cümle **tam olarak o noktaya işaret ediyor**. Yüksek varyansı görüp otomatik olarak "noise, temizlemeliyim" demek **yanlış bir refleks** olabilir; önce **"bu veri setinde neden yüksek varyans olabilir, mantıklı bir sebebi var mı"** diye sormanız gerekiyor.
+
+## Pratik Kullanımı — Ne Zaman "Şüphelenmelisiniz"?
+
+Varyansın **beklenenden yüksek olduğunu** anlamanın bir yolu, **benzer/karşılaştırılabilir veri setleriyle kıyaslamaktır**:
+
+```python
+# Farklı gruplar arasında varyans karşılaştırması
+df.groupby('Category')['Value'].var()
+```
+
+Eğer aynı kategoriye ait (yani "homojen olması beklenen") bir grup, diğer benzer gruplara göre **anormal derecede yüksek varyansa** sahipse, bu size **"burada bir şeyler yanlış olabilir"** sinyali verir.
+
+---
+
+**Özetle:** Bu ifade, yüksek varyansı **otomatik olarak noise** ile eşitlemek yerine, **"araştırılması gereken bir sinyal"** olarak görmenizi öneriyor. Yüksek varyans, ya **gerçek ve doğal bir çeşitliliği** (geçerli sebep varsa) ya da **veri kalitesi sorununu (noise)** (geçerli bir sebep yoksa) yansıtabilir — hangisi olduğuna karar vermek için **istatistiğin ötesinde, verinin gerçek dünyadaki bağlamını (domain knowledge) bilmeniz** gerekir.
+
+Domain Expertise
+Industry-specific knowledge plays a vital role in distinguishing between genuine variations and noise. For example, in healthcare, a sudden increase in patient blood pressure might be a valid signal for an emergency, not noise, but it could be flagged as an anomaly in a different dataset.
+
+Automated Anomaly Detection
+For large datasets, machine learning algorithms can be highly effective at detecting anomalies:
+
+Isolation Forests: This algorithm isolates outliers in high-dimensional datasets.
+K-means Clustering: K-means can help group similar data points together, with points that do not belong to any cluster considered anomalies.
+DBSCAN: Density-Based Spatial Clustering of Applications with Noise (DBSCAN) is a clustering algorithm that groups together closely packed points and labels sparse regions as noise.
+
+Techniques for Removing or Reducing Noisy Data
+After identifying noisy data, the next challenge is how to deal with noisy data through structured cleaning methods: These methods can be categorized into data cleaning, imputation, and outlier detection. Here are the common techniques for dealing with noisy data:
+
+Filtering (Filtreleme)
+
+Filtering, veri setindeki gürültüyü (noise) azaltmak için kullanılan, verinin sinyal kısmını korurken rastgele dalgalanmaları bastırmayı amaçlayan bir tekniktir. Temel mantık, art arda gelen değerlere matematiksel bir işlem uygulayarak ani ve anlamsız sıçramaları yumuşatmaktır.
+
+En yaygın filtreleme türleri:
+
+1. Low-pass filter (Alçak geçiren filtre)
+Yüksek frekanslı (hızlı, ani) değişimleri bastırır, yavaş ve genel eğilimi (trend) korur. Sensör verilerinde, ses işlemede sıkça kullanılır.
+
+2. Moving Average Filter (Hareketli ortalama)
+Her noktayı, kendisi ve komşu noktalarının ortalamasıyla değiştirir.
+
+Imputation:Fills missing or noisy data points using statistical methods
+Outlier Removal: Identifies and removes outliers using statistical methods like Z-scores or machine learning approaches like KNN
+
+Hocam evet, KNN outlier tespitinde de kullanılabiliyor, ama dikkat edilmesi gereken bir nokta var — bu, daha önce konuştuğumuz KNN Imputer'dan farklı bir kullanım amacı.
+
+KNN'in İki Farklı Kullanım Amacı
+
+1. KNN Imputer (Daha Önce Konuştuğumuz) → eksik değerleri doldurmak için, komşuların ortalamasını alarak tahmin üretir
+
+2. KNN Outlier Detection (Şimdi Bahsedilen) → aykırı değerleri tespit etmek için, bir noktanın komşularına olan mesafesine bakar
+
+Aynı temel mantık (komşuluk/mesafe) kullanılıyor, ama amaç tamamen farklı.
+
+KNN Outlier Detection Nasıl Çalışır?
+
+Mantık şu: normal bir veri noktası, genelde çok sayıda komşusuna yakın durur (yoğun bir bölgede yer alır). Outlier bir nokta ise, komşularından uzakta, izole bir konumda bulunur.
+
+Adımlar:
+
+Her veri noktası için, en yakın K komşusuna olan mesafeyi hesaplayın
+Bu mesafelerin ortalamasını (ya da toplamını) alın — buna genelde "KNN distance score" denir
+Bu skor yüksek olan noktalar (yani komşularından uzak olanlar) → outlier olarak işaretlenir.
+
+Neden KNN, Z-Score/IQR'a Göre Farklı/Avantajlı?
+
+Z-score ve IQR, tek bir sütuna bakarak outlier belirler (univariate). KNN outlier detection ise birden fazla sütunu birlikte değerlendirir (multivariate) — tıpkı KNN Imputer'ın "sadece Age'e değil, diğer sütunlara da bakması" gibi.
+
+Somut fark: Bir kişinin Age=30 ve BMI=45 olduğunu düşünün. Tek başına Age=30 normal, tek başına BMI=45 de yüksek ama tek başına aşırı değil. Ama bu iki değerin birlikte bu kombinasyonda görülmesi çok nadir/tuhaf olabilir — Z-score/IQR (tek sütuna bakan yöntemler) bunu kaçırabilir, ama KNN (çok boyutlu mesafeye bakan) bu kombinasyondaki tuhaflığı yakalayabilir.
+
+Scikit-learn'de Hazır Bir Alternatif — LOF (Local Outlier Factor)
+
+Pratikte, saf KNN mesafesi yerine genelde LOF (Local Outlier Factor) tercih edilir, bu da KNN mantığına dayanan ama yerel yoğunluğu da dikkate alan, daha gelişmiş bir yöntemdir:
+
+Dikkat Edilmesi Gereken Nokta — Scaling Yine Zorunlu
+
+Hatırlarsanız KNN Imputer'da da vurgulamıştık: KNN, mesafe tabanlı çalıştığı için, farklı ölçekteki sütunlar (Age 20-80, Cholesterol 150-300) mesafe hesabını çarpıtır. Bu yüzden KNN ile outlier tespiti yapmadan önce de mutlaka scaling (StandardScaler) uygulamanız gerekiyor.
+
+Özetle: Evet, KNN outlier removal'da kullanılıyor, ama Z-score/IQR gibi tek sütuna bakan (univariate) yöntemlerin aksine, birden fazla sütun arasındaki ilişkiyi (multivariate) değerlendirerek, tek sütunda fark edilemeyen ama kombinasyon olarak tuhaf olan noktaları yakalayabiliyor — bu da onu özellikle çok boyutlu, karmaşık veri setlerinde Z-score/IQR'a göre tamamlayıcı bir güç yapıyor.
+
+Soru: Hocam knn varken neden zscore veya iqr kullanalım ki ?
+
+Hocam gerçekten mantıklı bir soru — ama KNN her zaman "daha iyi" değil, her yöntemin kendi trade-off'u var. Sebeplerini sıralayayım.
+
+## 1. Hesaplama Maliyeti — Z-Score/IQR Çok Daha Hızlı
+
+Z-score ve IQR, **her sütun için tek bir geçişte** (O(n)) hesaplanır — sadece mean/std ya da quartile bulmanız yeterli. KNN ise **her noktanın diğer tüm noktalara olan mesafesini** hesaplamak zorunda (O(n²) civarı), büyük veri setlerinde (100.000+ satır) bu **ciddi derecede yavaşlar**, bazen pratik bile olmayabilir.
+
+## 2. Basitlik ve Yorumlanabilirlik
+
+Z-score/IQR sonucu **çok net açıklanabilir**: *"Bu değer, ortalamadan 3 standart sapma uzakta."* Bunu bir yöneticiye, bir doktora, teknik olmayan birine anlatmak kolay. KNN'in "komşularına olan ortalama mesafesi 2.7" çıktısını **aynı netlikte** açıklamak çok daha zor — "neye göre 2.7, bu ne anlama geliyor" sorusuna cevap vermek daha soyut.
+
+## 3. Sadece Tek Bir Sütunu İncelemek İstediğinizde KNN Gereksiz Karmaşıklık Katar
+
+Eğer sizin sorunuz **"sadece `Age` sütununda aykırı bir değer var mı?"** ise, KNN kullanmak **anlamsız bir karmaşıklık** — çünkü KNN doğası gereği **birden fazla boyut/sütun** arasında mesafe hesaplar. Tek boyutlu bir soruya, çok boyutlu bir araçla cevap aramak gereksiz yük.
+
+## 4. `n_neighbors` ve Eşik (Threshold) Seçimi Sübjektif
+
+Hatırlarsanız KNN Imputer'da da `n_neighbors` parametresinin seçiminin **kritik ve biraz keyfi** olduğunu konuşmuştuk. Outlier tespitinde de aynı sorun var — kaç komşuya bakacağınızı, hangi mesafe eşiğinin "outlier" sayılacağını **siz kendiniz belirlemeniz** gerekiyor, bu net bir istatistiksel kural değil, deneme-yanılma gerektirebilir. Z-score'da ise ±3 gibi **evrensel olarak kabul görmüş** bir eşik zaten var.
+
+## 5. "Curse of Dimensionality" (Boyut Laneti) Sorunu
+
+Sütun sayısı arttıkça (10, 20, 50 sütun), **"en yakın komşu"** kavramı garip bir şekilde **anlamını yitirmeye** başlar — yüksek boyutlu uzaylarda, tüm noktalar birbirine **eşit derecede uzak** görünmeye başlar, bu da KNN'in outlier tespitindeki gücünü **azaltır**. Z-score/IQR ise **her sütunu bağımsız** değerlendirdiği için bu sorundan etkilenmez.
+
+## 6. Scaling Zorunluluğu — Ekstra Adım, Ekstra Hata Riski
+
+KNN kullanmak için önce **mutlaka scaling** yapmanız gerekiyor (hatırlarsanız defalarca vurguladık). Z-score/IQR'da böyle bir ön koşul yok, direkt kullanabilirsiniz — daha az adım, daha az hata yapma ihtimali.
+
+## Peki Ne Zaman Hangisi?
+
+| Durum | Önerilen Yöntem |
+| Tek bir sütunda, basit/hızlı outlier taraması | **Z-Score veya IQR** |
+| Sütunlar arası **kombinasyon anomalisi** aranıyor (örneğin Age=30 + BMI=45 kombinasyonu tuhaf) | **KNN / LOF** |
+| Büyük veri seti, hız önemli | **Z-Score/IQR** |
+| Küçük-orta veri seti, karmaşık ilişkiler önemli | **KNN** |
+| Sonucu birine açıklamanız gerekiyor (rapor, sunum) | **Z-Score/IQR** (daha yorumlanabilir) |
+
+## Gerçek Hayatta Pratik Yaklaşım
+
+Deneyimli veri bilimciler genelde **önce basit yöntemlerle başlar** (Z-score/IQR ile hızlı bir tarama), sadece **"tek boyutlu yöntemlerin kaçırdığından şüphelendikleri"** durumlarda (örneğin sütunlar arası ilişkinin önemli olduğu, karmaşık veri setlerinde) **KNN/LOF gibi daha güçlü ama maliyetli** yöntemlere geçerler — yani KNN "her zaman kullanılan" değil, **"gerektiğinde devreye giren"** bir araçtır.
+
+**Özetle:** KNN "daha güçlü" olabilir ama **daha yavaş, daha az yorumlanabilir, daha fazla ön hazırlık (scaling) gerektiren ve parametre seçimi daha sübjektif** bir yöntem. Z-score/IQR ise **basit, hızlı, evrensel eşiklere sahip ve tek boyutlu problemler için yeterli** — bu yüzden "güç" tek başına yeterli bir kriter değil, **ihtiyaca göre doğru aracı seçmek** esas mesele.
+
+Dimensionality Reduction:Reduces data complexity by eliminating noise in high-dimensional datasets
+
+Binning method for data smoothing in Python
+
+Data smoothing is a crucial preprocessing technique in statistical analysis that helps reduce noise and makes data more suitable for analysis. The binning method is one approach where we group data values into discrete intervals called bins, making continuous data easier to handle and analyze.
+
+Understanding Binning
+Binning involves creating ranges (bins) and assigning data values to these ranges. The upper boundary of each bin is excluded and belongs to the next bin. This helps in data discretization and noise reduction.
+
+Key Benefits of Binning
+The binning method offers several advantages for data preprocessing ?
+
+Noise Reduction: Smooths out minor fluctuations in data
+Data Simplification: Converts continuous values to discrete categories
+Outlier Handling: Extreme values are contained within bins
+Statistical Analysis: Makes data suitable for categorical analysis methods
+
+Conclusion
+Binning is an effective data smoothing technique that groups continuous values into discrete intervals. This method simplifies data analysis, reduces noise, and makes datasets more suitable for statistical modeling and visualization.
+
+Extra Info:
+
+Binning, sürekli sayısal veriyi belirli aralıklara (bin) bölüp, her aralıktaki tüm değerleri o aralığı temsil eden tek bir değerle (ortalama, medyan veya sınır değerler) değiştirme işlemidir. Amaç, veri setindeki küçük ve genelde anlamsız farklılıkları ortadan kaldırarak gürültüyü azaltmak ve veriyi daha genelleştirilmiş, yönetilebilir bir forma getirmektir.
+
+Binning Türleri
+
+1. Equal-Width Binning (Eşit Genişlikli)
+Tüm aralıkların genişliği birbirine eşittir, ama her aralığa düşen veri sayısı farklı olabilir.
+
+df['yas_bin'] = pd.cut(df['yas'], bins=5)
+
+2. Equal-Frequency Binning (Eşit Frekanslı)
+Her aralığa yaklaşık eşit sayıda veri noktası düşecek şekilde bölünür, aralık genişlikleri farklı olabilir.
+
+df['yas_bin'] = pd.qcut(df['yas'], q=5)
+
+3. Smoothing by bin means/medians
+Her bin'deki değerler, o bin'in ortalaması veya medyanıyla değiştirilir (asıl "gürültü temizleme" amaçlı kullanılan yöntem budur).
+
+Aralık Sayısını Nasıl Belirleriz? (Asıl Sorunuz)
+
+Hem sezgisel/deneyime dayalı yaklaşımlar var hem de matematiksel formüller. İkisi de kullanılıyor:
+
+A) Matematiksel formüller (bin sayısını, yani "kaç aralık olmalı" sorusunu cevaplar)
+
+1. Sturges' Formula (en klasik, normal dağılıma yakın veriler için)
+
+k=1+log2​(n)
+
+n = veri noktası sayısı. Örneğin 100 veriniz varsa: 1 + log2(100) ≈ 7.6 → 8 bin
+
+2. Square Root Rule (basit ve hızlı, çoğu durumda kullanılabilir)
+
+𝑘 =  √n
+
+100 veri için: √100 = 10 bin
+
+3. Freedman-Diaconis Rule (aykırı değerlere karşı daha dayanıklı, çarpık dağılımlarda tercih edilir)
+
+Bin genişliği = 2 × [IQR / (n üzeri 1/3)]
+
+IQR (çeyrekler açıklığı) kullandığı için outlier'lardan daha az etkilenir, gerçek veri setlerinde genelde en güvenilir formül budur.
+
+k=2×(n üzeri 1/3)
+
+Sturges'e alternatif, biraz daha fazla bin önerir.
+
+import numpy as np
+# Freedman-Diaconis kuralını otomatik uygular
+counts, bin_edges = np.histogram(df['yas'], bins='fd')
+# Sturges
+counts, bin_edges = np.histogram(df['yas'], bins='sturges')
+
+B) Domain knowledge (alan bilgisi / kendi insiyatifiniz)
+
+Formüller matematiksel olarak "dengeli" bir bölünme sağlar ama her zaman en anlamlı bölünme olmayabilir. Sağlık verisi gibi alanlarda genelde domain knowledge tercih edilir:
+
+Örneğin yaş için:
+
+bins = [0, 18, 35, 50, 65, 100]
+labels = ['Çocuk', 'Genç Yetişkin', 'Yetişkin', 'Orta Yaş', 'Yaşlı']
+df['yas_grubu'] = pd.cut(df['yas'], bins=bins, labels=labels)
+
+Burada aralıkları formülle değil, tıbbi/istatistiksel olarak anlamlı eşiklere (18 = reşit olma yaşı, 65 = yaşlılık eşiği gibi) göre belirledik. BMI için de benzer şekilde WHO'nun resmi sınıflandırması kullanılır: <18.5 zayıf, 18.5-25 normal, 25-30 fazla kilolu, 30+ obez gibi.
+
+Hangi Yaklaşımı Kullanmalı?
+Amacınız sadece gürültü/noise azaltmaksa → matematiksel formüller (Freedman-Diaconis önerilir, outlier'a dayanıklı olduğu için) daha objektif ve tekrarlanabilir sonuç verir
+Amacınız yorumlanabilir, anlamlı kategoriler oluşturmaksa (örneğin bir rapor veya model feature'ı için) → domain knowledge kullanmak çok daha mantıklı, çünkü "0-33-66-100" gibi matematiksel olarak eşit ama anlamsız bir bölünme yerine "Çocuk/Genç/Yetişkin/Yaşlı" gibi gerçek dünyada bir anlam ifade eden gruplar elde edersiniz
+
+Pratikte gerçek ML projelerinde: Çoğu veri bilimci ikisini birleştirir — önce formülle kabaca kaç bin gerektiğine bakar, sonra o sayıyı alan bilgisiyle mantıklı sınırlara yuvarlar. Yani tamamen keyfi değil ama tamamen matematiksel de değil, ikisinin dengeli bir kombinasyonu tercih edilir.
+
+İşletmeler karar alma süreçlerinde verilere giderek daha fazla güvenmeye başladıkça, hatalı verilerin etkisi de giderek daha belirgin hale geliyor. Hatalı verileri tespit etmek, ortadan kaldırmak ve azaltmak için etkili stratejiler uygulayarak işletmeler, verilerinin en yüksek kalitede olmasını sağlayabilir ve böylece daha doğru içgörüler ve tahminler elde edebilir. Veri toplama ve temizleme süreçlerinde sürekli iyileştirmeler yapmak, veri bütünlüğünü korumak ve yapay zeka ile makine öğrenimi modellerinin tam potansiyelini ortaya çıkarmak için hayati önem taşır.
+
+Effective Strategies for Handling Noisy Data in Machine Learning
+
+In the realm of machine learning, the quality of your data often determines the success of your models. One of the most significant challenges data scientists face is handling noisy data, which can obscure patterns and lead to inaccurate predictions. Noisy data includes errors, outliers, and inconsistencies that can distort the learning process and degrade model performance. Therefore, effective strategies for identifying, cleaning, and transforming noisy data are crucial for building robust machine-learning models.
+
+How do you handle noisy data when preparing your machine-learning datasets?
+Handling noisy data is a critical aspect of preparing high-quality datasets for machine learning. Noisy data can lead to inaccurate models and poor performance. 
+
+Noise Identification
+The first step in handling noisy data is to identify it. You can use visualization tools like histograms, scatter plots, and box plots to detect outliers or anomalies in your dataset. Statistical methods such as z-scores can also help flag data points that deviate significantly from the mean. It’s essential to understand the context of your data because what appears as noise could be a valuable anomaly. Careful examination is necessary to distinguish between the two.[Verilerinizin bağlamını anlamak çok önemlidir; çünkü gürültü gibi görünen bir şey, aslında değerli bir anomali olabilir. İkisini birbirinden ayırt edebilmek için dikkatli bir inceleme gereklidir.]
+
+Data Cleaning
+Once you’ve identified noisy data, the process of cleaning begins. This involves correcting errors, removing duplicates, and dealing with missing values. Veri temizleme, hassas bir dengedir; veri kümenizin bütünlüğünden ödün vermeden mümkün olduğunca fazla yararlı bilgiyi korumak istersiniz.
+
+1-Correcting Errors
+Identify and correct errors in your data. This can involve fixing typos, ensuring consistent formatting, and validating data against known standards or rules.
+
+# Example: Correcting typos in a column 
+data['column_name'] = data['column_name'].replace({'mistke': 'mistake', 'eror': 'error'})
+
+Hocam "error" (hata) burada, verinin gerçekte imkansız veya mantıksal olarak yanlış bir değer içermesi durumunu ifade eder; yani veri, gerçek dünyada olması gereken sınırların dışına çıkmıştır ve bu bir format/yazım farkı değil, doğrudan yanlışlıktır. Örneğin bir hastanın yaşının -5 ya da 250 olması, tansiyonunun 900 gibi fizyolojik olarak imkansız bir değer taşıması, bir doğum tarihinin gelecekte bir tarih olarak girilmesi, ya da bir kişinin doğum yılının işe başlama yılından sonra olması gibi durumlar error'dur; çünkü bu değerler ölçüm hatası, veri girişi hatası, sistem/sensör arızası veya yazılım hatası gibi bir nedenden ötürü gerçekte olamayacak bir sonuç üretmiştir. Bunu inconsistency'den ayıran temel fark şudur: inconsistency'de değer doğrudur ama farklı biçimde yazılmıştır ("Male" ile "M" gibi, ikisi de doğru bilgiyi taşır), error'da ise değerin kendisi mantıksal veya fiziksel olarak imkansızdır, hangi formatta yazılırsa yazılsın yanlıştır. Bizim veri setimizde sayısal sütunların hepsi tıbbi olarak makul aralıklarda kaldığı için, klasik anlamda bir "error" bulgusuna rastlamadık; bulduklarımız (Gender, Smoker sütunlarındaki farklı yazımlar) aslında inconsistency kategorisine giriyor.
+
+*******************
+Soru: Hocam madem öyle neden " data['column_name'] = data['column_name'].replace({'mistke': 'mistake', 'eror': 'error'})" Bu örnek correcting error'a örnek olarak gösterilmiş ?
+
+Cevap:
+Hocam çok haklı bir soru, gerçekten kafa karıştırıcı bir nokta çünkü kaynaklar arasında bu sınır net değil. Açıklayayım:
+
+**Sorunun özü:** "Error" ve "inconsistency" arasındaki sınır, aslında **kaynaktan kaynağa değişen, kesin olmayan bir sınıflandırma**. Benim önceki tanımım (imkansız sayısal değer = error, farklı format = inconsistency) bir bakış açısı, ama literatürde **yazım hataları (typo) genelde "error" kategorisine sokulur**, çünkü:
+
+**Yazım hatası neden "error" sayılır?**
+`"mistke"` kelimesi, `"mistake"` kelimesinin **yanlış yazılmış** halidir — yani ortada gerçek bir **hata** (klavye hatası, dikkatsizlik) var. Bu, `"Male"` ile `"MALE"` arasındaki farktan kavramsal olarak farklıdır:
+
+- `"Male"` vs `"MALE"` → İkisi de **doğru yazılmış**, sadece **format/stil farkı** (büyük-küçük harf) → **Inconsistency**
+- `"mistke"` vs `"mistake"` → Biri **yanlış yazılmış**, bir harf eksik/hatalı → **Error (typo/yazım hatası)**
+
+**Yani ayrım şu şekilde daha doğru kurulmalı:**
+- **Error:** Verinin kendisinde bir **bozulma/yanlışlık** var (typo, imkansız sayısal değer, sensör hatası, sistem hatası)
+- **Inconsistency:** Veri **doğru** ama **standart olmayan bir biçimde** temsil edilmiş (aynı bilginin farklı yazım/format kuralıyla girilmesi)
+
+Bu yüzden `replace({'mistke': 'mistake'})` örneği doğru şekilde **error correction**'a örnek, çünkü `"mistke"` diye bir kelime İngilizcede **yok**, bu bir yazım hatası, bir "format farkı" değil.
+
+
+*******************
+
+misspelling , type , spelling error => yazım hatası anlamında kullanılmaktadır ve yazım hataları error kategorisine sokulur.
+
+Veri setinde "correcting error" adımı için düzeltilecek bir şey yok demektir — bu da normal bir sonuç, her veri setinde mutlaka error olması gerekmiyor, sizin bu adımı doğru şekilde uygulayıp "bulgu yok" sonucuna varmanız da veri temizleme sürecinin bir parçası.
+
+Inconsistency düzeltme adımları:
+
+Adım 1: Sütunları standartlaştırma mantığı
+
+Temel prensip: Farklı yazılmış ama aynı anlama gelen değerleri tek bir standart forma indirgemek. Bunun için genelde şu sıra izlenir:
+
+Önce metni küçük harfe çevir (.str.lower()) — böylece "MALE", "Male", "male" hepsi "male" olur
+Baştaki/sondaki boşlukları temizle (.str.strip()) — bazen fark edilmeyen boşluklar da ayrı kategori gibi sayılabiliyor
+Kalan kısaltmaları (Y, N gibi) tam karşılıklarıyla eşleştir (.replace() veya .map())
+
+Adım 2: Gender sütunu için mantık
+
+Şu an elimizdeki değerler: FEMALE, Male, Female, MALE, male
+Küçük harfe çevirdiğimizde hepsi zaten female ve male'e iner, ekstra bir eşleştirmeye bile gerek kalmaz:
+
+df['Gender'] = df['Gender'].str.lower().str.strip()
+Sonuç: sadece female ve male kalır (NaN'lar dokunulmadan kalır, .str fonksiyonları NaN'ı otomatik atlar).
+
+Adım 3: Smoker sütunu için mantık
+
+Burada durum biraz farklı çünkü hem tam kelime (Yes, No) hem kısaltma (Y, N) karışık. Sadece küçük harfe çevirmek yetmez, çünkü "y" ile "yes" hâlâ farklı iki string olarak kalır. Burada bir eşleştirme sözlüğü (mapping dictionary) kurmamız lazım:
+
+smoker_map = {
+    	'yes': 'Yes', 
+	'y': 'Yes',
+    	'no': 'No', 
+	'n': 'No'
+}
+df['Smoker'] = df['Smoker'].str.lower().str.strip().map(smoker_map)
+Neden önce .str.lower() sonra .map()? Çünkü mapping sözlüğünü her olası büyük/küçük harf kombinasyonu için ayrı ayrı yazmak yerine ('Yes', 'YES', 'yes', 'Y', 'y'...), önce hepsini küçük harfe indirip sözlüğü sadece küçük harfli anahtarlarla kısa tutuyoruz.
+
+Soru: Hocam diyelim ki Male ve female için biz hepsini str.lower() ile küçülttük. Aama biz error correcting aşamasında fmale , fimale vs yazılı şeyler olabilir. Bunun için o sütun içerisinde unique ıolarak neler olduğunu öğrenmemiz gerekiyor ki biz dict mapping yapalım. Ben bunu nasıl öğrenebilirim ? [hangi değerden kaç tane var gibisinden]
+
+Elcevap:
+
+Hocam tam da doğru soruyu soruyorsunuz, bu adım gerçekten kritik — çünkü hem unique değerleri görmemiz hem de her birinden kaç tane olduğunu bilmemiz lazım (nadir görülen bir değer muhtemelen bir typo'dur, çok görülen bir değer muhtemelen doğru yazımdır).
+
+.value_counts() kullanın
+
+df['Gender'].value_counts()
+
+Bu size şöyle bir çıktı verir (örnek):
+
+male      145
+female    132
+Male       23
+Female     18
+MALE        4
+fmale       2
+fimale      1
+
+Küçük harfe çevirip sonra .value_counts() yapmak daha temiz olur
+
+Tüm sütunlar için toplu görmek isterseniz
+
+Eğer birden fazla kategorik sütunu tek tek kontrol etmek istemiyorsanız, bir döngüyle hepsini art arda yazdırabilirsiniz:
+
+categorical_cols = ['Gender', 'Smoker', 'Diagnosis']
+for col in categorical_cols:
+    print(f"--- {col} ---")
+    print(df[col].str.lower().str.strip().value_counts())
+    print()
+
+Şimdi sıradaki aşama duplicated()'ları bulup drop yapmaktır. 
+
+df.duplicated().sum()
+df = df.drop_duplicates()
+
+Dikkat edilmesi gereken önemli bir nokta
+
+Sağlık verisinde tam satır tekrarı dışında bir de "Patient_ID" bazlı tekrara bakmak gerekir, çünkü bazen aynı hasta farklı satırlarda, ufak farklarla (örneğin bir sütunda güncellenmiş bir değerle) tekrar edebilir. Bu durumda duplicated() bunu fark etmez, çünkü satırlar birebir aynı değildir.
+
+df['Patient_ID'].duplicated().sum()
+
+Eğer bu sayı 0'dan büyükse ama df.duplicated().sum() 0 çıkıyorsa, bu size aynı hastanın birden fazla kez, farklı bilgilerle kayıtlı olduğunu gösterir — bu durumda hangi kaydın "doğru/güncel" olduğuna karar vermeniz gerekir (örneğin en son tarihli kaydı tutmak gibi).
+
+Duplicate aşamasına kadar neler yaptık hatırlayalım. 1. column adlarını trimleyip lower yaptık. 2. correcting error ve handling inconsistency kısımlarına yoğunlaştık. 
+Ardından duplicate control ettik.
+
+## Özet
+
+**1. Correcting Error (Hata Düzeltme)**
+Veri setindeki sayısal sütunları (Age, Blood_Pressure, Cholesterol, BMI) inceledik, hepsinin tıbbi olarak makul sınırlar içinde olduğunu gördük, imkansız/mantıksız bir değer (negatif yaş, aşırı yüksek tansiyon gibi) bulamadık. Ayrıca metin sütunlarında (özellikle serbest metin içeren Notes gibi alanlarda) yazım hatası (typo) olup olmadığını kontrol ettiniz, bulgu çıkmadı. Bu adımı "temiz, düzeltilecek bir şey yok" sonucuyla kapattık.
+
+**2. Inconsistency (Tutarsızlık Düzeltme)**
+`Gender` ve `Smoker` gibi kategorik sütunlarda aynı bilginin farklı yazım biçimlerinde (`Male/MALE/male`, `Yes/Y/No/N` gibi) girildiğini tespit ettik. Bunu düzeltmek için:
+- `.str.lower().str.strip()` ile büyük/küçük harf ve boşluk farklarını giderdik
+- `.value_counts()` ile her sütunun benzersiz değerlerini ve frekanslarını inceleyip nadir/garip yazımları (typo'ları) tespit ettik
+- `.map()` fonksiyonu ve bir eşleştirme sözlüğü (`mapping dict`) kullanarak tüm varyasyonları standart, tek bir forma indirgedik
+
+**3. Duplicate Kontrolü**
+İki farklı kontrol yaptık:
+- `df.duplicated().sum()` ile tam satır tekrarlarına baktık → **0** çıktı
+- `df['Patient_ID'].duplicated().sum()` ile aynı hastanın birden fazla kez farklı bilgilerle kayıtlı olup olmadığını kontrol ettik → **0** çıktı
+
+Sonuç: veri setinde tekrar eden kayıt bulunmuyor, bu adım da temiz çıktı.
+
+## Correcting Error (Hata Düzeltme)
+
+Correcting error, veri setindeki bir değerin **gerçek dünyada mantıksal veya fiziksel olarak imkansız** olması durumunu ifade eder; burada söz konusu olan bir format ya da yazım farkı değil, doğrudan **yanlışlıktır**. Örneğin bir hastanın yaşının -5 ya da 250 olması, tansiyonunun 900 gibi fizyolojik olarak imkansız bir değer taşıması, ya da bir doğum tarihinin gelecekte bir tarih olarak girilmesi gibi durumlar error'dur; bu hatalar genellikle ölçüm hatası, veri girişi hatası, sensör arızası ya da yazılım/sistem hatası gibi bir kaynaktan doğar. Bu kategoriye ayrıca yazım hataları (typo) da girer, çünkü "mistke" gibi bir kelime İngilizcede var olmayan, hatalı yazılmış bir kelimedir, bu da bir bozulma/yanlışlıktır. Correcting error adımının amacı, veriyi tek tek inceleyip bu tür imkansız ya da bozuk değerleri tespit etmek ve ya düzeltmek ya da uygun şekilde ele almaktır (örneğin gerçek NaN'a çevirmek); pratikte bunu tespit etmek için sayısal sütunlarda `describe()` ile min-max aralıklarına bakmak, ya da `apply(type)` gibi yöntemlerle beklenmeyen veri tiplerini yakalamak kullanılır. Önemli bir nokta, bazı "sentinel value" olarak adlandırılan gizlenmiş eksik değerlerin (örneğin yaş sütununda -1 ya da 258 gibi) hem error hem de disguised missing value olarak sınıflandırılabileceğidir, çünkü literatürde bu ikisi arasındaki sınır kesin değildir; asıl önemli olan bu tür imkansız değerleri fark edip ya gerçek NaN'a çevirmek ya da mantıklı bir düzeltme yapmaktır.
+
+## Inconsistency (Tutarsızlık)
+
+Inconsistency, verinin **kendisinin yanlış olmadığı ama farklı biçimlerde, standart olmayan bir şekilde temsil edildiği** durumu ifade eder; yani aynı gerçek bilgi, veri setinde birden fazla farklı formatta karşımıza çıkar. Örneğin bir cinsiyet sütununda aynı bilgi kimi zaman "Male", kimi zaman "MALE", kimi zaman "male" olarak girilmişse, ya da bir şehir ismi "Istanbul", "istanbul", "İSTANBUL" gibi farklı büyük-küçük harf ve yazım varyasyonlarıyla veri setine girmişse, bunların hepsi aynı gerçek bilgiyi taşısa da bilgisayar programı ya da makine öğrenmesi modeli bunları **farklı kategoriler** olarak algılar. Inconsistency ayrıca tarih formatlarında (29/07/2026 ile 2026-07-29 gibi), birim kullanımında (kilogram ile pound karışık kullanımı gibi) ya da veri tipinde (bir sütunda hem sayı hem string karışık bulunması gibi) de ortaya çıkabilir. Bu durumun önemli olmasının sebebi, analiz ve modelleme sürecinde ciddi hatalara yol açabilmesidir; örneğin bir modele kategorik veri verirken "Male" ve "M" farklı iki sınıf gibi işlenirse model gereksiz yere karmaşıklaşır, ya da şehir bazlı bir gruplama yaparken "istanbul" ve "Istanbul" ayrı satırlar olarak sayılıp gerçek dağılım yanlış hesaplanır. Düzeltme sürecinde genellikle önce `.value_counts()` ile her sütunun benzersiz değerleri ve frekansları incelenir, ardından `.str.lower().str.strip()` ile büyük-küçük harf ve boşluk farkları giderilir, kalan varyasyonlar ise bir eşleştirme sözlüğü (mapping dictionary) ve `.map()` fonksiyonuyla tek, standart bir forma indirgenir.
+
+## Noisy Data (Gürültülü Veri)
+
+Noisy data, veri setine anlamlı bilgiye ek olarak karışmış, **rastgele ve genellikle tekrar edilemeyen dalgalanmalar, hatalar ve sapmalar** içeren veridir; genellikle ölçüm cihazlarındaki hassasiyet sorunlarından, donanım arızalarından, programlama hatalarından, konuşma tanıma veya OCR (optik karakter tanıma) programlarından gelen anlamsız girdilerden, yazım hatalarından, sektöre özgü kısaltmalardan ya da argo ifadelerden kaynaklanır. Noisy data'nın özel bir alt türü olan **random noise (rastgele gürültü)**, verinin gerçek/asıl bilgisiyle hiçbir ilişkisi olmayan, ölçüm sürecine kaçınılmaz şekilde sızan fazladan bilgidir; örneğin bir tartıyla aynı ağırlığı art arda ölçtüğünüzde her seferinde ufak farklı sonuçlar almanız, tartının mekanik hassasiyeti gibi tesadüfi etkenlerden kaynaklanır ve bu sapmaların birbiriyle anlamlı bir korelasyonu yoktur. Ayrıca **uncontrolled variables (kontrol edilmeyen değişkenler)** de noisy data'ya yol açabilir; ölçmediğiniz ama sonucu etkileyen gizli bir faktör, veriyi aslında rastgele olmadığı halde rastgele gösterebilir ya da gerçekte var olmayan sahte örüntüler ortaya çıkarabilir (örneğin dondurma satışı ile boğulma vakaları arasındaki sahte korelasyonun asıl sebebinin yaz mevsimi olması gibi). Noisy data'nın ML modelleri açısından tehlikesi, modelin bu rastgele dalgalanmaları gerçek bir örüntüymüş gibi öğrenmeye çalışması, bu da genelleme yeteneğini düşürüp overfitting riskini artırmasıdır. Bu sorunu azaltmak için başlıca üç teknik kullanılır: **smoothing**, her veri noktasını kendisi ve komşularının ortalamasıyla temsil ederek ani dalgalanmaları yumuşatır (hareketli ortalama gibi); **binning**, sürekli sayısal veriyi belirli aralıklara bölüp her aralığı temsil eden tek bir değerle (ortalama, medyan) değiştirerek küçük farklılıkları ortadan kaldırır; **filtering** ise Gaussian filter, median filter, low-pass filter gibi matematiksel yöntemlerle komşu değerlere dayalı ağırlıklı işlemler uygulayarak gürültüyü bastırırken altta yatan gerçek sinyali korumaya çalışır.
+
+Artık Missing Value Kısmına geçiyoruz.
+
+Data Integration:
+
+Data Integration, farklı kaynaklardan gelen veriyi tek, tutarlı bir yapıda birleştirme sürecidir. Bunu üç ana aşamada düşünebilirsiniz, ve bu aşamalar genelde sırasıyla karşınıza çıkar.
+
+Aşama 1 — Kaynakları Anlama ve Şemaları Karşılaştırma
+
+Birleştirmeden önce, elinizdeki kaynakların yapısını anlamanız gerekir. İki farklı kaynak, aynı bilgiyi farklı isimlerle, farklı formatlarda tutuyor olabilir:
+
+Kaynak A (CRM): customer_id, full_name, signup_date
+Kaynak B (Fatura Sist.): cust_no, name, created_at
+
+Burada customer_id ile cust_no aynı şeyi ifade ediyor, ama isimleri farklı — bu Schema Matching dediğimiz adım, birleştirmeden önce bu eşleştirmeyi siz (ya da bir eşleştirme algoritması) yapmanız gerekiyor.
+
+Aşama 2 — Kayıtları Eşleştirme (Aynı Varlığı Tanıma)
+
+Şemaları eşleştirdikten sonra, asıl zor kısım gelir: iki farklı kaynaktaki kayıtların gerçekten aynı varlığa (kişi, ürün, hasta) ait olup olmadığını anlamak. Eğer her iki kaynakta da aynı, güvenilir bir ID varsa (örneğin her ikisinde de TC Kimlik No gibi benzersiz bir alan varsa), bu kolaydır — direkt o ID üzerinden eşleştirirsiniz. Ama gerçek hayatta genelde böyle temiz bir ortak anahtar yoktur, bu yüzden isim, doğum tarihi gibi birden fazla alanın kombinasyonuna bakarak "bunlar aynı kişi mi" kararı vermeniz gerekir — bu, Entity Resolution denen, biraz daha zorlu bir adım.
+
+Aşama 3 — Fiziksel Birleştirme (Pandas'ta Uygulama)
+
+Şemaları ve eşleştirme mantığını netleştirdikten sonra, artık teknik olarak verileri birleştirirsiniz — pandas'ta bunun için üç temel araç var:
+
+merge() → iki DataFrame'i ortak bir sütun üzerinden, SQL'deki JOIN mantığıyla birleştirir
+concat() → DataFrame'leri alt alta (satır olarak) ya da yan yana (sütun olarak) ekler, ortak bir anahtar gerektirmez
+join() → merge()'e benzer ama index üzerinden birleştirme yapar
+
+Hocam hayır, aynı şey değiller — ikisi **Data Integration sürecinin farklı aşamalarında, farklı sorulara cevap arayan** iki ayrı kavram. Aralarındaki farkı netleştireyim.
+
+## Schema Matching (Şema Eşleştirme)
+
+**Sorduğu soru:** *"Bu iki kaynaktaki sütunlar/alanlar birbirine karşılık geliyor mu?"*
+
+**Seviyesi:** **Yapısal** — verinin **kendisiyle değil, yapısıyla/etiketleriyle** ilgilenir.
+
+**Örnek:**
+```
+Kaynak A: customer_id, full_name, dob
+Kaynak B: cust_no, name, birth_date
+```
+Schema Matching, size şunu söylüyor: *"`customer_id` ile `cust_no` aynı şeyi ifade ediyor, `full_name` ile `name` aynı şeyi ifade ediyor, `dob` ile `birth_date` aynı şeyi ifade ediyor."* Bu aşamada henüz **hiçbir satır/kayıt** karşılaştırılmıyor, sadece **sütun isimleri/yapıları** eşleştiriliyor.
+
+## Entity Resolution (Varlık Çözümlemesi / Kayıt Eşleştirme)
+
+**Sorduğu soru:** *"Bu iki kaynaktaki belirli SATIRLAR/KAYITLAR aynı gerçek kişiye/nesneye mi ait?"*
+
+**Seviyesi:** **İçerik/veri düzeyi** — sütunlar zaten eşleştirilmiş, şimdi **gerçek verilerin kendisine** bakılıyor.
+
+**Örnek:** Schema Matching'i yaptıktan sonra elinizde artık uyumlu sütunlar var, ama şimdi şu soruyla karşılaşıyorsunuz:
+```
+Kaynak A: customer_id=101, full_name="Mehmet Ali Yılmaz", dob=1998-05-12
+Kaynak B: cust_no=X742,    name="M. A. Yılmaz",        birth_date=12/05/1998
+```
+Bu iki kayıt **aynı kişiye mi ait**? ID'ler tamamen farklı (`101` vs `X742`), isimler biraz farklı yazılmış — Entity Resolution, işte bu **belirsizliği çözüp**, "evet bu ikisi muhtemelen aynı kişi" kararını verme sürecidir (isim benzerliği, doğum tarihi eşleşmesi gibi ipuçlarını kullanarak).
+
+## Basit Bir Benzetmeyle Fark
+
+Bunu bir **çeviri ve tanıma** süreci gibi düşünebilirsiniz:
+
+- **Schema Matching** = İki farklı dildeki **sözlükleri eşleştirmek** — "İngilizce'deki 'apple' kelimesi, Türkçe'deki 'elma' kelimesine karşılık geliyor" demek. Burada henüz **hiçbir gerçek meyveye** bakmıyorsunuz, sadece **kelime karşılıklarını** kuruyorsunuz.
+
+- **Entity Resolution** = Şimdi elinizde iki farklı sepette meyveler var, ve **hangi meyvenin hangisiyle aynı meyve** olduğuna karar veriyorsunuz — "bu sepetteki 'elma' ile o sepetteki 'apple' yazan meyve, fiziksel olarak **aynı meyve mi**?" (belki biri çürümüş görünüyor, rengi farklı ama yine de aynı meyve olabilir).
+
+## Sıralamaları Nasıl İşliyor?
+
+Genelde **Schema Matching önce**, **Entity Resolution sonra** gelir:
+
+```
+1. Schema Matching  → Hangi sütun, hangi sütuna karşılık geliyor?
+                       (customer_id ↔ cust_no, full_name ↔ name)
+
+2. Entity Resolution → Sütunlar eşleştikten sonra, hangi SATIR, 
+                       hangi SATIRLA aynı gerçek varlığı temsil ediyor?
+                       (Kaynak A'daki satır 5, Kaynak B'deki satır 12 
+                        ile aynı müşteri mi?)
+```
+
+## Sizin İş İlanınızla Bağlantısı
+
+Hatırlarsanız health-tech startup ilanında şu geçiyordu: *"Match and reconcile records across systems where the 'obvious' ID doesn't line up — and figure out why when it doesn't."* Bu, **birebir Entity Resolution**'ın kendisi — ID'ler eşleşmediğinde, **başka ipuçlarına** (isim, doğum tarihi, telefon numarası gibi) bakarak "bu kayıtlar aynı hastayı mı temsil ediyor" sorusuna cevap bulmak.
+
+## Pandas'ta Pratik Karşılığı
+
+- **Schema Matching** → genelde **manuel** yapılır (siz karar verip `rename()` ile sütun isimlerini eşitlersiniz), ya da büyük ölçekli sistemlerde otomatik eşleştirme algoritmaları kullanılır
+```python
+df_b = df_b.rename(columns={'cust_no': 'customer_id', 'name': 'full_name'})
+```
+
+- **Entity Resolution** → `merge()` ile **birebir eşleşen bir ID** varsa kolay, ama ID'ler uyuşmuyorsa **fuzzy matching** (bulanık eşleştirme) gerekir, örneğin `fuzzywuzzy`/`rapidfuzz` gibi kütüphanelerle isim benzerliğine bakılır
+
+---
+
+**Özetle:** Schema Matching, **"sütunları" (yapıyı)** eşleştirir; Entity Resolution ise **"satırları/kayıtları" (gerçek varlıkları)** eşleştirir. Biri "hangi kutu neyi temsil ediyor" sorusuna, diğeri "bu iki kutudaki içerik aynı şey mi" sorusuna cevap verir — birbirinin **öncülü ve devamı** niteliğinde, ama farklı seviyelerde çalışan iki ayrı adım.
