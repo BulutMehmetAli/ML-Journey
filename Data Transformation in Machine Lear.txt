@@ -1,0 +1,124 @@
+Data Transformation in Machine Learning
+
+Often the data received in a machine learning project is messy and missing a bunch of values, creating a problem while we try to train our model on the data without altering it.
+
+In building a machine learning project that could predict the outcome of data well, the model requires data to be presented to it in a specific way such that the machine learning model could easily train on the data and perform prediction on the test dataset
+
+What is Data Transformation?
+Data transformation is the process of converting raw data into a more suitable format or structure for analysis, to improve its quality and make it compatible with the requirements of a particular task or system.
+
+Data Transformation in Machine Learning
+Data transformation is the most important step in a machine learning pipeline which includes modifying the raw data and converting it into a better format so that it can be more suitable for analysis and model training purposes. In data transformation, we usually deal with issues such as noise, missing values, outliers, and non-normality.
+
+Why Data Transformation is Important?
+Data transformation is crucial in the data analysis and machine learning pipeline as it plays an important role in preparing raw data for meaningful insights and accurate model building. Raw data, often sourced from diverse channels, may be inconsistent, contain missing values, or exhibit variations that could impact the reliability of analyses.
+
+Data transformation addresses these challenges by cleaning, encoding, and structuring the data in a manner(bir manada) that makes it compatible with analytical tools and algorithms.
+
+Additionally, data transformation facilitates feature engineering, allowing the creation of new variables that may improve model performance. By converting data into a more suitable format, ensures that models are trained on high-quality, standardized data, leading to more reliable predictions and valuable insights.
+
+Different Data Transformation Technique
+Data transformation in machine learning involves a lot of techniques, let's discuss 8 of the major techniques that we can apply to data to better fit our model and produce better results in the prediction process.
+
+The choice of data transformation technique depends on the characteristics of the data and the machine learning algorithm that we intend to use on the data. Here are the mentioned techniques discussed in details
+
+1-Handling Missing Data
+
+Before replacing the missing values we must consider some things in order to get better results in handling missing values through imputation method which includes the data type of the missing values must match imputation method, data distribution must also be considered for example mean imputation is not good for skewed data , atama yöntemi, veri kümesinde bulunan orijinal verilerin varyansını ve dağılımını etkilememelidir.
+
+Removing the Missing Data: 
+Imputation
+Forward Fill or Backward Fill
+Interpolation
+
+2-Dealing with Outliers
+
+Dealing with Outliers
+Dealing with the outlier values is one of the most important steps of data transformation, an outlier is a data point which is significantly different in value from the rest of the dataset. These outliers affects the generalization behaviour of the machine learning model as they impact the performance and accuracy of the model, here are some of the techniques used to handle the outliers:
+
+Identification of Outlier: The first step to consider in dealing with outliers is to identify the outliers data points. This could be done through more than one method, the first way we can identify the outliers is through visual inspection we can use either box-plot or scatter plot to identify the data points which are not among most of the data points in the dataset, we can also obtain the outlier data points by statistical methods including z-score and IQR, for example, we can calculate the z-score for all the data points and consider a threshold, if the z-score of the data point crosses the certain mentioned threshold then it is considered to be an outlier. There are also certain machine learning anomaly detection models including Isolation Forest and One-Class SVM which could be used to identify the outliers. Choosing the correct outlier detection method depends on the characteristics of data and the goals of analysis.
+
+Removing Outliers: The removal of outliers becomes an important measure in most of the cases as it produces noise or acts as an error and reduces the model performance. But before removing we must consider the characteristics of data which we are trying to analyze, for example in cases such as fraud detection the outlier can give important insights regarding faulty transactions.
+
+Transformations: Through data transformation we can reduce the impact of outliers with the help of various data transformation methods like log transformation in which if the outlier value is really large this method can reduce the impact of the value, or we can use square root transformation as well which is suitable for positively skewed data like log transformation, but this method is quite milder than log transformation. We can also use Box-Cox transformation, where we are not sure which transformation is useful. There are many other methods of data transformation which we can choose but choosing the best according to the characteristics of data that we have is a good way to work on a project.
+
+Truncation: Truncation is the method of setting a threshold and then adjusting all the points that are outside the range of the threshold value. Truncation reduces the impact of outliers on the analysis and modelling process by restricting the impact of extreme values.
+
+Binning and Discretization of Data: Often times certain machine learning algorithms like decision tree perform better on categorical data, but the data we might receive from different sources can be continuous in value. Therefore converting the continuous range of values into bins of data could help improve model performance. Binning is the process of converting continuous value of a feature into discrete values, KBinsDiscretizer is one of the most commonly used discretization technique that could be applied on continuous value data to encode them into discrete values.
+
+Normalization and Standardization
+
+Normalization and Standardization are two of the most common techniques used in data transformation which aims to scale and transform the data such that the features have similar scales, which makes it easy for the machine learning algorithm ot learn and converge.
+
+Normalization:
+The main objective of normalization is to rescale the features to a standard range of values which is usually 0-1. Normalization is usually used when different features have different range of values and some feature might contribute more to the model learning process, normalization helps in equalizing the range of the features and makes sure that the features contribute equally to the learning algorithm.
+Mathematically after normalization the new data point becomes:
+
+	  xi - min(X)
+   x'i =---------------
+	max(X) - min(X)
+
+here max(X) and min(X) are the maximum and minimum value of the feature of the data point being used x'i  is the value of the data point.
+
+Standardization:
+Standardardization is also known as z-score normalization, the objective of standardization is to transform the feature such that the value of mean becomes 0 and the value of standard deviation becomes 1. Standardization is usually useful when features have different scales but follow normal distribution, it helps machine learning algorithms which relies on gradient based optimization to converge at a faster rate. The new data point after standardization becomes:
+
+x'i = xi - mean(X)
+     --------------
+	std(X)
+
+Encoding Categorical Variables
+Many a times some features of a dataset are labeled as of different categories, but most of the machine learning algorithms works better on numeric data feature as compared to any different data type feature. Therefore, encoding of categorical features becomes an important step of data transformation. The categorical features could be encoded into numerical valued features in different ways, let's discuss some of the most common encoding techniques:
+
+One-Hot Encoding:
+One-Hot Encoding is the most common encoding techniques used in data transformation, what it does is that it converts each category in a categorical feature into a different binary feature(i.e. 0 or 1), for example if there is a feature called 'vehicle' in the dataset and the categories in it are 'car', 'bike', 'bicycle', one-hot encoding will create three separate columns as 'is_car', 'is_bike', 'is_bicycle' and then label them as 0 if absent or 1 if present.
+
+Label Encoding:
+Label Encoding on the other hand assigns a unique numeric value to different categories in the same feature, for example if there is a feature called size and it contains three values - 'small', 'medium', 'large', then the label encoding could label each value as 0, 1, 2 respectively.
+
+Ordinal Encoding:
+It is quite similar to label encoding except the fact that in ordinal encoding the categorical feature is encoded according to some sort of hierarchy in the system, For example if there are three categories in the categorical feature named - "High-School", "Bachelor's", and "Master's" the ordinal encoding will label this as 0, 1, 2 based on the educational hierarchy.
+
+The choice of the encoding method depends on the nature of the categorical feature, the machine learning algorithm that we are using and the specific requirements of the given project.
+
+Handling Skewed Distribution
+Feature Engineering and extraction
+Dimensionality Reduction
+Text Data Transformation
+
+Bu Dosyada Toplam Eksik Olan Kavramlar Listesi
+KNN Imputer / IterativeImputer (model tabanlı imputation)
+Missing Indicator
+MCAR/MAR/MNAR ayrımı
+LOF (Local Outlier Factor)
+Winsorization terimi
+RobustScaler
+MaxAbsScaler
+Scaling'in hangi modellerde gerekli/gereksiz olduğu
+Feature Hashing
+Rare Category Grouping
+Target Encoding
+Data augmentation
+Feature selection
+Sampling methods
+Dummy variable trap / drop_first
+Data Leakage (fit/transform ayrımı) — hiçbir bölümde geçmiyor
+Datetime Feature Engineering + Cyclical Encoding
+PCA / boyut indirgeme teknikleri (sadece başlık var)
+Text transformation teknikleri (sadece başlık var)
+EDA 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
