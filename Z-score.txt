@@ -1,0 +1,708 @@
+Z-score:
+
+Varyans Nedir?
+
+Varyans (variance), bir veri setindeki değerlerin ortalamadan ne kadar uzaklaştığının karesi alınarak hesaplanan, veri setinin yayılımını/dağınıklığını ölçen istatistiksel bir değerdir. Standart sapmanın "ham hali" gibi düşünebilirsiniz — aslında standart sapma, varyansın karekökünden başka bir şey değildir.
+
+Varyans(σ2)=[∑(xi​−μ)2​]/n
+
+xᵢ → her bir veri noktası
+μ → ortalama
+n → veri noktası sayısı
+
+Dikkat ederseniz bu, standart sapma formülünün karekök almadan önceki hali.
+
+Neden Ayrı Bir Kavram Olarak Var?
+
+Varyans ve standart sapma aynı bilgiyi taşır (biri diğerinden matematiksel olarak türetilir), ama farklı amaçlar için kullanılırlar.
+
+Varyans Neden "Kare Alınmış" Bir Ölçü?
+
+Hatırlarsanız standart sapmada anlatmıştım: pozitif ve negatif sapmaların birbirini götürmesini önlemek için farkların karesi alınıyor. Varyans, işte tam olarak bu karesi alınmış farkların ortalamasıdır — henüz karekök alınmamış, "ham" haliyle.
+
+Varyans ile Standart Sapma Arasındaki Pratik Fark
+
+Standart sapma, orijinal veri ile aynı birimde olduğu için yorumlanması kolaydır — "yaş ortalaması 40, standart sapma 5" dediğinizde, bunu direkt "yaşlar genelde 35-45 arasında yoğunlaşıyor" şeklinde okuyabilirsiniz.
+
+Varyans ise birimin karesi olduğu için (örneğin "yaş²"), tek başına sezgisel bir anlam taşımaz — kimse "varyans 25 yaş²" dediğinizde bunu kafasında somutlaştıramaz. Bu yüzden raporlama/yorumlama için genelde standart sapma tercih edilir.
+
+Peki o zaman varyansa neden ihtiyacımız var?
+
+Çünkü varyans, matematiksel işlemlerde çok daha kullanışlıdır:
+
+1. Toplanabilirlik özelliği
+Bağımsız değişkenlerin varyansları toplanabilir (Var(X+Y) = Var(X) + Var(Y)), ama standart sapmalar bu şekilde toplanamaz. Bu özellik, istatistiksel testlerde (örneğin ANOVA gibi) ve olasılık hesaplarında çok işe yarar.
+
+2. Türevlenebilirlik
+Optimizasyon problemlerinde (ML modellerinin eğitiminde, örneğin loss function'larda) varyans gibi kare tabanlı ifadeler matematiksel olarak türevi alınabilir ve kolayca optimize edilebilir, bu yüzden birçok algoritma (Linear Regression'ın "least squares" yöntemi gibi) doğrudan varyans/kare farkları üzerine kuruludur.
+
+ML'de Varyans — Sizin İçin Çok Önemli Bir Bağlantı
+
+Hatırlarsanız GitHub'a "Bias and Variance" diye bir not atmıştınız — işte tam burada, istatistikteki bu "varyans" kavramı, ML'deki bias-variance tradeoff kavramıyla doğrudan bağlantılı:
+
+İstatistiksel varyans: Verinin ortalamadan ne kadar yayıldığı
+ML'deki model varyansı: Modelin, farklı eğitim veri setlerinde eğitildiğinde tahminlerinin ne kadar değiştiği/tutarsızlaştığı
+
+Yüksek model varyansı, modelin eğitim verisindeki küçük dalgalanmalara (noise'a) çok fazla duyarlı olması, yani overfitting anlamına gelir — model, eğitim verisindeki gürültüyü bile "öğrenmeye" çalışır, bu da farklı bir veri setinde tahminlerinin çok değişken/kararsız çıkmasına yol açar. Yani "varyans" kelimesi hem istatistikte (veri yayılımı) hem ML'de (model kararlılığı) kullanılıyor, ama ikisinin kökeninde aynı matematiksel mantık (ortalamadan/beklenen değerden sapmaların karesi) yatıyor.
+
+Somut Sayısal Örnek (Tekrar, Ama Sadece Varyansa Odaklanarak)
+
+Veri: [4, 8, 6, 5, 3], ortalama = 5.2
+
+Farklar: -1.2, 2.8, 0.8, -0.2, -2.2
+Farkların karesi: 1.44, 7.84, 0.64, 0.04, 4.84
+Varyans = (1.44+7.84+0.64+0.04+4.84) / 5 = 2.96
+
+Varyans = 2.96 (yaş²) — bu haliyle pek bir şey ifade etmez, ama karekökünü alırsak (1.72 yaş) çok daha anlamlı hale gelir. İşte tam bu yüzden raporlarda standart sapma, matematiksel hesaplamalarda ise varyans tercih edilir.
+
+Python'da Kullanımı
+
+df['Age'].var()   # varyans
+df['Age'].std()   # standart sapma (varyansın karekökü)
+
+# Doğrulama:
+import numpy as np
+np.sqrt(df['Age'].var()) == df['Age'].std()  # True olmalı
+
+Not: Standart sapmada bahsettiğim population (n) vs sample (n-1) ayrımı varyans için de geçerlidir, pandas varsayılan olarak n-1 (sample varyansı) kullanır.
+
+Özetle: Varyans, "ortalamadan sapmaların karesinin ortalaması"dır; standart sapma onun karekökü alınmış, yorumlanabilir halidir. Varyans kendi başına raporlamada pek kullanışlı değildir ama matematiksel/istatistiksel işlemlerin temel yapı taşıdır, ve ML'deki "model varyansı" kavramı da köken olarak bu istatistiksel tanımdan türemiştir.
+
+Standart Sapma Nedir?
+
+Standart sapma (standard deviation), bir veri setindeki değerlerin ortalamadan ortalama olarak ne kadar uzaklaştığını gösteren bir ölçüdür. Yani veri setinizin ne kadar "yayılmış" ya da "dağınık" olduğunu tek bir sayıyla özetler.
+
+Sezgisel Bir Örnekle Başlayalım
+
+İki sınıf düşünün, ikisinin de ortalama notu 70:
+
+A Sınıfı notları: 68, 69, 70, 71, 72 → hepsi birbirine çok yakın
+B Sınıfı notları: 20, 50, 70, 90, 120 → çok dağınık
+
+İkisinin de ortalaması aynı (70), ama yayılımları tamamen farklı. Standart sapma, tam olarak bu farkı yakalayan sayıdır: A sınıfının standart sapması küçük, B sınıfının standart sapması büyük olacaktır.
+σ=karekök içinde ([∑(xi​−μ)^2​]/n)
+​
+σ (sigma) → standart sapma
+xᵢ → her bir veri noktası
+μ (mu) → ortalama (mean)
+n → veri noktası sayısı
+Adım Adım Hesaplama Mantığı
+
+Diyelim ki veri setiniz: [4, 8, 6, 5, 3]
+ortalaması 5.2
+
+Adım 2 — Her değerin ortalamadan farkını bulun:
+
+4 - 5.2 = -1.2
+8 - 5.2 = 2.8
+6 - 5.2 = 0.8
+5 - 5.2 = -0.2
+3 - 5.2 = -2.2
+
+Adım 3 — Bu farkların karesini alın (neden kare aldığımızı birazdan açıklayacağım):
+
+(-1.2)² = 1.44
+(2.8)²  = 7.84
+(0.8)²  = 0.64
+(-0.2)² = 0.04
+(-2.2)² = 4.84
+
+Adım 4 — Karelerin ortalamasını alın (buna "varyans" denir):
+2.96
+
+Adım 5 — Varyansın karekökünü alın (bu, standart sapmadır):
+1.72
+
+Neden Önce Kare Alıyoruz, Sonra Karekök?
+
+Bu, standart sapmanın en sık sorulan sorusu, çok mantıklı bir nedeni var:
+
+Sorun: Eğer sadece farkların (x - μ) ortalamasını alsaydık, pozitif ve negatif farklar birbirini götürürdü (yukarıdaki örnekte -1.2, 2.8, 0.8, -0.2, -2.2 toplamı sıfıra yakın çıkar), bu da bize yanlış bir şekilde "yayılım yok" izlenimi verirdi, oysa veri gerçekten dağınık.
+
+Çözüm: Farkların karesini alarak hepsini pozitif hale getiriyoruz (kare işlemi negatifi de pozitif yapar), böylece pozitif-negatif birbirini iptal etmez, gerçek yayılım ölçülür.
+
+Peki neden en sonda karekök alıyoruz?
+Çünkü kare aldığımız için elimizdeki sayı artık orijinal birimin karesi oluyor (örneğin yaş için "yaş²" gibi anlamsız bir birim). Karekök alarak bu sayıyı tekrar orijinal birime (yaşa) döndürüyoruz, böylece yorumlanabilir hale geliyor.
+
+Varyans ile Standart Sapma Farkı
+
+Dikkat ettiyseniz, Adım 4'te bulduğumuz sayı (2.96) "varyans", Adım 5'te bulduğumuz (1.72) ise "standart sapma". Aralarındaki ilişki basit:
+
+σ=Kök içinde(Varyans) ​ya da Varyans=σ^2
+
+Neden ikisine de ihtiyaç var? Varyans matematiksel işlemlerde (örneğin bazı istatistiksel testlerde) daha kullanışlı olabilir, ama yorumlanabilirlik açısından standart sapma çok daha kullanıcı dostudur çünkü orijinal veri ile aynı birimdedir (varyans "yaş²" gibi garip bir birimdeyken, standart sapma direkt "yaş" biriminde).
+
+Standart Sapmayı Nasıl Yorumlarız?
+
+Küçük standart sapma → veri noktaları ortalamaya yakın, homojen, tutarlı bir veri seti
+Büyük standart sapma → veri noktaları ortalamadan uzak, dağınık, değişken bir veri seti
+
+Normal Dağılımla İlişkisi (Z-Score'a Bağlantı)
+
+Hatırlarsanız Z-Score'da bahsetmiştik: eğer veri normal dağılıma uyuyorsa, şu kural geçerlidir ("68-95-99.7 kuralı"):
+
+Verinin %68'i → ortalama ± 1 standart sapma içinde
+Verinin %95'i → ortalama ± 2 standart sapma içinde
+Verinin %99.7'si → ortalama ± 3 standart sapma içinde
+
+İşte bu yüzden Z-Score'da ±3 sınırı outlier tespitinde kullanılıyordu — çünkü bu sınırın dışında kalmak, istatistiksel olarak çok nadir (%0.3) bir durum demek.
+
+Population vs Sample Standart Sapması (Küçük Ama Önemli Bir Detay)
+
+Python'da/istatistikte iki farklı standart sapma hesaplaması vardır:
+
+Population (Popülasyon) Standart Sapması — formülde n'e böler (yukarıda gösterdiğim gibi), tüm popülasyonu elinizde bulunduruyorsanız kullanılır.
+
+Sample (Örneklem) Standart Sapması — formülde n-1'e böler (buna Bessel's correction denir), elinizdeki veri daha büyük bir popülasyondan alınmış küçük bir örneklemse kullanılır (gerçek hayatta neredeyse her zaman bu durumdayız).
+
+import numpy as np
+import pandas as pd
+
+# Pandas varsayılan olarak SAMPLE (n-1) kullanır
+df['Age'].std()
+
+# NumPy varsayılan olarak POPULATION (n) kullanır
+np.std(df['Age'])          # population
+np.std(df['Age'], ddof=1)  # sample (Pandas ile aynı sonucu verir)
+
+Pratik not: Bu ikisi arasındaki fark, büyük veri setlerinde (n büyükse) neredeyse ihmal edilebilir düzeydedir, ama küçük veri setlerinde (n küçükse) fark daha belirgin olabilir. Pandas ile NumPy'ın varsayılan davranışları farklı olduğu için, ikisini karıştırıp kullanırsanız hafif farklı sonuçlar alabilirsiniz, bu normal.
+
+df['Age'].std()       # standart sapma
+df['Age'].var()       # varyans
+df['Age'].mean()      # ortalama
+
+Özetle: Standart sapma, "verinin ortalama etrafında ne kadar dağıldığını" tek bir sayıyla özetleyen, istatistikte en temel ve en sık kullanılan yayılım (dispersion) ölçüsüdür. Küçük değer = tutarlı/homojen veri, büyük değer = dağınık/değişken veri; ve Z-Score, IQR gibi birçok outlier tespit yöntemi doğrudan bu kavram üzerine inşa edilir.
+
+https://www.sefaerkus.com/standart-sapma-ve-varyans-nedir/
+
+Standard deviation and variance are two basic mathematical concepts that have an important place in various parts of the financial sector, from accounting to economics to investing. Both measure the variability of figures within a data set using the mean of a certain group of numbers. They are important to help determine volatility(dalgalanma) and the distribution of returns.
+
+However, there are inherent differences between the two. While standard deviation measures the square root of the variance, the variance is the average of each point from the mean.
+
+What is Standard Deviation?
+
+Standart sapma, bir sayı grubunun ortalamadan ne kadar uzak olduğunu gösteren istatistiksel bir ölçüdür. Basitçe ifade etmek gerekirse, standart sapma bir veri kümesindeki sayıların birbirinden ne kadar uzak olduğunu ölçer.
+
+Bu ölçüt, varyansın karekökü olarak hesaplanır. Bu, her bir veri noktası ile ortalaması arasındaki sapmayı belirlemeniz gerektiği anlamına gelir.
+
+This metric is calculated as the square root of the variance. This means you have to figure out the variation between each data point relative to the mean. Therefore, the calculation of variance uses squares because it weighs outliers more heavily than data that appears closer to the mean.Bu hesaplama, ortalamanın üzerindeki farkların ortalamanın altındaki farkları birbirini ortadan kaldırmasını da önler; aksi takdirde varyans sıfır olurdu.
+
+But how do you interpret standard deviation once you figure it out? If the points are further from the mean, there is a higher deviation within the data. But if they are closer to the mean, there is a lower deviation. So the more spread out the group of numbers are, the higher the standard deviation.
+
+What Is Variance?
+A variance is the average of the squared differences from the mean. To figure out the variance, calculate the difference between each point within the data set and the mean. Once you figure that out, square and average the results.
+
+For example, if a group of numbers ranges from one to 10, you get a mean of 5.5. If you square the differences between each number and the mean and find their sum, the result is 82.5. To figure out the variance:
+
+Divide the sum, 82.5, by either N (population variance) or N-1 (sample variance).
+In this example, N is 10 and N-1 would be 9.
+The result is a sample variance of 82.5/9 = 9.17 and a population variance of 8.25.
+Note that the standard deviation is the square root of the variance, so the standard deviation is about 3.03 for a sample data set. The standard deviation for a population data set would be 2.87.
+
+The sample formula is used when the data set represents a random sample from the entire population in question. The population formula is used when there is data from the entire population being studied or considered.
+
+The mean is the average of a group of numbers and the variance measures the average degree to which each number is different from the mean. The extent of the variance correlates to the size of the overall range of numbers, which means the variance is greater when there is a wider range of numbers in the group, and the variance is less when there is a narrower range of numbers. Bunu açıklar mısın?
+
+Hocam bu paragrafı açıklayayım, iki cümleye bölerek gidelim.
+
+## İlk Cümle
+
+**"Mean, bir grup sayının ortalamasıdır ve varyans, her bir sayının ortalamadan ortalama olarak ne kadar farklı olduğunu ölçer."**
+
+Bu, zaten detaylıca konuştuğumuz tanımın basit bir tekrarı: **mean** = ortalama, **varyans** = her sayının bu ortalamadan **ne kadar saptığının ortalaması** (kare alınarak hesaplanan hali). Yani varyans, "veri noktaları ortalamadan tipik olarak ne kadar uzaklaşıyor" sorusuna cevap veriyor.
+
+## İkinci Cümle (Asıl Vurgulanan Kısım)
+
+**"Varyansın büyüklüğü, sayıların genel aralığının (range) büyüklüğüyle ilişkilidir; yani grup içinde daha geniş bir sayı aralığı varsa varyans daha büyük olur, daha dar bir aralık varsa varyans daha küçük olur."**
+
+Bu cümle, varyansı **"range" (aralık)** kavramıyla ilişkilendiriyor — sezgisel bir açıklama yapıyor.
+
+## Somut Örnekle Gösterelim
+
+**Dar aralıklı (küçük varyanslı) grup:**
+```
+[48, 49, 50, 51, 52]
+```
+Range (aralık) = 52 - 48 = **4**
+Bu sayılar birbirine çok yakın, ortalamadan (50) fazla sapmıyorlar → **varyans küçük**
+
+**Geniş aralıklı (büyük varyanslı) grup:**
+```
+[10, 30, 50, 70, 90]
+```
+Range (aralık) = 90 - 10 = **80**
+Bu sayılar birbirinden çok uzak, ortalamadan (50) büyük ölçüde sapıyorlar → **varyans büyük**
+
+Görüldüğü gibi, **her iki grubun da ortalaması aynı (50)**, ama range'leri (4 vs 80) çok farklı, ve buna paralel olarak varyansları da çok farklı çıkıyor.
+
+## Bu Açıklama Ne Kadar Doğru/Kesin?
+
+Bu **sezgisel olarak doğru bir gözlem**, ama **matematiksel olarak tam kesin bir eşitlik değil**, biraz dikkatli yaklaşmak gerekiyor. Sebebi:
+
+**Range ve varyans genelde birlikte artar/azalır, ama range varyansı doğrudan belirlemez.** Aynı range'e sahip iki farklı grup, **farklı varyanslara** sahip olabilir çünkü varyans, sadece **en uç iki değere (min-max)** değil, **tüm noktaların dağılımına** bakar.
+
+**Örnek — Aynı Range, Farklı Varyans:**
+
+**Grup A:** `[0, 25, 50, 75, 100]` → Range = 100
+**Grup B:** `[0, 48, 50, 52, 100]` → Range = 100
+
+İkisinin de range'i **aynı (100)**, ama:
+- Grup A'da değerler **eşit aralıklarla yayılmış** → daha yüksek varyans
+- Grup B'de değerler **ortalarda yığılmış**, sadece uçlarda 2 aşırı değer var → farklı bir varyans değeri çıkar
+
+Yani **range aynı olsa bile varyans farklı çıkabilir**, çünkü varyans **her bir noktanın konumuna** bakarken, range sadece **en uzak iki noktaya (min ve max)** bakıyor.
+
+## Doğru Kavramsal Çerçeve
+
+Bu paragraf, varyansı **sezgisel olarak** anlamanız için iyi bir başlangıç noktası ("geniş dağılım = büyük varyans" mantığı genelde doğru bir yön gösteriyor), ama **kesin/matematiksel bir formül** değil — sadece **genel bir eğilim/korelasyon** belirtiyor ("correlates to" ifadesi zaten bunu ima ediyor, "tam olarak eşittir" demiyor).
+
+## Özetle
+
+Bu açıklama **doğru bir yönde**, ama **range ile varyansı birbirinin yerine geçebilir kavramlar** gibi düşünmemelisiniz — range, sadece **iki uç noktaya (min-max)** bakan kaba bir yayılım ölçüsüyken, varyans **her bir veri noktasının** ortalamadan sapmasını hesaba katan çok daha **hassas ve kapsamlı** bir yayılım ölçüsüdür. Bu yüzden paragraftaki "correlates to" (ilişkilidir) ifadesi kelime seçimi olarak **isabetli** — "aynıdır" ya da "belirler" değil, sadece **genel bir eğilim** olduğunu doğru bir şekilde ima ediyor.
+
+Comparing Standard Deviation and Variance
+
+"Varyans, veri setindeki değerlerin birbirlerinden ne kadar farklı olduğunu gösterirken, standart sapma bu değerlerin ortalamadan ne kadar farklı olduğunu yansıtır."
+
+Bu cümle, varyans ile standart sapma arasında "birbirinden sapma" (varyans) vs "ortalamadan sapma" (standart sapma) gibi bir ayrım yapıyor. Bu ayrım yanlış/yanıltıcı, çünkü ikisi de aslında aynı referans noktasına, yani ortalamaya (mean) göre hesaplanır.
+
+İkisi de (x - μ) yani "her değerin ORTALAMADAN sapması" üzerine kurulu. Varyans, bu sapmaların karesinin ortalamasını alır; standart sapma ise varyansın karekökünü alarak elde edilir. Yani ikisi de temelde ortalamadan sapmayı ölçüyor, "birbirlerinden sapma" diye ayrı bir şey ölçmüyorlar.
+
+"Varyans, verideki genel yayılımı/farklılığı temsil eder (dolaylı olarak, değerlerin birbirinden ne kadar farklı olduğu hissini verir), standart sapma ise bunu yorumlanabilir, ortalama etrafındaki somut bir mesafe olarak ifade eder."
+
+Varyans → kare alınmış birimde (örneğin "yaş²"), doğrudan yorumlanması zor, ama matematiksel işlemlerde (toplanabilirlik, optimizasyon) kullanışlı
+Standart sapma → orijinal birimde (örneğin "yaş"), doğrudan yorumlanabilir, raporlamada tercih edilir.
+
+Z-Score nedir ?
+
+Z-Score (standart skor), bir veri noktasının, veri setinin ortalamasından kaç standart sapma uzakta olduğunu gösteren bir ölçüdür. Yani bir sayının "normalden ne kadar uzak" olduğunu, standartlaştırılmış bir birimle ifade eder.
+
+Z = (x- μ) / σ
+
+x → incelediğiniz veri noktası
+μ (mu) → veri setinin ortalaması (mean)
+σ (sigma) → veri setinin standart sapması (standard deviation)
+
+Mantığını Adım Adım Açalım
+
+1. Önce ortalamayı çıkarırsınız (x - μ)
+Bu size, o noktanın ortalamadan ne kadar uzakta olduğunu, ham (raw) birimde gösterir. Örneğin yaş ortalaması 40 ise ve sizin noktanız 70 ise, fark 30'dur.
+
+2. Sonra standart sapmaya bölersiniz (/ σ)
+Bu adım, farkı "kaç standart sapma" cinsinden ifade eder. Neden gerekli? Çünkü "30 birim uzak" tek başına anlamlı değil — 30, standart sapması 5 olan bir veri setinde çok uzak sayılırken, standart sapması 50 olan bir veri setinde hiç uzak değildir. Z-score, bu göreceliliği ortadan kaldırıp standart, karşılaştırılabilir bir birim sunar.
+
+Somut Örnek
+
+Diyelim ki bir sınıfın sınav notları var:
+
+Ortalama (μ) = 70
+Standart sapma (σ) = 10
+
+Bir öğrencinin notu 90 ise:
+90-70 / 10 = 2
+
+Bu, o öğrencinin notunun ortalamanın 2 standart sapma üzerinde olduğu anlamına gelir.
+
+Başka bir öğrencinin notu 45 ise:45-70 / 10 = -2.5
+
+Bu da ortalamanın 2.5 standart sapma altında demektir (negatif işaret, ortalamanın altında olduğunu gösterir).
+
++-1 => Ortalamadan 1 standart sapma uzak (oldukça normal)
+
++-2 => 	Biraz sıra dışı, dikkat çekici
+
++3 / -3 ve ötesi => Genellikle outlier kabul edilir
+
+Neden ±3 eşiği yaygın kullanılır? Eğer veri normal dağılıma (çan eğrisi) uyuyorsa, istatistiksel olarak verinin %99.7'si ortalamanın ±3 standart sapması içinde kalır. Yani bir nokta ±3'ün dışındaysa, bu %0.3'lük çok nadir bir durumda olduğu anlamına gelir — bu yüzden "muhtemelen anormal/outlier" olarak işaretlenir.
+
+from scipy import stats
+import numpy as np
+
+z_scores = stats.zscore(df['Age'])
+outliers = df[np.abs(z_scores) > 3]  # |Z| > 3 olanlar outlier sayılır
+
+Ya da elle hesaplamak isterseniz:
+
+mean = df['Age'].mean()
+std = df['Age'].std()
+df['Z_score'] = (df['Age'] - mean) / std
+outliers = df[np.abs(df['Z_score']) > 3]
+
+---------------
+
+Verinin ortalamadan kaç standart sapma uzaklaştığını ölçüp, aykırı/gürültülü değerleri standart, karşılaştırılabilir bir birimle tespit etmek için kullanıyoruz.
+Soru:Zscore için outliers'lara karşı sensitive diye ifade var. Madem outlier tespiti yapacağız o zaman nasıl outlierlara karşı sensitive oluyor ?
+
+Hocam gerçekten çok zekice bir soru, tam da bu yöntemin **kendi kendini baltalayan** bir zayıflığına parmak basıyorsunuz. Açıklayayım.
+
+## Sorunun Özü: "Sensitive" Derken Ne Kastediliyor?
+
+Burada **iki farklı rol** birbirine karışıyor gibi duruyor, onları ayıralım:
+
+1. **Z-score'un outlier'ı TESPİT ETME rolü** — hesaplanan Z-score'a bakıp "bu değer aykırı mı" diye karar vermek
+2. **Z-score'un HESAPLANMA süreci** — Z-score'u hesaplamak için önce **mean (μ)** ve **standart sapma (σ)**'yı bulmanız gerekiyor
+
+**"Sensitive to outliers" derken kastedilen, 2. adımdaki mean ve standart sapmanın kendisinin, outlier'lardan etkilenmesidir** — yani outlier'ı **ölçmek için kullandığınız cetvelin kendisi, outlier tarafından bükülüyor**.
+
+## Somut Örnekle Gösterelim
+
+Diyelim ki veri setiniz: `[20, 21, 22, 23, 24, 200]`
+
+Burada **200** açıkça bir outlier. Şimdi mean ve standart sapmayı hesaplayalım:
+
+**Mean (ortalama):**
+```
+(20+21+22+23+24+200) / 6 = 310/6 ≈ 51.7
+```
+
+Dikkat edin: **outlier (200), ortalamayı ciddi şekilde yukarı çekti** (gerçek "merkez" 20-24 civarındayken, ortalama 51.7'ye fırladı).
+
+**Standart sapma da** benzer şekilde **şişer**, çünkü 200 ile diğer değerler arasındaki büyük fark, standart sapma formülüne (`(x-μ)²`) giriyor ve onu **büyütüyor**.
+
+## Şimdi Z-Score'ları Hesaplayalım
+
+Diyelim standart sapma bu şişme yüzünden **~70** çıktı (normalde çok daha küçük olması beklenirken).
+
+```
+Z(20) = (20 - 51.7) / 70 ≈ -0.45
+Z(200) = (200 - 51.7) / 70 ≈ 2.12
+```
+
+**Sorun burada ortaya çıkıyor:** 200 gibi **çok bariz bir outlier'ın** Z-score'u sadece **2.12** çıktı — bizim öğrendiğimiz **±3 eşiğinin altında kaldı!** Yani Z-score yöntemi, bu **gerçek outlier'ı kaçırabilir**, çünkü outlier'ın kendisi mean ve std'yi şişirip, kendi "aykırılığını" **gizlemiş/maskelemiş** oldu.
+
+## Bu Duruma Ne Deniyor?
+
+Buna istatistikte **"masking effect" (maskeleme etkisi)** denir — outlier, kendisini tespit etmek için kullanacağınız **referans noktalarını (mean, std) bozarak**, kendi izini siliyor.
+
+## Neden Bu "Sensitive" Kelimesiyle İfade Ediliyor?
+
+Çünkü Z-score yöntemi **"outlier'lara karşı dayanıksız/hassas"** — yani bir-iki tane bile aşırı outlier, **tüm hesaplamanın temelini (mean, std) bozarak**, sonucun **güvenilirliğini düşürüyor**. "Sensitive" derken, "outlier tespit ederken hata yapmaya meyilli" değil, **"outlier'ların varlığı, hesaplamanın kendisini çarpıtıyor"** anlamı kastediliyor.
+
+## Bu Neden IQR'ın Daha Güvenilir Olduğu Anlamına Geliyor?
+
+Hatırlarsanız IQR yöntemi **medyan ve çeyrekler (quartile)** kullanıyordu, mean/std değil. **Medyan, aşırı değerlerden neredeyse hiç etkilenmez** (çünkü sadece "ortadaki sırayı" önemser, büyüklüğü değil):
+
+```
+[20, 21, 22, 23, 24, 200] → medyan = (22+23)/2 = 22.5
+```
+
+200 olsa da olmasa da medyan **neredeyse hiç değişmez**, bu yüzden IQR yöntemi **outlier'ların kendi ölçüm sistemini bozmasına** izin vermiyor, dolayısıyla **daha dayanıklı (robust)**.
+
+## Özetle
+
+"Z-score outlier'lara karşı sensitive" derken kastedilen, **outlier'ı bulma başarısının düşük olması değil**, **outlier'ların kendisinin, Z-score'u hesaplamak için kullanılan mean ve standart sapmayı bozarak, kendini gizleyebilmesi/maskeleyebilmesi**. Yani bir nevi **"outlier'ı avlamaya çalışırken, avın kendisi silahınızı (mean/std) bozuyor"** diyebilirsiniz — bu paradoks, Z-score'un en bilinen zayıflığıdır ve IQR'ın neden bazı durumlarda tercih edildiğini açıklar.
+
+1. Z-Score Her Zaman "Bozuk" Değil — Sadece Belirli Koşullarda
+
+Az önceki örnekte tek bir aşırı outlier (200), küçük bir veri setinde (6 eleman) mean/std'yi ciddi şekilde bozdu. Ama gerçek hayattaki senaryolar genelde böyle uç değil:
+
+Veri seti büyükse (örneğin 10.000 satır), birkaç outlier'ın mean/std üzerindeki etkisi çok küçülür — çünkü ortalama, binlerce "normal" değerin arasında birkaç aşırı değere karşı matematiksel olarak daha dayanıklı hale gelir (etkisi seyrelir).
+Veri gerçekten normal dağılıma yakınsa ve outlier sayısı azsa (%1-2 gibi), Z-score genelde makul sonuçlar verir, masking effect'in etkisi sınırlı kalır.
+
+Yani Z-score'un "flawed" olması evrensel bir kural değil, belirli koşullarda (küçük veri, çok/aşırı outlier, çarpık dağılım) ortaya çıkan bir risk.
+
+2. Z-Score'un Avantajları, Zayıflığını Dengeliyor
+
+Z-score'un kullanılmaya devam etmesinin sebebi, hiçbir yöntemin mükemmel olmaması, her yöntemin kendi trade-off'u olması:
+
+Hesaplama açısından çok hafif/hızlı — büyük veri setlerinde bile anlık sonuç verir
+Yorumlanabilir — "3 standart sapma uzakta" demek, istatistikçiler için evrensel, net bir dil
+Normal dağılıma uyan veri için (ki birçok doğal ölçüm gerçekten buna yakındır) gayet güvenilir
+
+3. Bu Zayıflığı Bilerek, "Düzeltilmiş" Versiyonları da Var
+
+İşte tam bu masking effect sorununu bildikleri için, istatistikçiler Modified Z-Score (Düzeltilmiş Z-Score) diye bir alternatif geliştirmişler:
+
+Modified Z = 0.645 * (x-median) / MAD
+
+Burada mean yerine medyan, standart sapma yerine MAD (Median Absolute Deviation) kullanılıyor — ikisi de outlier'lara karşı çok daha dayanıklı (robust), çünkü medyan tabanlı. Yani "Z-score'un mantığını (standartlaştırma) koru, ama içindeki kırılgan bileşenleri (mean, std) daha sağlam olanlarla değiştir" mantığıyla çalışıyor.
+
+from scipy.stats import median_abs_deviation
+
+median = df['Age'].median()
+mad = median_abs_deviation(df['Age'])
+modified_z = 0.6745 * (df['Age'] - median) / mad
+outliers = df[np.abs(modified_z) > 3.5]  # genelde 3.5 eşiği kullanılır
+
+4. En Önemli Cevap — Hiçbir Yöntem "Tek Başına Yeterli" Değil
+
+Gerçek pratikte, deneyimli veri bilimciler tek bir yönteme güvenmez. Z-score'u kullanırken genelde:
+
+Önce verinin dağılımına bakılır (histogram/boxplot ile) — eğer aşırı çarpık/outlier yoğunsa, Z-score yerine IQR veya Modified Z-Score tercih edilir
+Z-score, normal dağılıma yakın, temiz veri setlerinde ilk tercih olarak kullanılır çünkü hızlı ve basittir
+Şüpheli durumlarda birden fazla yöntem (Z-score + IQR + görsel inceleme) birlikte kullanılır, sonuçlar karşılaştırılır.
+
+Özetle — Sizin Sorunuza Doğrudan Cevap
+
+Z-score, "her zaman yanılacağı bilinen bozuk bir yöntem" değil, "belirli koşullarda (aşırı/çok outlier, küçük veri, çarpık dağılım) güvenilirliğini kaybedebilen" bir yöntem. Bu zayıflık bilinen ve dokümante edilmiş bir durum, bu yüzden:
+
+Veri biliminde "kör güven" yerine "veriye göre yöntem seçme" prensibi var (dağılıma bakıp Z-score mu IQR mu karar verilir)
+Zayıflığı bilinen bu soruna karşı Modified Z-Score gibi düzeltilmiş versiyonlar geliştirilmiş
+3 Ve en önemlisi, basit/hızlı olması, birçok "temiz" veri setinde onu hâlâ ilk tercih yapan pratik bir avantaj sağlıyor — sorun sadece aşırı/çok sayıda outlier olan uç senaryolarda ortaya çıkıyor, her veri setinde değil.
+
+Kısacası: Kullanılmaya devam ediliyor çünkü zayıflığı evrensel değil, koşullu; ve bu koşullu zayıflığı bilen istatistikçiler, ya alternatif yöntemlere geçiyor ya da Z-score'un kendisini düzeltilmiş versiyonlarla (Modified Z-Score gibi) kullanıyor.
+
+
+----------------
+Önemli Bir Sınırlama — Normal Dağılım Varsayımı
+
+Z-Score'un en kritik zayıflığı: bu yöntem, verinin normal dağılıma (Gaussian) yakın olduğunu varsayar. Eğer veriniz çarpık (skewed) ise (örneğin gelir verisi gibi, çoğu değer düşük ama birkaç aşırı yüksek değer dağılımı sağa çekiyorsa), Z-Score yanıltıcı sonuçlar verebilir:
+
+Ortalama, birkaç aşırı yüksek değer tarafından yukarı çekilir
+Standart sapma da şişer
+Bu durumda gerçek outlier'lar bile düşük Z-score alıp fark edilmeyebilir, ya da normal değerler yanlışlıkla outlier gibi görünebilir.
+
+Bu yüzden çarpık dağılımlarda Z-Score yerine daha önce konuştuğumuz IQR yöntemi tercih edilir, çünkü IQR medyan/çeyrekler tabanlı çalıştığı için outlier'lardan (ve çarpıklıktan) çok daha az etkilenir.
+
+Ne Zaman Z-Score Kullanılmalı?
+Veri normal dağılıma yakınsa (histogram çektiğinizde çan eğrisine benziyorsa) → Z-Score güvenilir
+Veri çarpıksa veya zaten aşırı outlier'lar içeriyorsa → IQR daha güvenilir bir tercih
+Pratik Kontrol
+
+Z-Score kullanmadan önce, verinizin dağılımına bakmak iyi bir alışkanlıktır:
+
+import seaborn as sns
+sns.histplot(df['Age'], kde=True)  # çan eğrisine benziyor mu diye görsel kontrol
+
+Simetrik, ortada tepe yapan bir eğri görüyorsanız → normale yakın. Çarpık (bir tarafa uzun kuyruklu) görünüyorsa → normal değil.
+
+Q-Q Plot (Quantile-Quantile Plot) — En Güvenilir Görsel Yöntem
+Verinizin teorik normal dağılımla ne kadar örtüştüğünü gösteren bir grafik. Noktalar düz bir çizgi üzerinde diziliyorsa veri normale yakındır; noktalar çizgiden sapıyorsa (özellikle uçlarda kıvrılıyorsa) veri normal değildir.
+
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+
+stats.probplot(df['Age'], dist="norm", plot=plt)
+plt.show()
+
+Box Plot
+Medyanın kutunun ortasına yakın olup olmadığına, "bıyıkların" (whiskers) simetrik olup olmadığına bakarsınız — asimetrik bir box plot, çarpık bir dağılıma işaret eder.
+
+2. İstatistiksel Testler (Kesin/Sayısal Kanıt)
+
+Shapiro-Wilk Testi — En Yaygın Kullanılan
+Özellikle küçük-orta boyutlu veri setlerinde (n < 5000) tercih edilir.
+
+from scipy.stats import shapiro
+
+stat, p_value = shapiro(df['Age'])
+print(p_value)
+
+Yorumlanması: Sıfır hipotezi "veri normal dağılıma uyar" şeklindedir. p-değeri > 0.05 ise, normallik varsayımını reddetmezsiniz (veri normale yakın kabul edilir). p-değeri < 0.05 ise, veri normal dağılıma uymuyor demektir.
+
+D'Agostino ve Pearson Testi
+Daha büyük veri setlerinde Shapiro-Wilk'e göre biraz daha tercih edilir.
+
+from scipy.stats import normaltest
+
+stat, p_value = normaltest(df['Age'])
+
+Kolmogorov-Smirnov Testi
+Verinizi teorik bir normal dağılımla karşılaştıran, biraz daha genel amaçlı bir test.
+
+3. Sayısal Ölçütler — Skewness (Çarpıklık) ve Kurtosis (Basıklık)
+
+Bunlar, dağılımın normale ne kadar yakın olduğunu tek bir sayı ile özetler:
+
+python
+df['Age'].skew()      # çarpıklık
+df['Age'].kurtosis()  # basıklık
+
+Skewness (Çarpıklık) yorumlanması:
+
+0'a yakın → simetrik, normale yakın
+Pozitif → sağa çarpık (uzun kuyruk sağda, örneğin gelir verisi gibi)
+Negatif → sola çarpık
+
+Kurtosis (Basıklık) yorumlanması:
+
+0'a yakın (Fisher tanımında) → normal dağılıma benzer "sivrilik"
+Yüksek → daha sivri, uçları daha kalın (aşırı değer riski daha yüksek)
+Düşük → daha yayvan/düz
+Pratik Öneri — Hangisini Kullanmalı?
+
+Genelde tek bir yönteme güvenmek yerine kombinasyon önerilir:
+
+Önce hızlı bir histogram/Q-Q plot ile görsel bir izlenim edinin
+Sonra Shapiro-Wilk testi ile bunu sayısal olarak doğrulayın
+skew() ile çarpıklık derecesine de bakıp, ne kadar "sapma" olduğuna dair ek bir fikir edinin
+python
+# Hızlı, kapsamlı bir kontrol
+import seaborn as sns
+from scipy.stats import shapiro
+
+sns.histplot(df['Age'], kde=True)
+print("Skewness:", df['Age'].skew())
+stat, p = shapiro(df['Age'])
+print("Shapiro p-value:", p)
+
+Özetle: Görsel kontrol için histogram ve Q-Q plot, sayısal/kesin kanıt için Shapiro-Wilk testi, ve ek bir gösterge olarak skewness/kurtosis değerlerine bakarak verinizin normal dağılıma uyup uymadığını değerlendirebilirsiniz. Eğer normale yakınsa Z-score güvenle kullanılabilir, değilse IQR ya da Modified Z-Score gibi daha dayanıklı yöntemlere yönelmeniz gerekir.
+
+Özetle: Z-Score, bir noktanın ortalamadan kaç standart sapma uzakta olduğunu ölçen, normal dağılım varsayımına dayanan bir outlier/noise tespit yöntemidir; basit ve yaygın kullanılır ama çarpık dağılımlarda güvenilirliğini kaybeder, bu durumlarda IQR yöntemine yönelmek daha sağlıklıdır.
+
+sklearn.preprocessing.StandardScaler, teknik olarak sample standart sapmasını değil, population standart sapmasını kullanır (ddof=0), pandas'ın .std() fonksiyonu ise varsayılan olarak sample (ddof=1) kullanır. Büyük veri setlerinde bu fark ihmal edilebilir düzeydedir, ama çok küçük veri setlerinde elle hesapladığınız Z-score ile StandardScaler çıktısı arasında ufak bir sayısal fark görebilirsiniz — bu bir hata değil, sadece hangi std formülünün kullanıldığına dair bir detay.
+
+----------------- Bir diğer kaynak:
+
+Many machine learning algorithms perform better or converge faster when features are on a relatively similar scale. Algorithms that compute distances between data points (like K-Nearest Neighbors) or rely on gradient descent optimization (like linear regression, logistic regression, neural networks) are particularly sensitive to the scale of input features. If one feature ranges from 0 to 1 and another ranges from 0 to 1,000,000, the algorithm might incorrectly assign more importance to the feature with the larger range simply due to its scale, not its predictive value.
+
+Standardization, often referred to as Z-score scaling, is a common and effective technique to address this. It transforms your data such that it has a mean (μ) of 0 and a standard deviation (σ) of 1.
+
+The transformation for each value x in a feature is calculated using the following formula:
+
+Z = (x-μ) / σ
+
+Where:
+
+x is the original feature value.
+μ is the mean of the feature column.
+σ is the standard deviation of the feature column.
+Z is the standardized feature value.
+
+Each transformed value represents the number of standard deviations the original value was away from the mean. Values greater than the mean will be positive, values less than the mean will be negative, and a value equal to the mean will be zero.
+
+Implementing Standardization with Scikit-learn
+Scikit-learn provides a convenient transformer class, StandardScaler, within its preprocessing module. Like other Scikit-learn transformers, it follows the fit and transform pattern.
+
+Fit: The fit method calculates the mean (μ) and standard deviation (σ) for each feature in the training data. These calculated parameters are stored within the scaler object. It's important to only fit the scaler on the training data to prevent data leakage from the test set.
+Transform: The transform method uses the learned μ and  σ (from the fit step) to apply the standardization formula to the data, creating the scaled features. You will use this method on both the training data and, later, on any new data (like the validation or test set) before feeding it to your model.
+
+Standardization changes the scale of the data but preserves the shape of its distribution. If a feature was skewed before standardization, it will still be skewed afterwards, just on a different scale.
+
+When to Use Standardization
+
+Algorithms assuming Gaussian distribution:
+
+Standardization, verileri Gauss dağılımına uygun hale getirmez; ancak bazı modeller, standart normal dağılıma (ortalama=0, standart sapma=1) benzer özelliklere sahip özelliklerle en iyi şekilde çalışır.
+
+Distance-based algorithms: KNN, SVM (with RBF kernel), and clustering algorithms (like K-Means) use distance metrics. Standardization ensures all features contribute equally to the distance calculation.
+
+Gradient Descent-based algorithms: Linear Regression, Logistic Regression, Neural Networks often converge faster when features are standardized. Bu, gradyan güncellemelerini etkileyen farklı özellik aralıklarının yol açtığı salınımları veya yavaş yakınsamayı önlemeye yardımcı olur.
+
+## Önce "Convergence" (Yakınsama) Nedir, Onu Anlayalım
+
+Linear Regression, Logistic Regression, Neural Network gibi modeller **eğitim sırasında** bir hata fonksiyonunu (loss function) minimize etmeye çalışır. Bunu yaparken **Gradient Descent** adında bir yöntem kullanırlar — modelin parametrelerini (ağırlıklarını) **adım adım, küçük küçük düzelterek**, hatayı azalttıkları noktaya doğru **yürürler**. Bu "doğru noktaya ulaşma sürecine" **convergence (yakınsama)** denir.
+
+## Sorunun Kaynağı — Farklı Ölçeklerdeki Özellikler
+
+Diyelim ki modeliniz iki özellik kullanıyor:
+- `Age` → 20-80 arası (küçük sayılar)
+- `Cholesterol` → 150-300 arası (daha büyük sayılar, ama aynı büyüklük mertebesinde, kritik olan asıl farklı örnekle göstereceğim)
+
+Daha çarpıcı bir örnek verelim:
+- `Age` → 20-80 arası
+- `Income` → 20.000-200.000 arası
+
+Bu iki özelliğin **sayısal büyüklükleri arasında devasa bir fark** var.
+
+## Gradient Descent'i Bir "Vadi" Gibi Düşünün
+
+Gradient Descent'i, bir topu bir vadinin en alt noktasına (minimum hata noktasına) yuvarlamaya çalışmak gibi düşünebilirsiniz. Model, her adımda **hangi yöne, ne kadar** hareket edeceğine karar verir.
+
+**Eğer özellikler farklı ölçeklerdeyse**, bu "vadi" **simetrik, yuvarlak bir çanak** değil, **çok uzun ve dar, eliptik bir vadi** şeklini alır — çünkü `Income` gibi büyük sayılı bir özellik, hata fonksiyonunu o eksende **çok daha dik/keskin** yapar, `Age` gibi küçük sayılı bir özellik ise o eksende **çok daha yatık/loş** bir yüzey oluşturur.
+
+## "Salınım" (Oscillation) Ne Demek?
+
+Bu **eliptik/asimetrik vadide**, top (yani model) minimum noktaya **düz bir çizgiyle inemez** — çünkü bir eksende (Income) çok dik, diğer eksende (Age) çok yatık bir yüzeyde hareket ediyor. Sonuç olarak top, **sağa-sola sekerek, zikzak çizerek** ilerler — bu **salınım (oscillation)** demek. Her adımda bir eksende fazla, diğer eksende az hareket eder, düz bir yol izleyemez.
+
+## "Yavaş Yakınsama" Ne Demek?
+
+Bu zikzak hareket yüzünden, model **minimum noktaya (en düşük hataya) ulaşmak için çok daha fazla adım** atmak zorunda kalır — düz bir çizgide gidebilecekken, sürekli sağa-sola savrularak ilerliyor. Bu da eğitim sürecinin **gereksiz yere uzamasına** (yavaş yakınsama) yol açar.
+
+## Standardization Bunu Nasıl Çözüyor?
+
+Standardization, tüm özellikleri **aynı ölçeğe** (ortalama=0, standart sapma=1) çektiğinde, artık `Age` ile `Income` **benzer büyüklükte sayılar** haline gelir. Bu da hata fonksiyonunun "vadisini" **daha simetrik, yuvarlak bir çanak** haline getirir. Top artık **düz bir çizgiye yakın bir yolla, doğrudan** minimum noktaya inebilir — zikzak yapmadan, çok daha **az adımda ve hızlıca**.
+
+## Basit Bir Görsel Benzetme
+
+- **Standardize edilmemiş veri** → uzun, dar bir vadi → top zikzak çizerek, yavaş yavaş iner (salınım + yavaş yakınsama)
+- **Standardize edilmiş veri** → yuvarlak, simetrik bir çanak → top düz bir çizgiyle, hızlıca merkeze iner (hızlı, düzgün yakınsama)
+
+## Neden Sadece Linear/Logistic Regression ve Neural Network İçin Geçerli?
+
+Çünkü bu üçü, parametrelerini **gradient descent** ile (adım adım, iteratif olarak) öğrenir. Buna karşılık, **Decision Tree, Random Forest** gibi modeller gradient descent kullanmaz — onlar veriyi "böler" (sütunlara eşik değerleri koyarak), bu yüzden **ölçekten hiç etkilenmezler**, standardization onlara gerek duymaz.
+
+---
+
+**Özetle:** Farklı ölçeklerdeki özellikler, hata fonksiyonunun yüzeyini **çarpık/eliptik** yapar, bu da gradient descent'in **zikzak çizerek (salınım yaparak), yavaşça** minimuma ulaşmasına sebep olur. Standardization, tüm özellikleri **aynı ölçeğe** getirerek bu yüzeyi **simetrik/yuvarlak** hale getirir, model de minimuma **çok daha hızlı ve düzgün** bir şekilde ulaşır.
+
+Principal Component Analysis (PCA): PCA is sensitive to the scale of the features as it tries to find directions of maximum variance. Standardizing is typically recommended before applying PCA.
+
+Potential Drawbacks
+Sensitivity to Outliers: The mean (μ) and standard deviation (σ) used in standardization are sensitive to outliers. A few extreme values can significantly shift the mean and inflate the standard deviation, compressing the range of the "normal" data points after scaling. 
+"If your data has significant outliers, scaling might be a better choice." Biz zaten standardization yapıyoruz ya bu scaling olmuyor mu ? 
+
+Kaynağınızın Kastı — "Scaling" Kelimesi Burada Dar Anlamda Kullanılmış
+
+Sizin de fark ettiğiniz gibi, Standardization zaten bir "scaling" (ölçeklendirme) türüdür — yani "scaling" kelimesi hem genel bir şemsiye terim hem de bazı kaynaklarda spesifik olarak "Min-Max Scaling" anlamında dar bir terim olarak kullanılıyor. Kaynağınızdaki cümle, muhtemelen ikinci (dar) anlamda kullanmış.
+
+Doğru Hiyerarşi
+
+"Feature Scaling" (genel şemsiye kavram) → altında iki ana alt teknik var:
+
+1.Standardization (Z-score) → ortalama=0, standart sapma=1 yapar
+2.Normalization / Min-Max Scaling → veriyi sabit bir aralığa (genelde 0-1) sıkıştırır
+
+Kaynağınız muhtemelen "scaling" derken spesifik olarak Min-Max Scaling'i kastetmiş, "standardization"ı ise ayrı bir kategori gibi ele almış — yani cümle aslında şunu söylemeye çalışıyor: "Eğer veride ciddi outlier'lar varsa, standardization yerine Min-Max Scaling daha iyi bir seçim olabilir."
+
+Ama Burada Asıl Sorun Var — Bu İfade Aslında Ters!
+
+Dürüst olmam gerekirse, bu cümle teknik olarak yanıltıcı, çünkü gerçek durum tam tersi:
+
+Min-Max Scaling, outlier'lara karşı ÇOK DAHA HASSASdır, standardization'a göre daha kırılgandır. Sebebini açayım:
+
+Min-Max formülü, verinin min ve max değerlerini kullanıyor. Eğer bir outlier varsa (örneğin normalde 20-80 arası olan yaş verisinde bir tane 999 varsa), bu outlier max değeri olur, ve formül şöyle bozulur:
+
+X_scaled = (X - 20) / (999 - 20)
+
+Artık tüm normal değerler (20-80 arası), bu devasa aralık (20-999) içinde neredeyse hep 0'a yakın, sıkışmış görünür — outlier, ölçeklendirmenin tamamını bozar.
+
+Standardization ise, mean ve std kullandığı için (daha önce Z-score'da konuştuğumuz "masking effect" gibi bir miktar etkilenir ama), Min-Max kadar drastik bir şekilde bozulmaz — çünkü tüm veri noktalarının etkisiyle hesaplanan mean/std, tek bir outlier'ın min/max'ı domine etmesi kadar kırılgan değildir.
+
+Peki Kaynağınız Neden Böyle Yazmış Olabilir?
+
+Bazı kaynaklarda bu konuda karışıklık/hata olduğunu belirtmeliyim — bu, sizin daha önce yakaladığınız "kovaryans = iki serinin varyansıdır" ya da "varyans birbirinden sapmayı ölçer" gibi hatalı/yanıltıcı basitleştirmelere benzer bir durum olabilir. Kaynak muhtemelen "scaling" ve "standardization"ı iki ayrı, karşılaştırılabilir seçenek gibi sunmuş, ama outlier'a karşı hangisinin daha dayanıklı olduğu konusunda yanlış ya da en azından eksik/yanıltıcı bir ifade kullanmış.
+
+Gerçek Doğru Bilgi (Robust Scaling ile Tamamlayalım)
+
+Eğer veride ciddi outlier'lar varsa, aslında ne Standardization ne de Min-Max Scaling ideal — bunun yerine RobustScaler kullanılması önerilir, çünkü bu, medyan ve IQR kullanır (hatırlarsanız IQR'ın outlier'lara karşı dayanıklı olduğunu konuşmuştuk):
+
+Xrobust = (X - median) / IQR
+
+from sklearn.preprocessing import RobustScaler
+
+scaler = RobustScaler()
+data['Age_robust'] = scaler.fit_transform(data[['Age']])
+
+Sonuç olarak sizin sorunuz tamamen yerinde — evet, standardization zaten bir "scaling" türü, kaynağınızın "scaling'i standardization'dan ayrı, alternatif bir seçenek gibi sunması" kafa karıştırıcı bir terminoloji tercihi, ve üstüne üstlük outlier dayanıklılığı konusunda da yanıltıcı bir iddiada bulunmuş — doğrusu, outlier varsa Standardization'dan da öte, RobustScaler'a yönelmek gerekir
+
+Interpretability: The resulting standardized values (Z-scores) are unitless and represent standard deviations from the mean, which might be less directly interpretable than the original units or a min-max scaled range like [0, 1].
+
+Standardization is a foundational technique for preparing numerical features. By centering the data around zero and scaling it based on its standard deviation, you make it more suitable for a wide range of machine learning algorithms, particularly those sensitive to feature scales. Remember to fit the StandardScaler only on your training data and then use it to transform both your training and test/validation sets.
+
+Conclusion
+Effectively handling noisy data is a cornerstone of successful machine-learning projects. The presence of noise can significantly hinder model performance, leading to inaccurate predictions and unreliable insights. However, by employing a systematic approach to identify, clean, and transform your data, you can mitigate the adverse effects of noise and enhance the overall quality of your datasets.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
