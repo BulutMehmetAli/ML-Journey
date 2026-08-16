@@ -1,0 +1,124 @@
+K- Fold Cross Validation in Machine Learning
+
+Bir model eğitirken, elinizde tek bir train/test bölünmesi varsa (bizim heart.csv örneğimizde yaptığımız gibi, test_size=0.2), modelin performansı şansa bağlı olabilir — belki o rastgele bölünmede, test setine tesadüfen kolay ya da zor örnekler düştü, ve elde ettiğiniz accuracy (%79.5 gibi) aslında tam olarak güvenilir bir gösterge değil, sadece o spesifik bölünmeye özgü bir sonuç olabilir. K-Fold Cross-Validation, bu "şans faktörünü" azaltmak için, modeli birden fazla farklı bölünmeyle test ederek, daha güvenilir ve tutarlı bir performans ölçümü elde etmenizi sağlar.
+
+## K-Fold Cross-Validation Neden Var? (Önce Sorunu Anlayalım)
+
+Bir model eğitirken, elinizde **tek bir train/test bölünmesi** varsa (bizim `heart.csv` örneğimizde yaptığımız gibi, `test_size=0.2`), modelin performansı **şansa bağlı** olabilir — belki o rastgele bölünmede, test setine **tesadüfen** kolay ya da zor örnekler düştü, ve elde ettiğiniz accuracy (%79.5 gibi) aslında **tam olarak güvenilir bir gösterge değil**, sadece **o spesifik bölünmeye özgü** bir sonuç olabilir. K-Fold Cross-Validation, bu **"şans faktörünü"** azaltmak için, modeli **birden fazla farklı bölünmeyle test ederek**, daha **güvenilir ve tutarlı** bir performans ölçümü elde etmenizi sağlar.
+
+## Temel Fikir — Veriyi K Parçaya Bölmek
+
+K-Fold'un mantığı şudur: elinizdeki veri setini **K eşit parçaya (fold'a)** bölersiniz (örneğin K=5 derseniz, 5 parça). Sonra, **K kez tekrarlanan bir döngü** başlatırsınız — her turda, **1 parçayı test (validation) seti**, **geri kalan K-1 parçayı ise train seti** olarak kullanırsınız. Önemli olan, her turda **farklı bir parçanın** test seti olması — böylece **her parça, tam olarak bir kez** test seti rolünü üstlenir.
+
+## Somut Bir Örnekle Görselleştirelim (K=5)
+
+Diyelim ki veriniz 5 parçaya bölündü: `[A, B, C, D, E]`
+
+```
+Tur 1:  Test = A,  Train = B+C+D+E
+Tur 2:  Test = B,  Train = A+C+D+E
+Tur 3:  Test = C,  Train = A+B+D+E
+Tur 4:  Test = D,  Train = A+B+C+E
+Tur 5:  Test = E,  Train = A+B+C+D
+```
+
+Her turda, modeli **train** parçasıyla eğitip, **test** parçasında **performansı** (accuracy, vs.) ölçersiniz. Sonunda, **5 farklı accuracy değeriniz** olur (her tur için bir tane), ve bunların **ortalamasını** alarak, modelin **genel, daha güvenilir** bir performans tahminine ulaşırsınız.
+
+## Neden Bu, Tek Bir Train/Test Split'ten Daha Güvenilir?
+
+Çünkü **her veri noktası, tam olarak bir kez test edilir**, ama **hiçbir zaman, o turda kendi eğitiminde kullanılmaz** — yani sistematik olarak, **her satır için "bu satırı hiç görmeden yapılan bir tahmin"** elde edilir. Bu, tek bir rastgele train/test bölünmesinin aksine, **"şansa bağlı iyi/kötü bir bölünme" riskini büyük ölçüde azaltır**, çünkü sonuç, **5 farklı bölünmenin ortalamasına** dayanıyor, tek bir bölünmeye değil.
+
+## Kod Üzerinden Basit Bir Örnek
+
+```python
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.linear_model import LogisticRegression
+
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+model = LogisticRegression(max_iter=1000)
+scores = cross_val_score(model, X, y, cv=kf)
+
+print("Her fold'un accuracy'si:", scores)
+print("Ortalama accuracy:", scores.mean())
+```
+
+Bu kod, sizin manuel olarak `kf.split()` ile yaptığınız döngüyü, `cross_val_score()` fonksiyonu **otomatik olarak** yapıyor — 5 kez eğitim/test yaparak, size **5 ayrı accuracy skoru** ve bunların **ortalamasını** veriyor.
+
+## `kf.split(df)` Ne Döndürüyor? (Az Önceki Kodda Gördüğünüz Kısım)
+
+`kf.split(df)`, her tur için **iki liste** döndürür: o turdaki **train satırlarının index numaraları** ve **test/validation satırlarının index numaraları**. Bu, doğrudan **hangi satırların hangi rolde olduğunu** söyleyen, ham bir index listesi — siz bu index'leri kullanarak `df.iloc[train_index]` ve `df.iloc[val_index]` ile **gerçek veri parçalarını** elde ediyorsunuz.
+
+## Peki K-Fold'un Target Encoding'deki Rolü Neydi? (Bağlantıyı Kuralım)
+
+Şimdi K-Fold'un genel mantığını anladığınıza göre, Target Encoding'deki kullanımını tekrar düşünelim: Target Encoding'de biz **model eğitmiyoruz**, ama **aynı prensibi** kullanıyoruz — her satırın **encoding değerini**, o satırı **hiç görmeyen** bir veri parçasından hesaplıyoruz. Yani K-Fold'un **"her turda bir parçayı dışarıda bırakma"** mantığı, burada **model performansı ölçmek için değil, sızıntısız bir encoding değeri hesaplamak için** ödünç alınmış — aynı **"kendi kendini görmeme"** ilkesi, iki farklı amaç için kullanılıyor.
+
+## `n_splits`, `shuffle`, `random_state` Parametrelerini Netleştirelim
+
+- **`n_splits`** → kaç parçaya böleceğinizi belirler (yaygın değerler 5 veya 10)
+- **`shuffle=True`** → veriyi bölmeden önce **rastgele karıştırır**; eğer veri setiniz belirli bir sıraya göre dizilmişse (örneğin tarihe göre sıralı), karıştırmadan bölmek **yanlı (biased)** fold'lar yaratabilir
+- **`random_state`** → rastgele karıştırmanın **her çalıştırmada aynı sonucu vermesini** sağlar, bu **tekrarlanabilirlik (reproducibility)** için önemlidir — aynı `random_state` ile herkes **aynı fold'ları** elde eder
+
+**Özetle:** K-Fold Cross-Validation, veriyi **K parçaya bölüp**, her turda **farklı bir parçayı test, geri kalanını train** olarak kullanarak, modelin performansını **tek bir şanslı/şanssız bölünmeye bağlı olmadan**, daha **güvenilir bir ortalama** ile ölçmenizi sağlayan bir tekniktir. Target Encoding'de bu aynı mantık, model performansı ölçmek için değil, **her satırın encoding değerini kendi bilgisini kullanmadan (leakage'sız) hesaplamak** için kullanılıyor — temel ilke aynı: **"bir şeyi değerlendirirken/hesaplarken, o şeyin kendisini asla kullanma."**
+
+K-Fold Cross Validation is a statistical technique to measure the performance of a machine learning model by dividing the dataset into K subsets of equal size (folds). The model is trained on K − 1 folds and tested on the last fold. This process is repeated K times, with each fold being used as the testing set exactly once. The performance of the model is then averaged over all K iterations to provide a robust estimate of its generalization ability.
+
+Cross-validation serves multiple purposes:
+
+Avoids Overfitting: Modelin yalnızca eğitim verilerinde iyi performans göstermekle kalmayıp, daha önce görülmemiş verilere de genelleme yapmasını sağlar.
+
+Provides Robust Evaluation: Averages results over multiple iterations, reducing bias and variance in the performance metrics.
+
+Efficient Use of Data: Maximizes the utilization of the dataset, especially when the data size is limited.
+
+K-Fold Cross Validation
+The process can be broken into the following steps:
+
+1. Split Data into K Folds: Divide the dataset into K subsets or folds.
+2. Train-Test Iterations: For each fold:
+
+Use K −1 folds for training the model.
+Use the remaining fold as the test set to evaluate the model.
+
+3. Aggregate Results: Calculate the performance metric (e.g., accuracy, precision, recall, etc.) for each fold and average the results.
+
+The choice of K affects the trade-off between bias and variance:
+
+Akademik/istatistiksel açıdan **daha sağlam kabul edilen görüş**, benim size ilk anlattığım şekilde: **yüksek K → düşük bias, YÜKSEK varyans.** Bunu birkaç güçlü kaynaktan doğrulayabiliyorum:
+
+**1. Klasik istatistiksel öğrenme kaynağı (ISLR — makine öğrenmesinin en çok referans gösterilen ders kitaplarından biri):**
+LOOCV yöntemi (K=n, yani K'nın olabileceği en yüksek hali) çok az bias'a sahiptir, çünkü neredeyse tüm gözlemler modelleri oluşturmak için kullanılır. Ama LOOCV veriyi yeterince "sarsmaz": her CV modelinden gelen tahminler birbiriyle yüksek korelasyonludur, bu yüzden ortalamaları yüksek varyansa sahip olabilir.
+
+**2. Kapsamlı bir akademik derleme makalesi (arXiv):**
+Kat sayısını artırırken genel eğilimleri şöyle özetleyebiliriz: performans tahmincisinin bias'ı azalır (daha doğru); performans tahmincilerinin varyansı artar (daha değişken).
+
+**3. Yakın tarihli, gerçek deneysel bir çalışma (Nature Scientific Reports, 2026):**
+Değerlendirilen tüm algoritmalar ve veri setlerinde, k arttıkça varyans arttı; bu da bizim kurgumuzda daha yüksek k değerlerinin kat-a-kat tahminlerini daha az kararlı hale getirebileceğini gösteriyor.
+
+## Neden Sizin Bulduğunuz Kaynak "Ters" Söylüyor?
+
+Bu tarz bir çelişki, genelde **blog/popüler kaynaklarda sıkça karşılaşılan bir basitleştirme hatasından** kaynaklanıyor — nitekim aynı aramada bulduğum bir Medium yazısı, tam olarak sizin bahsettiğiniz ters görüşü savunuyor. Sorunun kökeninde, **"varyans" kelimesinin iki farklı anlamda** kullanılması yatıyor:
+
+**Anlam 1 (Basitleştirilmiş, sezgisel ama daha az titiz):** "Küçük K → her fold'da az train verisi var → model kararsız öğrenir → sonuçlar dağınık çıkar" — bu mantık kulağa makul geliyor ama **istatistiksel olarak eksik**, çünkü sadece "train verisinin küçüklüğünü" düşünüyor, fold'lar arası **korelasyonu** hiç hesaba katmıyor.
+
+**Anlam 2 (Akademik/istatistiksel olarak doğru kabul edilen):** "Büyük K → fold'ların train setleri birbirine neredeyse aynı → bu yüzden K tahmin birbiriyle çok ilişkili (correlated) çıkıyor → ilişkili sayıların ortalamasını almak, gerçek varyansı azaltmıyor, hatta zaman zaman artırıyor" — bu, **ISLR gibi ciddi kaynakların** savunduğu görüş.
+
+## Somut Bir Benzetmeyle Açıklayayım
+
+Diyelim ki K=10 (yüksek K) seçtiniz, 100 satırlık bir veri setiniz var. Her fold'da **90 satır** train'de kalıyor. Bu **90 satırlık train setleri, fold'dan fold'a neredeyse aynı** — sadece 10 satır değişiyor. Yani **10 farklı modeliniz**, aslında **neredeyse aynı veriyle** eğitiliyor — bu da onların **birbirine çok benzer sonuçlar** üretmesine yol açıyor. Sorun şu: eğer bu 90 satırlık ortak veri **şans eseri bir şekilde "kötü/yanlı"** ise (örneğin nadir bir alt grup fazla temsil ediliyorsa), bu yanlılık **tüm 10 fold'a da** sızıyor — çünkü hepsi **aynı temel veriyi** paylaşıyor. Bu, tüm K-fold sürecinin **("eğer veri setini baştan farklı seçseydik ne olurdu" sorusuna göre) daha değişken/varyanslı** olmasına yol açıyor.
+
+Buna karşılık K=5 (düşük K) seçseydiniz, her fold'un train seti **daha fazla farklılaşırdı** (80 satır, ve her seferinde farklı 20 satır dışarıda), bu da fold'lar arasında **daha az korelasyon**, dolayısıyla **ortalama alındığında daha düşük varyans** anlamına gelirdi.
+
+## Peki Neden Bu Kadar Çok Kaynak "Ters" Yazıyor?
+
+Bu, gerçekten **pedagojik bir sorun** — birçok blog yazarı, konuyu **basitleştirirken** "az veri = kararsız model = yüksek varyans" sezgisiyle yola çıkıyor, ama bu **modelin kendi eğitim varyansı** ile **cross-validation tahmincisinin varyansı** kavramlarını **birbirine karıştırıyor**. Bunlar **teknik olarak farklı** şeyler, ama günlük dilde ikisi de "varyans" kelimesiyle anılıyor, bu da kafa karışıklığı yaratıyor.
+
+## Benim Önerim
+
+**Daha akademik, daha titiz kaynaklara** (ISLR, hakemli makaleler) güvenmenizi öneririm — bu kaynaklar **tutarlı bir şekilde**, yüksek K'nın **düşük bias, yüksek varyans** getirdiğini söylüyor. Sizin bulduğunuz kaynak, muhtemelen **popüler/blog tarzı** bir kaynak ve bu konuyu **fazla basitleştirmiş**, hatta yanlış aktarmış olabilir.
+
+---
+
+**Özetle:** Siz haklısınız, bu iki kaynak **gerçekten birbirine ters** — ama bu **sizin bir şey yanlış anladığınızdan değil, literatürdeki gerçek bir tutarsızlıktan** kaynaklanıyor. Daha güvenilir, akademik kaynaklara göre (ISLR, hakemli makaleler, deneysel çalışmalar) benim ilk anlattığım **"yüksek K → düşük bias, yüksek varyans"** görüşü doğru kabul ediliyor; sizin yeni bulduğunuz kaynak, muhtemelen konuyu **fazla basitleştirmiş, daha az titiz** bir popüler kaynak.
+
+A standard choice is 10-Fold Cross Validation that is a good trade-off between bias and variance in most situations.
