@@ -122,3 +122,393 @@ Bu, gerçekten **pedagojik bir sorun** — birçok blog yazarı, konuyu **basitl
 **Özetle:** Siz haklısınız, bu iki kaynak **gerçekten birbirine ters** — ama bu **sizin bir şey yanlış anladığınızdan değil, literatürdeki gerçek bir tutarsızlıktan** kaynaklanıyor. Daha güvenilir, akademik kaynaklara göre (ISLR, hakemli makaleler, deneysel çalışmalar) benim ilk anlattığım **"yüksek K → düşük bias, yüksek varyans"** görüşü doğru kabul ediliyor; sizin yeni bulduğunuz kaynak, muhtemelen konuyu **fazla basitleştirmiş, daha az titiz** bir popüler kaynak.
 
 A standard choice is 10-Fold Cross Validation that is a good trade-off between bias and variance in most situations.
+
+Variants of K-Fold Cross Validation
+Stratified K-Fold Cross Validation: Maintains the same class distribution for each fold as for the entire dataset, particularly helpful for datasets that are imbalanced.
+Repeated K-Fold Cross Validation: Performs the K-Fold operation several times with varying splits, giving more stable performance estimates.
+Leave-One-Out Cross Validation (LOOCV): A special case where K is equal to the number of data points, so every fold will hold one data point.
+
+Implementation of K-Fold Cross Validation
+Here’s a Python example of how to implement K-Fold Cross Validation using the scikit-learn library:
+
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
+
+data = load_iris()
+X, y = data.data, data.target  
+
+# K-Fold Cross Validation
+k = 5  
+kf = KFold(n_splits=k, shuffle=True, random_state=42)
+
+# Initialize the RandomForestClassifier model
+model = RandomForestClassifier(random_state=42)
+
+# Perform Cross Validation
+scores = cross_val_score(model, X, y, cv=kf, scoring='accuracy')
+
+print(f"Accuracy for each fold: {scores}")
+
+average_accuracy = np.mean(scores) 
+print(f"Average Accuracy: {average_accuracy:.2f}")
+
+Explanation: This code does K-Fold Cross Validation with a RandomForestClassifier on the Iris dataset. It divides the data into 5 folds, trains the model on each fold and checks its accuracy. The accuracy of each fold is printed, as well as the average accuracy over all folds.
+
+Benefits of K-Fold Cross Validation
+Efficient Data Usage: Every data point is used for both training and testing.
+Reliable Estimates: Reduces the likelihood of overfitting or underfitting.
+Applicability: Works well with small datasets or when data collection is expensive.
+Time-Series Data: For time-series data, where the order of observations is crucial, a modification called Time Series Cross Validation is used. The training set consists of all data points up to time t, and the test set includes all data points at time t+1 and beyond.
+
+Limitations of K-Fold Cross Validation
+Computational Cost: Re-training the model k times can be time-consuming, especially for large datasets or complex models.
+Data Leakage Risk: Care must be taken to ensure that no data preprocessing (e.g., scaling, encoding) leaks information from the test set into the training set.
+Not Ideal for Time-Series Data: Sequential dependencies in time-series data may render K-Fold inappropriate without modifications like time-based splits.
+
+Introduction to Cross-Validation
+
+Splitting data into training and testing sets, often using a function like train_test_split, helps in checking against overfitting. Models are trained on the training set and evaluated on the unseen test set. However, the performance score obtained from a single split might not be entirely reliable. If the data were split differently, perhaps by using a different random_state, a noticeably different evaluation score could result. This variability is a significant concern. A performance metric could be overly optimistic or pessimistic simply because of which specific data points landed in the training versus the test set for that particular split.[Bir performans ölçütü, sadece o belirli bölünmede hangi veri noktalarının eğitim kümesine, hangilerinin ise test kümesine dahil edildiğine bağlı olarak aşırı iyimser ya da kötümser olabilir.]
+
+This is where cross-validation comes in. It's a more comprehensive approach to model evaluation that provides a more stable and reliable estimate of how a model is likely to perform on unseen data. Instead of relying on a single train-test split, cross-validation systematically creates multiple splits of the data and computes an average evaluation score across these splits. Think of it as repeating the train-test split process multiple times with different data subsets and then combining the results.
+
+The primary benefit of cross-validation is reducing the variance associated with a single train-test split. By averaging performance across several different partitions of the data, we smooth out the effect of getting a particularly "lucky" or "unlucky" split. The resulting averaged score gives us a better indication of the model's underlying generalization capability.
+
+Furthermore, cross-validation makes more efficient use of the available data. In a simple train-test split (e.g., 80% train, 20% test), the model never gets trained on the 20% held out for testing. With cross-validation techniques, typically every data point gets a chance to be in a test set exactly once, while also being used for training in other iterations. This is especially advantageous when working with datasets that aren't very large, as it maximizes the data used for both training (at some point) and validation (at some point).
+
+The general procedure involves partitioning the original dataset into a number of subsets, often called "folds". The model is then trained iteratively. In each iteration, one fold is held out as a validation set, and the model is trained on the remaining folds. This process repeats until every fold has served as the validation set exactly once. The performance scores from each iteration are then collected and typically averaged to produce the final cross-validation score.
+
+This evaluation procedure is fundamental for making trustworthy comparisons between different models or different hyperparameter configurations for the same model. It helps ensure that we are selecting a model or parameters that perform well consistently, not just on one specific random split of the data. The following sections will detail specific cross-validation strategies implemented in Scikit-learn, such as K-Fold cross-validation.
+
+Implementing K-Fold Cross-Validation
+While splitting data into a single training set and a testing set provides a basic check against overfitting, the resulting performance estimate can be sensitive to which data points end up in the training versus the test set. A particularly "lucky" or "unlucky" split might give a misleadingly optimistic or pessimistic view of the model's true generalization ability. Cross-validation offers a more reliable approach by systematically creating multiple train-test splits and averaging the results. K-Fold cross-validation is one of the most common methods.
+
+The K-Fold Cross-Validation Process
+In K-Fold cross-validation, the original dataset is partitioned into K roughly equal-sized, non-overlapping subsets called "folds". The process then iterates K times. In each iteration i (from 1 to K):
+
+Hocam **"non-overlapping"** (çakışmayan/örtüşmeyen), K-Fold'da parçalara ayrılan fold'ların **birbirleriyle hiçbir ortak veri noktası paylaşmadığı** anlamına geliyor.
+
+Diyelim ki veri setiniz 10 satırdan oluşuyor (index 0-9), ve K=5 seçtiniz. Veri şu şekilde 5 fold'a bölünür:
+
+```
+Fold 1: satır 0, 1
+Fold 2: satır 2, 3
+Fold 3: satır 4, 5
+Fold 4: satır 6, 7
+Fold 5: satır 8, 9
+```
+
+**"Non-overlapping" (çakışmayan) olması şu anlama gelir:**
+- Satır 0, **sadece Fold 1'de** bulunur, başka **hiçbir fold'da tekrar etmez**
+- Satır 5, **sadece Fold 3'te** bulunur, Fold 1, 2, 4, 5'te **hiç görünmez**
+
+Yani her satır, **tam olarak bir fold'a** aittir — hiçbir satır **iki farklı fold'da aynı anda** yer almaz.
+
+## Neden Bu Özellik Önemli?
+
+Bu, K-Fold'un **temel garantisidir** ve şu iki şeyi sağlar:
+
+**1. Her Satır Tam Olarak Bir Kez Test Edilir**
+Hatırlarsanız 5 turluk döngüde, her turda **farklı bir fold** validation seti oluyordu. Fold'lar çakışmadığı (non-overlapping) için, **her satır toplamda sadece bir kez** validation setine düşer — ne eksik ne fazla. Eğer fold'lar çakışsaydı (örneğin satır 0 hem Fold 1 hem Fold 2'de olsaydı), o satır **birden fazla kez** test edilirdi, bu da sonuçların **dengesiz/yanlı** olmasına yol açardı.
+
+**2. "Kendi Kendini Görmeme" İlkesini Garantiler**
+Target Encoding örneğimizi hatırlarsanız, bir satırın encoding değeri **o satırı içermeyen** fold'lardan hesaplanıyordu. Eğer fold'lar **overlapping (çakışan)** olsaydı, bir satır **hem train hem validation** kısmında **aynı anda** bulunabilirdi — bu da tam olarak kaçınmaya çalıştığımız **data leakage'ı** geri getirirdi, çünkü o satırın kendi bilgisi, kendi encoding değerinin hesaplanmasına **sızmış** olurdu.
+
+Bunu bir **sınıfı gruplara ayırma** gibi düşünün — bir öğretmen 30 öğrenciyi 5 gruba (her grupta 6 öğrenci) ayırıyor. **"Non-overlapping"** demek, **her öğrencinin sadece bir grupta** olması demek — hiçbir öğrenci **aynı anda iki farklı grubun üyesi** olamaz. Eğer bir öğrenci yanlışlıkla **iki gruba** dahil edilseydi (overlapping), bu öğrenci hem "sınav yapan grup" hem "sınava giren grup" olarak **çift sayılırdı**, bu da adaletsiz/tutarsız bir değerlendirme yaratırdı.
+
+## "Roughly Equal-Sized" Kısmıyla Bağlantısı
+
+Cümledeki **"roughly equal-sized"** (kabaca eşit boyutlu) ifadesi de bununla ilişkili — fold'lar **çakışmadığı** için, toplam veri **K parçaya kesin olarak bölünür**, ve bu bölme genelde **mümkün olduğunca eşit** parçalar halinde yapılmaya çalışılır (eğer veri sayısı K'ya tam bölünmüyorsa, bazı fold'lar 1 satır daha fazla/az olabilir, bu yüzden "roughly" yani "kabaca" deniyor).
+
+**Özetle:** "Non-overlapping" derken kastedilen, her veri noktasının **kesinlikle tek bir fold'a ait olması**, hiçbir satırın **birden fazla fold'da tekrar etmemesidir** — bu özellik, K-Fold'un hem **her satırı tam olarak bir kez, adil şekilde test etmesini** hem de **data leakage'ı önlemesini** sağlayan temel bir garantidir.
+
+1-Fold i is held out as the validation set. 
+2-The remaining  K−1 folds are combined to form the training set. 
+3-The machine learning model is trained on this combined training set. 
+4-The trained model is evaluated on the held-out validation fold (Fold i). 
+5-The evaluation score (e.g., accuracy, R-squared) for this iteration is recorded. 
+
+After completing all K iterations, we have K evaluation scores. The final cross-validation score is typically reported as the average of these K scores. This average provides a more stable and reliable estimate of the model's performance on unseen data compared to a single train-test split because every data point gets to be in a validation set exactly once and in a training set  K−1 times. Common choices for K are 5 or 10.
+
+Stratify Kfold:
+
+## Neden Normal K-Fold Bazen Yetersiz Kalıyor?
+
+Hatırlarsanız normal K-Fold, veriyi **rastgele** K parçaya bölüyordu (`shuffle=True` ile karıştırıp). Ama bu **rastgelelik**, özellikle **sınıf dengesizliği (class imbalance)** olan veri setlerinde bir soruna yol açabilir.
+
+## Somut Bir Örnekle Sorunu Gösterelim
+
+Diyelim ki bir sahtekarlık tespiti (fraud detection) veri setiniz var, 1000 işlem içeriyor:
+```
+950 işlem → Normal (target=0)
+50 işlem  → Sahte (target=1)
+```
+
+Bu, **%5'lik bir azınlık sınıfı** demek. Şimdi normal K-Fold ile 5 parçaya rastgele bölerseniz, **şans eseri** şöyle bir dağılım çıkabilir:
+```
+Fold 1: 190 normal, 2 sahte    (sahte oranı: %1.0)
+Fold 2: 185 normal, 15 sahte   (sahte oranı: %7.5)
+Fold 3: 195 normal, 5 sahte    (sahte oranı: %2.5)
+Fold 4: 188 normal, 12 sahte   (sahte oranı: %6.0)
+Fold 5: 192 normal, 16 sahte   (sahte oranı: %7.7)
+```
+
+Gördüğünüz gibi, **her fold'daki "sahte" oranı çok farklı** — bazı fold'larda neredeyse hiç sahte işlem yokken, bazılarında görece daha fazla var. Bu, modelin **bazı fold'larda hiç "sahte" örnek görmeden** eğitilmesine, ya da **test edilirken çok az sahte örnekle karşılaşmasına** yol açabilir — bu da **performans ölçümünü güvenilmez ve tutarsız** hale getirir.
+
+## Stratified K-Fold'un Çözümü
+
+**Stratified K-Fold**, veriyi bölerken **her fold'daki sınıf oranlarının, orijinal veri setindeki oranla aynı kalmasını garanti eder.** Yani eğer orijinal veri setinizde `%5 sahte, %95 normal` varsa, Stratified K-Fold **her fold'da da yaklaşık %5 sahte, %95 normal** olmasını sağlar:
+
+```
+Fold 1: 190 normal, 10 sahte   (sahte oranı: %5.0)
+Fold 2: 190 normal, 10 sahte   (sahte oranı: %5.0)
+Fold 3: 190 normal, 10 sahte   (sahte oranı: %5.0)
+Fold 4: 190 normal, 10 sahte   (sahte oranı: %5.0)
+Fold 5: 190 normal, 10 sahte   (sahte oranı: %5.0)
+```
+
+## Kod Üzerinden Gösterelim
+
+```python
+from sklearn.model_selection import StratifiedKFold
+
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+for fold, (train_index, val_index) in enumerate(skf.split(X, y)):
+    X_train, X_val = X[train_index], X[val_index]
+    y_train, y_val = y[train_index], y[val_index]
+```
+
+## Kritik Fark — `split()` Fonksiyonuna Dikkat
+
+Normal `KFold` ile `StratifiedKFold` arasındaki **syntax farkına** dikkat edin:
+
+```python
+kf.split(X)              # normal KFold — sadece X'e bakar
+skf.split(X, y)           # StratifiedKFold — X VE y'ye bakar
+```
+
+**Neden `StratifiedKFold`, `y`'ye de ihtiyaç duyuyor?** Çünkü stratification (katmanlama) yapabilmesi için, **hangi satırın hangi sınıfa ait olduğunu bilmesi** gerekiyor — bu bilgi sadece `y`'de var. Normal `KFold` ise **tamamen kör bir şekilde**, hangi satırın hangi sınıfa ait olduğuna **hiç bakmadan**, sadece rastgele bölüyordu.
+
+## Ne Zaman Stratified K-Fold Kullanmalısınız?
+
+**Kullanmalısınız eğer:**
+- **Sınıflandırma** problemi çözüyorsanız (regression'da "sınıf" kavramı olmadığı için stratification anlamsız)
+- Hedef değişkeninizde **dengesizlik (imbalance)** varsa (örneğin %95-%5 gibi)
+- Küçük bir veri setiyle çalışıyorsanız (küçük veri setlerinde, rastgele bölünme şansı **daha fazla dengesizlik yaratma riski** taşır)
+
+**Gerekli olmayabilir eğer:**
+- Sınıflar zaten **dengeliyse** (örneğin %50-%50, ya da bizim Iris örneğimizdeki gibi her sınıftan eşit sayıda — 50/50/50)
+- **Regresyon** problemi çözüyorsanız (sürekli bir hedef değişken varken "sınıf oranı" kavramı yok)
+
+## Sizin `heart.csv` Örneğinize Uygulayalım
+
+Hatırlarsanız `heart.csv`'de `target` sütunu **0.514 civarında** bir ortalamaya sahipti (yani yaklaşık %51-%49 dengeli bir dağılım). Bu durumda **normal K-Fold ile Stratified K-Fold arasında büyük bir fark hissetmezsiniz**, çünkü zaten sınıflar dengeli. Ama örneğin `creditcard.csv` dosyanızı hatırlarsanız (`Class` sütunu vardı) — kredi kartı dolandırıcılığı veri setleri **genellikle çok dengesizdir** (%99.8 normal, %0.2 dolandırıcılık gibi), bu tür bir veri setinde **Stratified K-Fold neredeyse zorunlu** hale gelir.
+
+## Regresyon İçin Alternatif — `KFold` Yeterli
+
+Eğer hedef değişkeniniz **sürekli bir sayı** ise (örneğin ev fiyatı tahmini), "sınıf oranı" diye bir kavram olmadığı için `StratifiedKFold` **kullanılamaz**, normal `KFold` kullanmaya devam edersiniz. (Not: Regresyon için de bir tür "stratification" yapmak isteyen ileri seviye teknikler var — hedef değişkeni önce bin'lere ayırıp öyle stratify etmek gibi — ama bu, şu anki seviyeniz için gerekli değil.)
+
+**Özetle:** Stratified K-Fold, normal K-Fold'un **"tamamen rastgele bölme"** yaklaşımına, **"her fold'daki sınıf oranlarını orijinal veriyle aynı tutma"** garantisini ekliyor. Bu, özellikle **dengesiz sınıflara sahip sınıflandırma problemlerinde** (fraud detection, nadir hastalık teşhisi gibi) modelin performansını **çok daha güvenilir ve tutarlı** ölçmenizi sağlıyor — sizin `creditcard.csv` gibi bir veri setiyle çalışırken bu, neredeyse **zorunlu bir adım** haline geliyor.
+
+K-Fold cross-validation provides a more robust estimate of model performance compared to a single train-test split. However, standard K-Fold distributes data into folds randomly. While this approach works well for many scenarios, it can sometimes lead to problematic splits, especially in classification tasks with imbalanced datasets.
+
+Imagine a binary classification problem where 90% of your samples belong to Class A and only 10% belong to Class B. If you use standard K-Fold with, say, 10 folds, it's possible purely by chance that some folds might contain very few, or even zero, instances of the minority class (Class B). Training a model on a fold lacking Class B examples means the model won't learn to identify that class. Similarly, evaluating on a test fold that happens to have a disproportionately high or low number of Class B samples can give an unreliable performance score. This variance in class distribution across folds can lead to unstable and misleading evaluation results.
+
+To address this, we use Stratified K-Fold. Stratification ensures that each fold's class distribution is approximately the same as that of the entire dataset. If your dataset has 90% Class A and 10% Class B, Stratified K-Fold will ensure that each of the k folds created maintains this 90/10 split (or as close as possible given the number of samples).
+
+How Stratified K-Fold Works
+Instead of purely random assignment, Stratified K-Fold first groups the data by class label. Then, it samples instances from each class proportionally to create the folds. This guarantees that the class representation is preserved in both the training and validation subsets generated for each iteration of the cross-validation process.
+
+The Limitation of a Single Split
+Imagine you split your data into 80% for training and 20% for testing. You train your model, evaluate it on the test set, and get an accuracy of, say, 85%. How confident can you be in this number? If you were to reshuffle the data and create a different 80/20 split, you might get 82% accuracy, or perhaps 88%. This variability arises because the performance is sensitive to the specific samples chosen for the test set. Cross-validation techniques aim to reduce this variance and give us a better sense of the model's average performance on unseen data.
+
+Choosing K:
+
+Hocam bu, K-Fold'ta **K değerini seçerken karşılaştığınız temel dengeyi (trade-off)** anlatıyor. Kısaca açıklayayım.
+
+## Yüksek K (örneğin K=10)
+
+**Avantajı:** Her fold'da **train verisi daha büyük** olur (çünkü sadece 1/K'lık kısım test'e ayrılır, geri kalan K-1 parça train'e gider — K büyüdükçe bu oran büyür). Model, **gerçeğe daha yakın** bir veri miktarıyla eğitildiği için, gerçek performansı **daha az küçümser** — buna **"düşük bias"** deniyor.
+
+**Dezavantajı 1 — Hesaplama Maliyeti:** K arttıkça, döngü **daha fazla kez** (K kez) tekrarlanır, yani modeli **daha çok kez eğitmeniz** gerekir — bu, özellikle büyük veri setlerinde/karmaşık modellerde **zaman/maliyet** açısından pahalıya patlar.
+
+**Dezavantajı 2 — Yüksek Varyans:** K büyüdüğünce, her fold'un train verisi **birbirine çok benzer** hale gelir (çünkü her seferinde sadece küçük bir parça dışarıda kalıyor, geri kalan hemen hemen aynı). Bu benzerlik, fold'lar arası sonuçların **birbirine bağımlı** olmasına yol açar — bu da **"yüksek varyans"** demek, yani sonuçlar teorik olarak daha **kararsız/dalgalı** olabilir.
+
+## Düşük K (örneğin K=3)
+
+**Avantajı:** Daha **az iterasyon**, yani **daha hızlı, daha az maliyetli** — özellikle büyük veri setlerinde pratik bir tercih.
+
+**Dezavantajı:** Her fold'da **train verisi daha küçük** olur (çünkü daha büyük bir parça test'e ayrılıyor). Model, **daha az veriyle** eğitildiği için, gerçek potansiyelini **tam gösteremeyebilir** — bu da modelin performansını **olduğundan düşük gösterme** eğilimi yaratır, yani **"yüksek bias"**.
+
+## Basit Bir Özet
+
+- **K büyük** → daha doğru (az bias) ama yavaş ve biraz kararsız (yüksek varyans)
+- **K küçük** → hızlı ama daha az güvenilir tahmin (yüksek bias)
+
+**Pratikte en çok tercih edilen değerler K=5 veya K=10** — bu ikisi, hız ile güvenilirlik arasında **makul bir denge** sunduğu için sektörde standart haline gelmiştir.
+
+K=5 or K=10 are widely used as they often provide a good balance between computational cost and reliable performance estimation.
+
+Stratified K-Fold Cross-Validation
+
+When dealing with classification problems, especially those with imbalanced classes (where one class is much more frequent than others), standard K-Fold might lead to folds where the class distribution is skewed. For instance, one fold might accidentally contain very few or even zero samples of the minority class. This can severely impact the training process or yield misleading evaluation scores.
+
+Stratified K-Fold addresses this by ensuring that each fold preserves the same percentage of samples for each class as present in the complete dataset. If your dataset has 80% Class A and 20% Class B, Stratified K-Fold ensures that each fold will also have (approximately) 80% Class A and 20% Class B samples.
+
+This is the preferred method for classification tasks, as it ensures that the model is trained and evaluated on folds representative of the overall class distribution.
+
+In scikit-learn, you can use the StratifiedKFold class or simply pass and you can use an integer value for cv to cross_val_score when performing classification; scikit-learn often uses Stratified K-Fold by default for classification estimators.
+
+Hocam bu cümledeki **`cv`**, `cross_val_score` fonksiyonunun bir **parametresi** — kısaca **"cross-validation stratejisi"** anlamına geliyor. Açıklayayım.
+
+## `cv` Parametresi Ne İşe Yarıyor?
+
+Hatırlarsanız `cross_val_score` fonksiyonunu şöyle kullanmıştık:
+
+```python
+from sklearn.model_selection import cross_val_score
+
+scores = cross_val_score(model, X, y, cv=kf)
+```
+
+Burada `cv=kf` derken, **daha önce kendimiz oluşturduğumuz `KFold` nesnesini** (`kf = KFold(n_splits=5, ...)`) veriyorduk — yani `cv` parametresi, fonksiyona **"veriyi nasıl bölmen gerektiğini"** söylüyor.
+
+## Cümlenin Bahsettiği Kolaylık — `cv`'ye Doğrudan Bir Sayı Vermek
+
+Cümle şunu söylüyor: `cv` parametresine, **hazır bir `KFold` nesnesi oluşturup vermek yerine**, doğrudan **bir tam sayı (integer)** de verebilirsiniz:
+
+```python
+scores = cross_val_score(model, X, y, cv=5)  # sadece "5" yazmak yeterli
+```
+
+Bu, `KFold(n_splits=5)` yazıp onu `cv`'ye vermekle **kabaca aynı işi** yapıyor — ama **daha kısa, daha pratik** bir yazım. Sklearn, `cv=5` gördüğünde arka planda **otomatik olarak** 5 parçalı bir bölme stratejisi kuruyor, sizin elle `KFold` nesnesi oluşturmanıza gerek kalmıyor.
+
+## Peki Cümlenin Asıl Vurgusu Ne? — "Otomatik Stratification"
+
+İşte cümlenin **en can alıcı kısmı** burada: **"scikit-learn often uses Stratified K-Fold by default for classification estimators"** — yani, eğer siz `cv=5` gibi **sadece bir sayı** verirseniz VE çözdüğünüz problem bir **sınıflandırma (classification)** problemiyse, sklearn **sizin yerinize, otomatik olarak** normal `KFold` değil, **`StratifiedKFold`** kullanıyor!
+
+## Neden Bu Önemli? (Hatırlayalım)
+
+Hatırlarsanız Stratified K-Fold'u konuşurken, **sınıf dengesizliği olan** veri setlerinde (örneğin %95-%5 gibi), her fold'daki sınıf oranlarının **orijinal veriyle aynı kalmasının** ne kadar kritik olduğunu görmüştük. Bu cümle bize diyor ki: **siz hiç `StratifiedKFold` yazmasanız bile**, sadece `cv=5` yazarsanız ve **model bir sınıflandırıcıysa** (örneğin `LogisticRegression`), sklearn **sizin için otomatik olarak** bu daha güvenli, dengeli bölmeyi yapıyor — **arka planda, sizin haberiniz bile olmadan**.
+
+## Somut Bir Karşılaştırma
+
+```python
+# 1. Yöntem — Sadece sayı verirsiniz, sklearn otomatik stratify eder (classification için)
+scores = cross_val_score(LogisticRegression(), X, y, cv=5)
+
+# 2. Yöntem — Elle StratifiedKFold oluşturup verirsiniz (aynı sonucu, ama açıkça kontrol ederek)
+from sklearn.model_selection import StratifiedKFold
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(LogisticRegression(), X, y, cv=skf)
+
+# 3. Yöntem — Bilinçli olarak NORMAL KFold istiyorsanız (stratify İSTEMİYORSANIZ), elle belirtmelisiniz
+from sklearn.model_selection import KFold
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(LogisticRegression(), X, y, cv=kf)
+```
+
+**1. ve 2. yöntem, classification'da genelde aynı sonucu verir** (çünkü sklearn zaten otomatik stratify ediyor) — ama **2. yöntem daha açık/kontrollü**, çünkü `shuffle=True` ve `random_state` gibi detayları **siz** belirliyorsunuz; `cv=5` yazdığınızda bu detaylar **sklearn'ün varsayılanlarına** bırakılıyor (örneğin varsayılan olarak `shuffle=False` olabilir, bu da rastgelelik istiyorsanız sorun yaratabilir).
+
+## Peki Regresyon Problemlerinde Ne Oluyor?
+
+Eğer modeliniz bir **regresyon** modeliyse (örneğin `LinearRegression`, sürekli bir sayı tahmin ediyorsa), stratification kavramı **anlamsız** olduğu için (hatırlarsanız, "sınıf oranı" diye bir şey yok), sklearn bu durumda **otomatik olarak normal `KFold`** kullanır, `StratifiedKFold` değil.
+
+## Özetle `cv` Parametresinin Alabileceği Değerler
+
+| `cv` Değeri | Ne Anlama Gelir |
+| `cv=5` (bir sayı) | Sklearn otomatik karar verir — classification'da genelde Stratified K-Fold, regression'da normal K-Fold |
+| `cv=kf` (bir `KFold` nesnesi) | Siz **tam kontrol** sahibisiniz, tam olarak nasıl bölüneceğini belirlersiniz |
+| `cv=skf` (bir `StratifiedKFold` nesnesi) | Siz **açıkça** stratification istediğinizi belirtmiş olursunuz |
+
+---
+
+**Özetle:** `cv`, `cross_val_score` fonksiyonuna **"veriyi nasıl K parçaya böleceğini"** söyleyen parametre. Ona sadece bir **sayı** (`cv=5`) verirseniz, sklearn **kendi başına en uygun stratejiyi seçiyor** — sınıflandırma problemlerinde bu genellikle **Stratified K-Fold** oluyor, çünkü bu daha güvenli/dengeli bir yaklaşım. Eğer **tam kontrol** istiyorsanız (örneğin `shuffle` ve `random_state` gibi detayları elle ayarlamak için), kendi `KFold`/`StratifiedKFold` nesnenizi oluşturup `cv`'ye onu vermeniz gerekir.
+
+Soru: Hocam ben kfoldu alenen belirtmediğim takdirde cross_val_score(ck=5) yaparsam bu stratified CV olarak mı çalışacak ?
+
+Elcevap:Hocam evet, **doğru anladınız** — `cross_val_score(model, X, y, cv=5)` yazdığınızda ve `model` bir **sınıflandırıcı (classifier)** ise, sklearn **otomatik olarak Stratified K-Fold kullanır**, siz hiç `KFold` ya da `StratifiedKFold` yazmasanız bile.
+
+## Bunun Şartı Ne?
+
+Bu otomatik davranış **iki koşula bağlı:**
+
+1. **Model bir classifier olmalı** — yani `LogisticRegression`, `RandomForestClassifier`, `DecisionTreeClassifier` gibi bir sınıflandırma modeli kullanıyor olmalısınız (sklearn, modelin `_estimator_type` özelliğine bakarak "bu bir classifier mı" diye kontrol ediyor)
+2. **`y` (hedef değişken) kategorik/sınıf yapısında olmalı** — yani sürekli bir sayı değil, ayrık sınıflar (0/1, ya da "Setosa/Versicolor/Virginica" gibi) içermeli
+
+Eğer bu iki koşul sağlanıyorsa, `cv=5` yazmanız, **arka planda otomatik olarak** `StratifiedKFold(n_splits=5)` çalıştırılması anlamına gelir.
+
+## Dikkat Edilmesi Gereken Bir Detay — `shuffle` Varsayılanı
+
+Burada önemli bir **ince nokta** var: sklearn'ün bu **otomatik oluşturduğu** `StratifiedKFold`, varsayılan olarak **`shuffle=False`** ile çalışır — yani veriyi **karıştırmadan**, olduğu sırayla böler. Bu, sınıf oranlarını korur (stratification hâlâ çalışır), ama eğer veri setiniz **belirli bir sıraya göre dizilmişse** (örneğin tarihe göre sıralıysa), bu **istenmeyen bir örüntü** yaratabilir.
+
+```python
+# cv=5 yazdığınızda, arka planda kabaca şu çalışıyor:
+StratifiedKFold(n_splits=5, shuffle=False)  # shuffle=False, random_state yok
+```
+
+## Eğer Shuffle da İstiyorsanız — Elle Belirtmeniz Gerekir
+
+```python
+from sklearn.model_selection import StratifiedKFold
+
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(model, X, y, cv=skf)
+```
+
+Yani **sadece stratification** istiyorsanız `cv=5` yeterli ve pratik; ama **hem stratification hem shuffle (rastgele karıştırma) hem de tekrarlanabilirlik (random_state)** istiyorsanız, kendi `StratifiedKFold` nesnenizi oluşturup **açıkça** `cv`'ye vermeniz gerekiyor.
+
+## Basit Bir Doğrulama Kodu
+
+Merak ederseniz, bunu kendi gözünüzle de doğrulayabilirsiniz:
+
+```python
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.linear_model import LogisticRegression
+import numpy as np
+
+model = LogisticRegression(max_iter=1000)
+
+# cv=5 ile
+scores1 = cross_val_score(model, X, y, cv=5)
+
+# Elle StratifiedKFold (shuffle=False) ile
+skf = StratifiedKFold(n_splits=5, shuffle=False)
+scores2 = cross_val_score(model, X, y, cv=skf)
+
+print(np.allclose(scores1, scores2))  # True çıkmalı, ikisi aynı sonucu üretir
+```
+
+Eğer bu kodu çalıştırırsanız, `scores1` ve `scores2`'nin **birebir aynı** çıktığını göreceksiniz — bu da `cv=5`'in gerçekten arka planda **shuffle'sız bir StratifiedKFold** çalıştırdığını kanıtlar.
+
+---
+
+**Özetle:** Evet, `cross_val_score(model, X, y, cv=5)` yazmanız, model bir **classifier** ve `y` **kategorik** olduğu sürece, otomatik olarak **Stratified K-Fold** olarak çalışır — ama **shuffle=False** varsayılanıyla. Eğer veriniz belirli bir sıraya göre dizilmişse ya da rastgele karıştırma istiyorsanız, kendi `StratifiedKFold(shuffle=True, random_state=...)` nesnenizi oluşturup `cv` parametresine **açıkça** vermeniz gerekir.
+
+# Example using scikit-learn for Stratified K-Fold
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
+
+# Assume X and y are defined, y might be imbalanced
+# Example placeholder imbalanced data
+X = np.random.rand(100, 10)
+y = np.array([0]*80 + [1]*20) # 80% class 0, 20% class 1
+np.random.shuffle(y) # Shuffle to mix classes
+
+model = RandomForestClassifier(random_state=42)
+
+# Define the Stratified K-Fold strategy (e.g., 5 folds)
+stratified_kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+# Perform cross-validation using Stratified K-Fold
+# For classification, cross_val_score often uses StratifiedKFold by default
+# if y is passed, but specifying it explicitly is clearer.
+scores = cross_val_score(model, X, y, cv=stratified_kfold, scoring='roc_auc') # Using ROC AUC
+
+print(f"Stratified Scores for each fold: {scores}")
+print(f"Average CV ROC AUC: {np.mean(scores):.4f}")
+print(f"Standard Deviation of CV ROC AUC: {np.std(scores):.4f}")
+
