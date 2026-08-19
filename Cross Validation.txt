@@ -512,3 +512,363 @@ print(f"Stratified Scores for each fold: {scores}")
 print(f"Average CV ROC AUC: {np.mean(scores):.4f}")
 print(f"Standard Deviation of CV ROC AUC: {np.std(scores):.4f}")
 
+Other Cross-Validation Strategies
+
+While K-Fold and Stratified K-Fold are the most common, other strategies exist:
+
+Leave-One-Out Cross-Validation (LOOCV): This is K-Fold where K equals the number of samples (N) in the dataset. In each iteration, one sample is used as the test set, and the remaining N−1 samples are used for training. It's computationally very expensive (N iterations) and can produce high-variance estimates of test error, but it can be useful for very small datasets.
+
+Shuffle Split: This strategy creates a specified number of independent train/test splits. In each split, the data is first shuffled randomly, and then a certain percentage (e.g., 20%) is selected as the test set. Unlike K-Fold, samples can appear in the test set multiple times across different iterations, and the folds are not disjoint. ShuffleSplit and StratifiedShuffleSplit (which maintains class proportions) offer flexibility in controlling the number of iterations and the size of the test set independently.
+
+Hocam ShuffleSplit'i detaylıca anlatayım, K-Fold ile sürekli karşılaştırarak.
+
+## Önce Temel Farkı Anlayalım — "Disjoint" Kelimesine Dönelim
+
+Hatırlarsanız K-Fold'da **"non-overlapping" (çakışmayan/disjoint)** kavramını detaylıca konuşmuştuk — her satırın **tam olarak bir fold'a** ait olduğunu, hiçbir satırın **birden fazla fold'da** tekrar etmediğini öğrenmiştik. **ShuffleSplit, bu kuralı tamamen kırıyor** — cümledeki "folds are not disjoint" (fold'lar çakışmayan değil) ifadesi tam olarak bunu söylüyor: **aynı satır, farklı iterasyonlarda birden fazla kez test setine düşebilir.**
+
+## ShuffleSplit Nasıl Çalışıyor?
+
+K-Fold'da veriyi **önceden, sabit K parçaya** bölüyorduk ve her parça **sırayla** test seti oluyordu. ShuffleSplit'te böyle bir "önceden bölme" **yok** — bunun yerine, her iterasyonda **bağımsız, kendi başına** şu işlem tekrarlanıyor: veriyi **rastgele karıştır**, sonra belirlediğiniz bir **yüzdeyi (örneğin %20)** test seti olarak **rastgele seç**, geri kalanını train yap. Bu işlem, siz kaç iterasyon istiyorsanız o kadar **tekrar tekrar, her seferinde sıfırdan** yapılıyor.
+
+## Somut Bir Örnekle Farkı Gösterelim
+
+Diyelim ki 10 satırlık bir veri setiniz var (index 0-9), ve **3 iterasyon** istiyorsunuz, test seti **%20** (yani 2 satır).
+
+**K-Fold (K=5) olsaydı, sabit ve çakışmayan bölünme:**
+```
+Fold 1: test = [0, 1]
+Fold 2: test = [2, 3]
+Fold 3: test = [4, 5]
+Fold 4: test = [6, 7]
+Fold 5: test = [8, 9]
+```
+Her satır **tam olarak bir kez** test'e giriyor.
+
+**ShuffleSplit (3 iterasyon, %20 test) olsaydı, tamamen bağımsız rastgele seçimler:**
+```
+İterasyon 1: test = [3, 7]   (rastgele seçildi)
+İterasyon 2: test = [3, 5]   (dikkat, 3 yine burada!)
+İterasyon 3: test = [1, 3]   (3 üçüncü kez test'te!)
+```
+
+Gördüğünüz gibi, **satır 3, üç iterasyonun hepsinde de test setine düşmüş** — bu, K-Fold'da **asla olmayacak** bir durum, çünkü orada her satır garanti olarak **sadece bir kez** test'e giriyordu. ShuffleSplit'te böyle bir garanti **yok**, çünkü her iterasyon **bağımsız, kendi başına** rastgele bir seçim yapıyor, önceki iterasyonları **hiç hatırlamıyor/dikkate almıyor.**
+
+## Kod Üzerinden Gösterelim
+
+```python
+from sklearn.model_selection import ShuffleSplit
+
+ss = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+
+for i, (train_index, test_index) in enumerate(ss.split(X)):
+    print(f"İterasyon {i+1} - Test index'leri: {test_index}")
+```
+
+Bu kodu çalıştırırsanız, **5 farklı iterasyonun** test index listelerinin **birbirinden bağımsız, örtüşen** olduğunu göreceksiniz.
+
+## Neden Böyle Bir Şeye İhtiyaç Var? (K-Fold Yeterli Değil miydi?)
+
+ShuffleSplit'in sunduğu **en büyük esneklik**, cümlede geçen şu kısımda gizli: **"iterasyon sayısını ve test setinin boyutunu birbirinden bağımsız kontrol edebilme."**
+
+K-Fold'da bu ikisi **birbirine kilitli** — eğer `K=5` derseniz, otomatik olarak **her fold %20 test** olur (çünkü 5 eşit parçaya bölünüyor, her biri 1/5 = %20). Eğer `K=10` derseniz, otomatik olarak **her fold %10 test** olur. Yani K-Fold'da **"kaç kez tekrarlayacağım"** ile **"test seti ne kadar büyük olacak"** sorularının **tek bir cevabı** var, ikisini **ayrı ayrı** seçemiyorsunuz.
+
+ShuffleSplit'te ise bu ikisi **tamamen bağımsız iki parametre:**
+```python
+ShuffleSplit(n_splits=20, test_size=0.1)   # 20 KEZ tekrarla, her seferinde %10 test
+ShuffleSplit(n_splits=3, test_size=0.3)    # sadece 3 KEZ tekrarla, her seferinde %30 test
+```
+
+K-Fold'da, `n_splits=20` demek zorunda kalsaydınız, otomatik olarak **her fold sadece %5 test** olurdu (1/20) — ama belki siz **her test setinin daha büyük (%10) olmasını, ama yine de 20 kez tekrarlamayı** istiyorsunuzdur. ShuffleSplit, işte tam bu **"istediğim kadar tekrarla, istediğim büyüklükte test seti kullan"** esnekliğini sağlıyor.
+
+## Büyük Veri Setlerinde Pratik Bir Avantaj
+
+Çok büyük bir veri setiniz varsa (milyonlarca satır), K-Fold'da `K=10` gibi bir değer seçtiğinizde, modelinizi **10 kez, her seferinde neredeyse tüm veriyle** eğitmeniz gerekir — bu **çok maliyetli** olabilir. ShuffleSplit ile, **daha az iterasyon** (örneğin sadece 5) ve **daha küçük bir test seti** (%10 gibi) seçerek, **hesaplama maliyetini düşürüp**, yine de **makul bir performans tahmini** elde edebilirsiniz — K-Fold'un getirdiği "her satırı tam bir kez test etme" garantisinden **bilinçli olarak vazgeçerek.**
+
+## StratifiedShuffleSplit — Aynı Mantık, Sınıf Dengesi Korunarak
+
+Tıpkı `KFold` ile `StratifiedKFold` arasındaki ilişkiye benzer şekilde, **`StratifiedShuffleSplit`**, ShuffleSplit'in mantığını korurken, **her iterasyonun test setinde** sınıf oranlarının **orijinal veriyle aynı kalmasını** garanti ediyor:
+
+```python
+from sklearn.model_selection import StratifiedShuffleSplit
+
+sss = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+
+for train_index, test_index in sss.split(X, y):
+    # burada da y'ye ihtiyaç var, çünkü sınıf oranlarını bilmesi gerekiyor
+    ...
+```
+
+Yine hatırlarsanız `StratifiedKFold`'da da `split(X, y)` derken **hem X hem y** vermemiz gerekiyordu — burada da **aynı sebepten**, `StratifiedShuffleSplit`'in **hangi satırın hangi sınıfa ait olduğunu** bilmesi gerekiyor, bu bilgi de sadece `y`'de var.
+
+## Ne Zaman K-Fold, Ne Zaman ShuffleSplit Kullanmalı?
+
+| Durum | Önerilen |
+| Her satırın **tam olarak bir kez** test edilmesi önemliyse (garantili, sistematik kapsama) | **K-Fold** |
+| İterasyon sayısı ile test seti boyutunu **bağımsız** kontrol etmek istiyorsanız | **ShuffleSplit** |
+| Çok büyük veri setinde, hesaplama maliyetini düşürmek istiyorsanız | **ShuffleSplit** (daha az/küçük iterasyon) |
+| Sınıf dengesizliği varsa | **StratifiedKFold** ya da **StratifiedShuffleSplit** (senaryonuza göre) |
+
+---
+
+**Özetle:** ShuffleSplit, K-Fold'un **"her satır tam bir kez test edilir"** garantisinden vazgeçip, bunun yerine **her iterasyonda bağımsız, rastgele bir bölme** yaparak, **iterasyon sayısı ile test seti boyutunu birbirinden ayrı ayrı kontrol edebilme esnekliği** sunuyor — bu esnekliğin bedeli, aynı satırın **birden fazla kez test edilebilmesi, bazı satırların ise hiç test edilmeyebilmesi** ihtimali. StratifiedShuffleSplit ise bu yaklaşıma, sınıf oranlarını koruma garantisini ekliyor.
+
+Hocam bu data leakage olmaz mı ?
+
+Hocam çok yerinde bir refleks, ama burada **hayır, data leakage olmuyor** — çünkü "leakage" ile "farklı iterasyonlar arası satır tekrarı" **birbirinden tamamen farklı** kavramlar. Bu ayrımı netleştireyim.
+
+## Data Leakage'ın Gerçek Tanımını Hatırlayalım
+
+Data leakage, bir modelin **aynı değerlendirme içinde**, test verisinin bilgisini **train sürecine sızdırması** demekti — yani **bir satırın hem train hem test'te AYNI ANDA, AYNI İTERASYONDA** bulunması, ya da bir istatistiğin (mean, std, target ortalaması gibi) test verisini de içine katarak hesaplanması.
+
+## ShuffleSplit'te Her İterasyonun Kendi İçinde Ne Oluyor?
+
+**Her tek bir iterasyona baktığınızda**, ShuffleSplit de tıpkı K-Fold gibi **temiz bir train/test ayrımı** yapıyor — bir satır, **o iterasyonda** ya train'de ya test'te, **asla ikisinde birden** değil:
+
+```python
+İterasyon 1: train = [0,1,2,4,5,6,8,9], test = [3,7]
+                  ↑ satır 3, bu iterasyonda SADECE test'te
+```
+
+Model, iterasyon 1'de **sadece train'deki 8 satırla** eğitiliyor, sonra **sadece test'teki 2 satırla** test ediliyor — burada **hiçbir sızıntı yok**, tıpkı K-Fold'daki gibi kusursuz bir ayrım var.
+
+## Peki Kafanızı Karıştıran Şey Ne? — Farklı İterasyonlar Arası Tekrar
+
+Sizin muhtemelen düşündüğünüz senaryo şu: *"Eğer satır 3, iterasyon 1'de test'teyse, ama iterasyon 2'de train'e düşerse, bu bir sızıntı değil mi? Çünkü model sonunda o satırı 'görmüş' oluyor."*
+
+**Bu, gerçek bir leakage değil**, çünkü **her iterasyon, kendi başına bağımsız, ayrı bir deney.** Hatırlarsanız `cross_val_score`'un her iterasyonda **modeli sıfırdan klonladığını** konuşmuştuk — yani:
+
+```
+İterasyon 1: YENİ bir model → sadece iterasyon 1'in train'iyle eğitilir → sadece iterasyon 1'in test'iyle değerlendirilir → SONUÇ 1
+İterasyon 2: TAMAMEN YENİ bir model → sadece iterasyon 2'nin train'iyle eğitilir → sadece iterasyon 2'nin test'iyle değerlendirilir → SONUÇ 2
+```
+
+**İterasyon 2'deki model, iterasyon 1'de ne olduğunu hiç bilmiyor** — o, kendi başına, **temiz bir sayfa** ile başlıyor. Satır 3'ün iterasyon 1'de test'te olması, iterasyon 2'nin modelini **hiçbir şekilde etkilemiyor**, çünkü bu iki model **birbirinden habersiz, tamamen ayrı** varlıklar.
+
+## Basit Bir Benzetmeyle Açıklayalım
+
+Bunu **5 farklı, birbirinden habersiz sınav** gibi düşünün. Bir öğrenci (satır 3), **1. sınavda soru olarak** çıkabilir, **2. sınavda ise "ders çalışma materyali" olarak** kullanılabilir. Bu **sorun değil**, çünkü 1. sınavı yapan öğretmen ile 2. sınavı yapan öğretmen **birbirinden tamamen bağımsız** — 2. öğretmen, 1. sınavda o öğrencinin ne sorulduğunu **hiç bilmiyor**, kendi bağımsız değerlendirmesini yapıyor.
+
+## Peki Gerçekte Ne Fark Ediyor? — Leakage Değil, "İstatistiksel Bağımsızlık" Sorunu
+
+ShuffleSplit'in K-Fold'dan **gerçek farkı**, leakage değil, **sonuçların istatistiksel olarak ne kadar "bağımsız"** olduğu meselesi. Hatırlarsanız K-Fold'da **her satır tam olarak bir kez** test edildiği için, 5 fold'un sonuçları **birbirinden daha "temiz" ayrılmış** oluyordu. ShuffleSplit'te ise bazı satırlar **hiç test edilmeyebilir**, bazıları **birden fazla kez test edilebilir** — bu, **"her satırı adil şekilde kapsama"** garantisini zayıflatıyor, ama bu **leakage değil**, sadece **örneklem çeşitliliği/kapsama** meselesi.
+
+## Gerçek Bir Leakage Riski Nerede Ortaya Çıkabilir? (İnce Bir Nokta)
+
+Eğer siz ShuffleSplit'i **hiperparametre optimizasyonu** için **defalarca, çok sayıda kombinasyon deneyerek** kullanırsanız (örneğin `GridSearchCV` ile yüzlerce parametre kombinasyonunu test ederken), **aynı test verilerinin tekrar tekrar görülmesi**, dolaylı olarak **"validation setine aşırı uyum" (overfitting to validation)** riskine yol açabilir — bu, klasik "train'e test sızması" değil, ama **çoklu deneme (multiple comparisons)** kaynaklı, daha **ince bir aşırı iyimserlik riski.** Bu, ShuffleSplit'e **özgü değil**, K-Fold dahil **her cross-validation yönteminde** hiperparametre araması yaparken karşılaşılabilecek genel bir tuzak.
+
+---
+
+**Özetle:** Hayır, ShuffleSplit **data leakage'a yol açmıyor** — çünkü **her iterasyonun kendi içinde**, train ve test **kusursuz şekilde ayrılmış** durumda, ve her iterasyon **birbirinden habersiz, bağımsız bir model** kullanıyor. Farklı iterasyonlar arasında aynı satırın **tekrar görünmesi**, "sızıntı" değil, sadece K-Fold'un sunduğu **"her satırı garantili, tam bir kez kapsama"** özelliğinden **bilinçli olarak vazgeçilmesi** anlamına geliyor — bu bir güvenlik açığı değil, sadece **farklı bir tasarım tercihi.**
+
+Cross Validation Hyperparameter Tuning
+
+Cross-Validation for Hyperparameter Tuning
+
+Outer Loop: The search method proposes a combination of hyperparameters (e.g., C=1.0, kernel='rbf' for an SVM).
+
+Inner Loop (Cross-Validation): To evaluate this specific combination, the training data is split using K-Fold (or Stratified K-Fold). The model with the chosen hyperparameters is trained and evaluated K time.
+
+Aggregate Score: The average performance score across the K folds is calculated for that hyperparameter combination.
+
+Repeat: Steps 1-3 are repeated for all hyperparameter combinations defined in the grid (Grid Search) or for a fixed number of random combinations (Randomized Search).
+
+Select Best: The hyperparameter combination that yielded the best average cross-validation score is selected as the optimal set of parameters.
+
+Final Training: Finally, the model with these best hyperparameters is typically retrained on the entire original training dataset (not just the K-1 folds used during CV) to maximize the data used before evaluating on the final, held-out test set.
+
+This ensures that the hyperparameters are chosen based on a stable estimate of generalization performance, rather than performance on a single validation split.
+
+By employing cross-validation, we move from potentially unreliable single-split evaluations to estimates of how our models are likely to perform on new, unseen data. This is fundamental for building confidence in our model selection and hyperparameter tuning processes. 
+
+Hocam bu metni, adım adım ve somut örneklerle açıklayayım — bu, hiperparametre ayarlamanın (hyperparameter tuning) cross-validation ile **nasıl birleştiğini** anlatan, gerçek bir ML projesinin en kritik parçalarından biri.
+
+## Önce "Hyperparameter" Kavramını Hatırlayalım
+
+Hatırlarsanız `KNNImputer(n_neighbors=5)` yazarken, `5` değerini **biz elle seçmiştik.** İşte bu `n_neighbors` gibi, **modelin kendisinin öğrenmediği, bizim önceden belirlediğimiz** ayarlara **hyperparameter (hiperparametre)** denir. `LogisticRegression`'da `max_iter`, SVM'de `C` ve `kernel`, Random Forest'ta `n_estimators` gibi parametreler hep bu kategoriye girer. Sorun şu: **hangi değerin en iyi olduğunu genelde bilmiyoruz**, bu yüzden birden fazla değeri **deneyip karşılaştırmamız** gerekiyor — işte bu metin, bu "deneme ve karşılaştırma" sürecinin **doğru, güvenilir bir şekilde** nasıl yapılması gerektiğini anlatıyor.
+
+## Outer Loop (Dış Döngü) — "Hangi Kombinasyonu Deneyeceğiz?"
+
+Metnin başında bahsedilen **outer loop**, **arama yönteminin** (grid search ya da random search) size bir **hiperparametre kombinasyonu önerdiği** aşama. Örneğin SVM için `C=1.0, kernel='rbf'` gibi bir kombinasyon **teklif ediliyor** — bu, henüz **hiçbir eğitim/test yapılmadan önce**, sadece "şimdi bunu deneyelim" diyen bir **öneri adımı.**
+
+## Inner Loop (İç Döngü) — Cross-Validation Devreye Giriyor
+
+Bu önerilen **her bir kombinasyonu değerlendirmek için**, metin diyor ki: **train verisini K-Fold (ya da Stratified K-Fold) ile bölün, bu spesifik hiperparametre kombinasyonuyla modeli K kez eğitip test edin.** Yani burada, **tam olarak bizim şu ana kadar öğrendiğimiz K-Fold süreci**, tek bir hiperparametre kombinasyonunu **değerlendirmek için bir "alt işlem" olarak kullanılıyor.** Örneğin `C=1.0, kernel='rbf'` kombinasyonunu, K=5 ile değerlendirirseniz, bu kombinasyon için **5 farklı accuracy değeri** elde edersiniz — tıpkı bizim `heart.csv` üzerinde yaptığımız gibi.
+
+## Aggregate Score (Toplu Skor) — 5 Sayıyı Tek Bir Sayıya İndirmek
+
+Bu adım, K-Fold'dan çıkan **5 farklı accuracy'nin ortalamasını almak** — hatırlarsanız `np.mean(fold_accuracies)` ile yaptığımız işlem tam olarak bu. Sonuç, **"C=1.0, kernel='rbf' kombinasyonu, ortalama olarak %82 accuracy veriyor"** gibi **tek bir özet sayı** oluyor.
+
+## Repeat (Tekrarla) — Bu Süreç Her Kombinasyon İçin Tekrarlanıyor
+
+İşte burada **outer loop ile inner loop'un iç içe geçmiş yapısı** netleşiyor. Diyelim ki denemek istediğiniz hiperparametre kombinasyonları şunlar:
+```
+Kombinasyon 1: C=0.1, kernel='linear'
+Kombinasyon 2: C=1.0, kernel='rbf'
+Kombinasyon 3: C=10, kernel='rbf'
+Kombinasyon 4: C=1.0, kernel='poly'
+```
+
+Her bir kombinasyon için, **ayrı ayrı, sıfırdan bir K-Fold cross-validation süreci** çalıştırılıyor:
+```
+Kombinasyon 1 → 5-Fold CV çalıştır → ortalama accuracy: %75
+Kombinasyon 2 → 5-Fold CV çalıştır → ortalama accuracy: %82
+Kombinasyon 3 → 5-Fold CV çalıştır → ortalama accuracy: %79
+Kombinasyon 4 → 5-Fold CV çalıştır → ortalama accuracy: %77
+```
+
+Eğer 4 kombinasyonunuz ve K=5 foldunuz varsa, toplamda **4 × 5 = 20 kez** model eğitimi yapılmış oluyor — bu, **"outer loop × inner loop"** yapısının hesaplama maliyetinin neden hızla arttığını gösteriyor.
+
+## Grid Search vs Randomized Search — İki Farklı "Kombinasyon Önerme" Stratejisi
+
+Metin, bu kombinasyonların **Grid Search** ya da **Randomized Search** ile üretilebileceğini söylüyor:
+
+**Grid Search**, siz her hiperparametre için **olası tüm değerleri** listelersiniz, sistem bunların **her olası kombinasyonunu** dener (tıpkı yukarıdaki 4 kombinasyon örneği gibi, ama gerçekte genelde çok daha fazla kombinasyon olur).
+
+**Randomized Search** ise, tüm kombinasyonları denemek yerine, **rastgele seçilmiş, sınırlı sayıda** kombinasyonu dener — özellikle hiperparametre uzayı çok büyükse (örneğin 5 farklı parametrenin her biri 10 farklı değer alabiliyorsa, bu 10⁵=100.000 kombinasyon demek), tüm kombinasyonları denemek **pratik olmayacağı için**, rastgele bir örneklemle **makul sürede** iyi bir sonuca yaklaşmaya çalışılır.
+
+## Select Best (En İyiyi Seç) — Karar Anı
+
+Tüm kombinasyonlar denendikten sonra, **en yüksek ortalama cross-validation skoruna** sahip kombinasyon **kazanan** ilan edilir. Bizim örneğimizde bu, **Kombinasyon 2 (C=1.0, kernel='rbf', %82 accuracy)** olurdu.
+
+## Final Training — En Kritik ve Sıkça Atlanan Adım
+
+Metnin bu kısmı **gerçekten önemli ve çoğu yeni başlayanın atladığı bir detay:** en iyi hiperparametreleri bulduktan sonra, modeli **tekrar, ama bu sefer TÜM orijinal train verisiyle** (K-1 fold'la değil, **train verisinin tamamıyla**) eğitmeniz gerekiyor.
+
+**Neden bu gerekli?** Çünkü cross-validation sürecinde, her fold'da modeliniz **train verisinin sadece K-1/K'lık kısmıyla** (örneğin K=5 ise, verinin sadece %80'iyle) eğitiliyordu — bu, **hiperparametreyi seçmek için gerekliydi** (çünkü test edecek bir "kalan" parçaya ihtiyacınız vardı), ama artık **doğru hiperparametreyi bulduğunuza göre**, elinizdeki **tüm** train verisini kullanarak, modelin **daha fazla veriden öğrenmesini** sağlayabilirsiniz — bu, modelin **nihai performansını** artırır.
+
+```python
+# 1. Adım: Cross-validation ile en iyi hiperparametreyi bul
+en_iyi_C = 1.0
+en_iyi_kernel = 'rbf'
+
+# 2. Adım: Bu hiperparametrelerle, TÜM train verisiyle son bir kez eğit
+final_model = SVC(C=en_iyi_C, kernel=en_iyi_kernel)
+final_model.fit(X_train_tam, y_train_tam)  # artık K-1 fold değil, TÜM train verisi
+
+# 3. Adım: Ancak bu son modeli, hiç görmediği test setinde değerlendir
+final_score = final_model.score(X_test, y_test)
+```
+
+## Son Cümle — Neden Tüm Bu Süreç Gerekli?
+
+Metnin kapanışı şunu vurguluyor: **"Bu, hiperparametrelerin, tek bir validation bölünmesindeki performansa değil, genelleme performansının kararlı bir tahminine dayanarak seçilmesini sağlar."** Bu, aslında bizim **en başta K-Fold'u neden öğrendiğimizin** temel sebebiyle birebir örtüşüyor — eğer siz hiperparametreyi **sadece tek bir train/test bölünmesine** bakarak seçseydiniz, o seçim **şansa bağlı** olabilirdi (belki o bölünmede `C=10` iyi çıktı ama bu tesadüftü). Cross-validation kullanarak, hiperparametre seçiminizi **5 farklı bölünmenin ortalamasına** dayandırarak, **çok daha güvenilir ve tekrarlanabilir** bir karar veriyorsunuz.
+
+## Kod Üzerinden Bütün Süreci Görelim (GridSearchCV ile Otomatikleştirilmiş Hali)
+
+```python
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVC
+
+param_grid = {
+    'C': [0.1, 1.0, 10],
+    'kernel': ['linear', 'rbf', 'poly']
+}
+
+grid_search = GridSearchCV(SVC(), param_grid, cv=5)
+grid_search.fit(X_train, y_train)  # otomatik olarak TÜM outer+inner loop sürecini çalıştırır
+
+print("En iyi parametreler:", grid_search.best_params_)
+print("En iyi CV skoru:", grid_search.best_score_)
+
+# GridSearchCV, otomatik olarak en iyi parametrelerle, TÜM train verisiyle
+# yeniden eğitilmiş bir modeli de saklıyor:
+final_model = grid_search.best_estimator_
+test_score = final_model.score(X_test, y_test)
+```
+
+**Dikkat edin:** `GridSearchCV`, metindeki **tüm süreci** (outer loop, inner loop, aggregate score, en iyiyi seçme, final training) **otomatik olarak** yapıyor — siz sadece hangi parametreleri deneyeceğinizi (`param_grid`) ve kaç fold kullanacağınızı (`cv=5`) belirtiyorsunuz.
+
+---
+
+**Özetle:** Bu süreç, **iç içe geçmiş iki döngüden** oluşuyor — dış döngü **hangi hiperparametre kombinasyonunu deneyeceğine** karar verirken, iç döngü (K-Fold cross-validation) **her kombinasyonun ne kadar iyi olduğunu güvenilir şekilde** ölçüyor. En iyi kombinasyon bulunduktan sonra, model **tüm train verisiyle son bir kez** eğitiliyor (cross-validation sırasında kullanılan kısmi veriyle değil), böylece hem **güvenilir bir hiperparametre seçimi** yapılmış hem de **elinizdeki tüm veri, nihai modelin eğitiminde** kullanılmış oluyor.
+
+Soru: Biz param_grid = {
+    'C': [0.1, 1.0, 10],
+    'kernel': ['linear', 'rbf', 'poly']
+} buradaki parametreleri nasıl bileceğiz ? Bir de neden C için 0.1-1.0-10 yazdık da 2 - 3 - 4 vs yazmadık ?
+
+Hocam iki ayrı soru sordunuz, ikisini de detaylıca açıklayayım.
+
+## 1. Parametreleri Nasıl Biliyoruz? (Hangi Hiperparametreler Var, Nereden Öğreniyoruz?)
+
+Bu bilginin kaynağı, temelde **üç yerden** geliyor. Birincisi ve en güvenilir olanı, **scikit-learn'ün resmi dokümantasyonu** — her model sınıfının (örneğin `SVC`, `RandomForestClassifier`, `LogisticRegression`) kendi sayfasında, alabileceği **tüm parametrelerin isimleri, ne işe yaradıkları, varsayılan değerleri ve makul aralıkları** ayrıntılı şekilde açıklanır. Örneğin `SVC` için dokümantasyona baktığınızda, `C` parametresinin **"regularization strength" (düzenlileştirme gücü)** kontrol ettiğini, `kernel` parametresinin ise **verinin hangi matematiksel dönüşümle işleneceğini** belirlediğini görürsünüz. İkinci kaynak, **deneyim ve literatür** — zamanla, hangi modelde hangi parametrenin **en çok etkiye sahip olduğunu** (örneğin Random Forest'ta `n_estimators` ve `max_depth`'in, KNN'de `n_neighbors`'ın kritik olduğunu) öğrenirsiniz, bu bilgi genelde makalelerde ve deneyimli veri bilimcilerin paylaşımlarında da tekrarlanır. Üçüncü kaynak ise, **modelin kendi Python kodunu inceleyerek** (`help(SVC)` yazarak ya da doğrudan kaynak koda bakarak) parametrelerin tam listesini görebilirsiniz:
+
+```python
+from sklearn.svm import SVC
+help(SVC)
+```
+
+**Pratik olarak siz her parametreyi aramanıza dahil etmiyorsunuz** — genelde modelin **en etkili, en çok "ayarlanabilir"** olduğu bilinen 2-4 parametreyi seçip, geri kalanları **varsayılan değerlerinde** bırakırsınız, çünkü tüm parametreleri aynı anda aramak (özellikle her birinin çok sayıda olası değeri varsa) **kombinasyon sayısını patlatır** ve pratik olmaktan çıkar.
+
+## 2. Neden `C` İçin `0.1, 1.0, 10` — Neden `2, 3, 4` Değil?
+
+Bu, gerçekten **çok isabetli ve ileri düzey bir gözlem** — cevabı, `C` parametresinin **doğasında** yatıyor. `C`, SVM'de **düzenlileştirme (regularization) gücünü** kontrol eder, ve bu tür parametreler genelde **çarpımsal/logaritmik bir etkiye** sahiptir, **toplamsal/doğrusal bir etkiye değil**. Yani `C`'yi `1`'den `2`'ye çıkarmak ile `10`'dan `20`'ye çıkarmak, modelin davranışında **benzer büyüklükte bir değişiklik** yaratır — çünkü etkisi **oransal (relative)** olarak işliyor, `+1` gibi **mutlak (absolute)** bir artışla değil.
+
+Somut bir örnekle düşünün: eğer siz `C=1, 2, 3, 4, 5` gibi **doğrusal, eşit aralıklı** bir arama yapsaydınız, bu değerler arasındaki **gerçek etkideki fark** çok küçük olurdu (çünkü `1`'den `2`'ye gitmek, `%100`'lük bir artışken; `4`'ten `5`'e gitmek sadece `%25`'lik bir artış — yani doğrusal aralıklar, parametrenin **gerçek etkisini eşit şekilde temsil etmiyor**). Ayrıca, çoğu pratik problemde etkili `C` değerleri **çok geniş bir aralığa** yayılır — bazen `0.001` gibi çok küçük, bazen `1000` gibi çok büyük değerler en iyi sonucu verebilir. Eğer siz sadece `1, 2, 3, 4, 5` gibi dar bir aralıkta ararsanız, gerçek optimal değer belki `0.01` ya da `100` civarındaysa, **onu hiç göremezsiniz**, çünkü arama alanınız (search space) o bölgeyi hiç kapsamıyor.
+
+Bu yüzden pratikte, `C` gibi regularization parametreleri için **logaritmik bir ölçek** (her adımda 10 kat artan: `0.001, 0.01, 0.1, 1, 10, 100, 1000`) kullanılır — bu, **geniş bir değer aralığını, az sayıda denemeyle, dengeli bir şekilde** taramanızı sağlar. `0.1, 1.0, 10` sizin verdiğiniz örnekte, bu logaritmik mantığın **küçük, 3 adımlık bir versiyonu.**
+
+## Hangi Parametreler Logaritmik, Hangileri Doğrusal Aranmalı?
+
+Bu ayrım, parametrenin **doğasına** bağlı. **Logaritmik ölçekte aranması gereken** parametreler genelde şunlardır: `C` (regularization), `alpha` (Ridge/Lasso'da düzenlileştirme), `learning_rate` (öğrenme oranı) gibi — bunların **etkisi çarpımsal/üstel.** Buna karşılık **doğrusal ölçekte aranabilecek** parametreler ise, örneğin `n_neighbors` (KNN'de kaç komşu, `3, 5, 7, 9` gibi eşit aralıklarla artabilir) ya da `max_depth` (bir ağacın derinliği, `3, 5, 7, 10` gibi) — bunların etkisi **daha doğrusal**, her ek birimin etkisi **kabaca benzer büyüklükte.**
+
+## Kod Üzerinden Logaritmik Aralık Üretmek
+
+```python
+import numpy as np
+
+# Logaritmik aralık üretmek için (10 üzeri -3'ten 10 üzeri 3'e, 7 nokta)
+C_degerleri = np.logspace(-3, 3, 7)
+print(C_degerleri)
+# Çıktı: [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+```
+
+`np.logspace()`, tam olarak bu **logaritmik aralıklı değerleri** otomatik üretmek için tasarlanmış bir fonksiyon — elle `0.1, 1.0, 10` yazmak yerine, daha geniş ve sistematik bir tarama için bu kullanılır.
+
+## Peki Baştan Nasıl Karar Verilir — Hangi Aralık Denenmeli?
+
+Genelde şu yaklaşım izlenir: **önce geniş, logaritmik bir aralıkla (örneğin `0.001'den 1000'e`) kaba bir tarama yapılır**, hangi bölgede iyi sonuç çıktığı görülür (örneğin `C=10` civarı iyi çıktıysa), sonra **o bölgeye odaklanarak, daha dar ve ince bir aralıkla (`5, 10, 15, 20` gibi) ikinci bir tarama** yapılır — buna **"coarse-to-fine search"** (kabadan inceye arama) denir. Bu iki aşamalı yaklaşım, hem **geniş bir alanı kaçırmadan taramanızı** hem de **en sonunda ince/hassas bir optimizasyon** yapmanızı sağlar.
+
+---
+
+**Özetle:** Hangi parametrelerin aranacağını **dokümantasyon, deneyim ve literatürden** öğreniyoruz. `C` için `0.1, 1.0, 10` gibi **logaritmik aralıklı** değerler seçilmesinin sebebi, bu tür regularization parametrelerinin **etkisinin çarpımsal/oransal** olması — doğrusal, eşit aralıklı değerler (`2, 3, 4` gibi) hem parametrenin gerçek etkisini **adaletsiz** temsil eder hem de geniş, önemli değer aralıklarını **kaçırma riski** taşır. Bu yüzden regularization/öğrenme oranı gibi parametrelerde logaritmik, komşu sayısı/derinlik gibi parametrelerde ise genelde doğrusal arama tercih edilir.
+
+Nasıl Bulunur? (Gelecekte Kendiniz Aramak İsterseniz)
+
+Her sklearn modelinin (SVC, RandomForestClassifier, LogisticRegression, hangisi olursa) kendi API sayfası var, adres formatı hep aynı mantıkta:
+
+scikit-learn.org/stable/modules/generated/sklearn.[modül].[SınıfAdı].html
+
+En hızlı yöntem: Google'da "sklearn [model adı]" yazın (örneğin sklearn SVC, sklearn RandomForestClassifier), ilk sonuç genelde doğrudan bu API sayfası çıkar.
+
+Sayfanın Yapısı — Neden "Didik Didik Etmenize" Gerek Kalmıyor
+
+Bu sayfada, Parameters: başlığı altında, her parametre ayrı ayrı, kısa ve net şekilde açıklanmış:
+
+En önemli 3-4 parametre (bunlarla başlayın):
+
+C (float, varsayılan=1.0) → Düzenlileştirme (regularization) parametresi, düzenlileştirme gücü C ile ters orantılıdır. Değeri ne kadar küçükse, model o kadar "esnek/toleranslı"; ne kadar büyükse, o kadar "sıkı/az hata toleranslı" olur.
+kernel (varsayılan='rbf') → 'linear', 'poly', 'rbf', 'sigmoid' seçeneklerinden biri, verinin nasıl dönüştürüleceğini belirler.
+gamma (varsayılan='scale') → 'rbf', 'poly', 'sigmoid' kernel'leri için katsayı, C gibi genelde aranan (tuned) ikinci önemli parametre.
+degree (varsayılan=3) → Sadece 'poly' kernel için geçerli, polinomun derecesi.
+
+Geri kalanlar (shrinking, probability, tol, cache_size, class_weight, max_iter, random_state gibi) genelde varsayılan değerinde bırakılır, sadece özel bir ihtiyacınız varsa (örneğin dengesiz sınıflar için class_weight='balanced') değiştirilir.
+
+Pratik Öneri — Aramaya Nereden Başlamalı
+
+GridSearchCV için hiperparametre kombinasyonu kurarken, genelde sadece 2-3 parametreyi hedeflersiniz — SVC için bu genelde C, kernel, gamma üçlüsüdür:
+
+python
+param_grid = {
+    'C': [0.1, 1, 10],
+    'kernel': ['linear', 'rbf'],
+    'gamma': ['scale', 'auto', 0.1, 1]
+}
+
+Geri kalan parametreler (tol, cache_size gibi) neredeyse hiçbir zaman aranmaz, çünkü modelin doğruluğuna değil, daha çok teknik/performans detaylarına etki ederler.
+
+Özetle: Bu yeni sayfa (modules/generated/sklearn.svm.SVC.html), teori anlatan sayfadan farklı olarak sadece parametre listesi ve kısa açıklamalarını veriyor — herhangi bir modelin parametrelerini hızlıca görmek istediğinizde, artık direkt "sklearn [ModelAdı]" diye arayıp bu tarz API reference sayfasına gidebilirsiniz, "didik didik etme" derdiniz büyük ölçüde ortadan kalkar.
+
+
+
+
