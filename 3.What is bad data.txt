@@ -1,0 +1,130 @@
+What is bad data?
+
+Bad data refers to information that compromises decision-making because it is inaccurate, incomplete, inconsistent, outdated, duplicate, invalid or biased.
+
+The causes of bad data vary. Sometimes it stems from poor data architecture; other times it’s the result of human error. Regardless of origin, when organizations unintentionally use bad data, the consequences can range from minor inconveniences, such as sending tax documents to the wrong address, to severe risks such as regulatory noncompliance, reputational damage and financial losses.
+
+Önce iki kelimeyi vereyim, gerisi kolay. "stems from" = bir şeyden kaynaklanır, ileri gelir (stem aslında "sap, gövde" demek; mecazi olarak "bir şeyin kökünden çıkmak"). "Regardless of" = bir şeye bakılmaksızın, ne olursa olsun.
+
+Metnin özü: Kötü verinin sebepleri çeşitlidir. Bazen kötü veri mimarisinden (data architecture) kaynaklanır, bazen de insan hatasının sonucudur. Kaynağı ne olursa olsun, kurumlar farkında olmadan kötü veri kullandığında sonuçları küçük sıkıntılardan (mesela vergi belgelerini yanlış adrese göndermek) ciddi risklere kadar uzanabilir; bu ciddi riskler arasında yasal uyumsuzluk (regulatory noncompliance), itibar kaybı (reputational damage) ve maddi zararlar (financial losses) sayılıyor.
+
+Tek cümlede: Kötü veri ya sistemsel (mimari) ya da insani hatadan doğar ve sebebi ne olursa olsun, küçük aksaklıklardan ağır yasal/itibari/mali sonuçlara kadar zarar verebilir. Bu da son konuştuğumuz veri kalitesi konusunun "peki bozuk veri neye mal olur" tarafı.
+
+A unique danger of bad data lies in its stealth. Unlike a system outage, the effects of bad data can go undetected until significant damage is done. Organizations can unknowingly operate on bad data for years. For example, a sales team would notice immediately if their Salesforce dashboard didn’t load, but it would take them much longer to realize that the data displayed was wrong.
+
+Önce anahtar kelimeler: "lies in" = bir şeyde yatar, ona dayanır (buradaki "lie" geçen gün konuştuğumuz "uzanmak/bulunmak" anlamındaki lie, "yatmak"tan geliyor). "stealth" = gizlilik, sinsilik, fark edilmeden iş görme. "outage" = kesinti, sistemin çökmesi/durması. "undetected" = fark edilmeden, tespit edilmeden.
+
+Metnin özü: Kötü verinin kendine has tehlikesi, sinsiliğinde yatar. Bir sistem kesintisinin (outage) aksine, kötü verinin etkileri ciddi bir zarar oluşana kadar fark edilmeden ilerleyebilir. Kurumlar yıllarca farkında olmadan kötü veri üzerinde çalışabilir. Örnek olarak: bir satış ekibi, Salesforce panosu (dashboard) yüklenmese bunu anında fark eder; ama panoda gösterilen verinin yanlış olduğunu anlamaları çok daha uzun sürer.
+
+"""Kontrast, en genel anlamıyla zıtlık veya karşıtlık demektir. İki farklı unsur, renk veya kavram arasındaki belirgin farkı ve zıtlığı ifade etmek için kullanılır."""
+
+Buradaki asıl fikir şu kontrast: sistem çökmesi gürültülüdür, hemen belli olur, herkes anında görür. Kötü veri ise sessizdir; sistem sorunsuz çalışıyormuş gibi görünür, panolar yüklenir, raporlar gelir, ama içindeki sayılar yanlıştır. Bu yüzden çok daha tehlikelidir, çünkü kimse alarma geçmeden arka planda yıllarca hatalı kararlar alınmasına yol açabilir.
+
+Tek cümlede: Kötü verinin en tehlikeli yanı sinsiliğidir; sistem çökmesi gibi hemen belli olmaz, her şey çalışıyor görünürken veri yanlış olabilir ve bu fark edilene kadar büyük zarar çoktan oluşmuş olur.
+
+As big data volumes skyrocket and business leaders increasingly rely on data to power artificial intelligence (AI) and decision-making, maximizing data quality is more important than ever. Through strong data governance, data quality management practices and data observability tools, organizations can help ensure their data assets fuel growth—rather than become invisible liabilities.
+
+Types of bad data
+Bad data can be broadly categorized using the key dimensions of data quality:
+
+Inaccurate data
+Incomplete data
+Inconsistent data
+Outdated data
+Duplicate data
+Invalid data
+Biased data
+
+Inaccurate data
+Data accuracy measures how closely data reflects true, real-world events and values. When data is inaccurate, it contains errors and is unreliable for decision-making. For instance, inaccurate customer data (such as data points about pricing) can distort a company’s understanding of its audience and lead to misguided actions that erode customer satisfaction rates.
+
+Incomplete data
+Incomplete data is missing necessary records and values—gaps that impact data processing and data analysis. A large gap can even introduce bias, as analysis results may not be representative of the true dataset. For example, if most of the entries in a customer database are missing contact information, sales teams will miss opportunities to engage their customers.
+
+Inconsistent data (tutarsız veri), aynı bilginin veri içinde birbiriyle çelişen ya da uyumsuz şekillerde bulunması demektir. Yani veri kendi içinde bir uyum/mantık bütünlüğü taşımıyordur. Bunu daha önce konuştuğumuz yapısal hatalarla (structural errors) karıştırma; akraba ama biraz daha geniş bir kavram. Birkaç türünü somutlaştırayım.
+
+Birinci tür, **biçimsel tutarsızlık.** Aynı şeyin farklı formatlarda yazılması. Hatırla, inconsistent formats konusunu işlemiştik; tarihlerin bir yerde "01/05/2024" başka yerde "2024-05-01" yazılması, "İstanbul" ile "istanbul"un karışık durması gibi. Bu, tutarsız verinin en yaygın yüzü.
+
+İkinci tür, **mantıksal/çelişkili tutarsızlık.** Veri içindeki iki bilgi birbiriyle çelişir. Mesela bir kaydın "doğum tarihi 1990" ama "yaş 65" yazıyorsa, bu ikisi aynı anda doğru olamaz. Ya da "şehir: İzmir" ama "posta kodu: İstanbul'a ait" ise çelişki vardır. Burada format sorunu yok, doğrudan bilgiler birbirini tutmuyor.
+
+Üçüncü tür, **birim/ölçek tutarsızlığı.** Aynı sütunda farklı birimler karışmıştır. Mesela boy sütununda bazı kayıtlar santimetre (175), bazıları metre (1.75) cinsindense, sayılar aynı şeyi ölçse de tutarsızdır. Para biriminde kimi satır TL kimi dolar olması da aynı sorun.
+
+Dördüncü tür, **kopya/çelişen kayıtlar (duplicates).** Aynı varlık veride birden fazla kez, üstelik farklı bilgilerle yer alır. Mesela aynı müşteri iki kez kaydedilmiş ama birinde telefonu farklı yazılmışsa, hangisinin doğru olduğu belirsizdir; veri kendi içinde tutarsızdır.
+
+Neden önemli? Çünkü model veriyi olduğu gibi okur ve tutarsızlığı "gerçek" sanar. "İstanbul" ile "istanbul"u iki ayrı şehir, santimetre ile metreyi aynı ölçekte sayılar zanneder; çelişen kayıtlar da onu yanıltır. Bu da daha önce konuştuğumuz "garbage in, garbage out" ilkesine bağlanır: tutarsız veriyle eğitilen model güvenilmez sonuçlar üretir. Çözümü de veri temizleme aşamasında bu tutarsızlıkları yakalayıp standart bir biçime/mantığa oturtmaktır.
+
+Tek paragrafta: Inconsistent data, aynı bilginin veri içinde çelişen ya da uyumsuz şekillerde bulunmasıdır; bu biçimsel farklılık (farklı tarih/yazım formatları), mantıksal çelişki (doğum tarihiyle yaşın tutmaması), birim karışıklığı (cm ile m'nin aynı sütunda olması) ya da çelişen kopya kayıtlar şeklinde ortaya çıkabilir. Model bu tutarsızlıkları gerçek sanıp yanlış öğrendiği için, veri temizleme aşamasında bunların tek bir tutarlı biçime getirilmesi gerekir.
+
+Tutarsız veriler standartlaştırılmamıştır ve farklı veri kümeleri ile sistemler arasında büyük ölçüde uyumsuzdur. Tarih biçimleri, adlandırma kuralları ve ölçü birimlerinde görülen farklılıklar, kullanıcılar arasında kafa karışıklığına yol açabilir, belirli platformlar içinde veri siloları oluşturabilir ve raporlama veya analizlerde hatalara neden olabilir.
+
+Outdated data
+Outdated data is information that is no longer current, which can cause decision-makers to use irrelevant information that does not represent real-world conditions. Data freshness is a metric that indicates how often database information is updated. Significantly long gaps between updates can result in data staleness.
+
+Duplicate data
+Duplicate data (or redundant data) refers to repeated entries in a dataset—unique data only appears once. It can skew analysis by overrepresenting certain data values or trends. (It’s important to note that there are use cases for intentional data redundancy in database design to help ensure high availability, data integrity and consistency.
+
+Data integrity and consistency:
+
+Bu iki kavram birbirine yakın ama farklı şeyleri vurgular, kısaca ayırayım.
+
+Data integrity (veri bütünlüğü), verinin doğru, eksiksiz ve güvenilir olması; yani yaşam döngüsü boyunca bozulmadan, kaybolmadan ve yetkisiz değişmeden kalmasıdır. Daha geniş bir kavramdır: verinin hem doğruluğunu hem güvenliğini hem de kurallara uygunluğunu kapsar. Mesela bir kaydın asıl hâliyle aynı kalması, izinsiz değiştirilmemesi data integrity meselesidir.
+
+Data consistency (veri tutarlılığı), aynı verinin farklı yerlerde birbiriyle uyumlu olmasıdır. Yani aynı bilgi iki ayrı tabloda, sistemde ya da kopyada çelişmemelidir. Mesela bir müşterinin adresi hem satış hem fatura sisteminde aynıysa veri tutarlıdır; biri güncellenip diğeri eski kalırsa tutarsızlık doğar.
+
+Aradaki fark şu: consistency, integrity'nin bir parçasıdır. Tutarlılık "kopyalar birbirini tutuyor mu" sorusuna bakar; bütünlük ise bunun yanında doğruluk, eksiksizlik ve güvenliği de kapsayan daha büyük şemsiyedir. Yani her tutarlı veri bütünlüklü olmayabilir (uyumlu ama yanlış olabilir), ama bütünlüğü sağlam bir sistem tutarlılığı da içerir.
+
+Invalid data
+
+Invalid data (geçersiz veri), tanımlı kurallara, beklenen biçime ya da mantıksal sınırlara uymayan veridir. Yani değer, o alanda olması gereken çerçevenin dışına çıkmıştır; teknik olarak orada durur ama geçerli değildir.
+
+Birkaç tipik türü var. Birincisi, mantıksal sınır ihlali: yaş sütununda "-5" ya da "200" gibi imkânsız değerler, ya da yüzde sütununda "150" olması. İkincisi, biçim ihlali: e-posta alanında "@" içermeyen bir metin, telefon alanında harf bulunması gibi beklenen formata uymayan değerler. Üçüncüsü, izin verilen küme dışı değer: cinsiyet sütununda yalnızca "K/E" beklenirken "X" yazması, ya da tanımlı kategoriler dışında bir etiket. Dördüncüsü , yanlış veri tipi: sayısal olması gereken bir alanda metin bulunması.
+
+Daha önce konuştuğumuz kavramlarla ilişkisini netleştireyim, çünkü hepsi veri kalitesi ailesinden ama farklılar. Missing data değerin hiç olmamasıydı; invalid data ise değer vardır ama yanlıştır/kuralsızdır. Inconsistent data verinin kendi içinde çelişmesiydi; invalid data ise tek bir değerin tek başına geçersiz olmasıdır (başka bir veriyle çelişmesine gerek yok, kendisi zaten kural dışı). Mesela "yaş: -5" hiçbir şeyle kıyaslanmadan geçersizdir, çünkü yaş negatif olamaz.
+
+Tek cümlede: Invalid data, bir değerin var olduğu hâlde tanımlı kurallara, biçime ya da mantıksal sınırlara uymaması (negatif yaş, hatalı e-posta formatı, izin verilmeyen kategori gibi) durumudur; eksik olması değil, yanlış/kuralsız olmasıyla missing ve inconsistent veriden ayrılır.
+
+What causes bad data?
+There is no one root cause of bad data. It can arise from technology, processes or people—and typically, it’s a combination of several. Some common causes of poor data quality include:
+
+System failures
+Data decay
+Unreliable data collection
+Weak data governance
+Human error
+Data integration or migration breakdowns
+
+System failures
+Poorly designed data architectures can lead to data silos, slow performance and software bugs that degrade data consistency and reliability. When systems fail, files can be corrupted or left incomplete, resulting in missing values and inaccuracies in downstream processes.
+
+Data decay
+Many types of business data (such as consumer behavior metrics) are subject to decay if not updated regularly. When databases are outdated, any insights or decisions based on the data are stale—and likely inaccurate.
+
+Unreliable data collection
+Bad data can originate at collection, and not just from poor-quality data sources or providers. Biases, inconsistent methods, faulty tools or inaccurate measurements during data entry and processing can all compromise data quality.
+
+How to prevent bad data
+In a perfect world, bad data would be caught at the source and never reach downstream systems or data analytics workflows. In reality, however, data quality can degrade at any point of its lifecycle and for many different reasons.
+
+Preventing bad data at all stages requires a comprehensive strategy that addresses risks at every phase. This strategy can incorporate the following practices:
+
+Governance and strategy
+Monitoring and visibility
+Cleansing and remediation
+Data skills and literacy
+
+Governance and strategy
+Establishing strong data governance is a critical first step in preventing bad data. It defines and enforces the policies, standards and procedures needed to maintain accurate, high-quality data through its lifecycle. Robust governance frameworks can help organizations identify and address inaccuracies before they influence decision-making and operational efficiency.
+
+Effective data governance should complement and enhance an organization’s broader data strategy. It typically works alongside other disciplines—such as data management, data security and data architecture—to keep data consistent and reliable.
+
+Cleansing and remediation
+With data errors and their root causes identified, bad data must then be corrected. Data cleansing processes work to address common data quality issues such as duplicate records, missing values, inconsistencies, syntax errors, irrelevant data and structural errors. Common techniques include standardization, addressing outliers and missing values, deduplication and data validation.
+
+Data teams increasingly use AI to automate and optimize several of these steps, especially tasks such as standardization and deduplication.
+
+Data skills and literacy
+Data-literate organizations have the skills to read, understand, use and communicate with data for better decision-making. The ability to critically evaluate data also improves overall data quality: Employees with even rudimentary data skills are better equipped to recognize bias, inconsistencies, inaccuracies or missing values.
+
+
+
+
