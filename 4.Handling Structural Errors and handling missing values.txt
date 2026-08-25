@@ -1,0 +1,151 @@
+Handling Structural Errors and handling missing values
+Structural errors include inconsistent formats, wrong data types and mislabeled categories. Standardization improves consistency across features.Bunu detaylı açıklar mısın ?
+
+Bu metin, veri temizlemenin (data cleaning) önemli bir alt başlığını anlatıyor: yapısal hatalar. Hatırla, daha önce dataset bias ve veri kalitesini konuşmuştuk; işte yapısal hatalar, model eğitilmeden önce verinin "fiziksel/biçimsel" düzeyde bozuk olduğu durumlardır. İçeriğin yanlış olmasından çok, biçiminin tutarsız olmasıyla ilgilidir. Başlıktan başlayıp üç hata türünü tek tek açayım.
+
+Birincisi **inconsistent formats** (tutarsız biçimler). Aynı bilgi veride farklı kalıplarda yazılmıştır. Klasik örnek tarihlerdir: bir satırda "01/05/2024", başka satırda "2024-05-01", bir diğerinde "1 May 2024" yazıyordur. Üçü de aynı tarihi gösterir ama biçimleri farklı olduğu için bilgisayar bunları farklı şeyler sanar. Aynı şey metinlerde de olur: "İstanbul", "istanbul", "ISTANBUL", "İstanbul" hepsi aynı şehir ama farklı yazıldığı için model bunları dört ayrı kategori gibi görür. Para birimleri, telefon numaraları, ölçü birimleri de sık sık bu soruna düşer.
+
+İkincisi **wrong data types** (yanlış veri tipleri). Bir verinin olması gereken tipte değil, başka bir tipte saklanması. En sık görüleni, aslında sayı olması gereken bir sütunun metin (string) olarak tutulmasıdır. Mesela yaş sütununda "35" sayı değil de "35" metni olarak duruyorsa, üzerinde matematiksel işlem (ortalama, toplama) yapamazsın; model onu sayı gibi kullanamaz. Ya da tarih olması gereken bir sütun düz metin olarak durur, o zaman "iki tarih arası kaç gün" gibi hesapları yapamazsın. Veri tipi yanlışsa, o sütun teknik olarak orada ama işlevsel olarak kullanılamaz hâldedir.
+
+Üçüncüsü **mislabeled categories** (yanlış etiketlenmiş kategoriler). Kategorik bir değişkende, aynı kategorinin farklı isimlerle yazılması ya da yanlış isimlendirilmesi. Mesela bir "cinsiyet" sütununda "Male", "M", "male", "erkek" değerleri karışık duruyorsa, bunlar aslında tek kategori olması gerekirken model bunları ayrı ayrı kategori sanar. Ya da bir ürün kategorisinde "elektronik" yazılması gerekirken yanlışlıkla "elektrik" yazılmıştır. Etiketin kendisi tutarsız ya da hatalı olduğu için kategori yapısı bozulur.
+
+Son cümle çözümü veriyor: **"Standardization improves consistency across features"** (standardizasyon, özellikler arası tutarlılığı artırır). Burada standardization, tüm bu tutarsız şeyleri tek bir ortak kurala/biçime sokmak demek. Bütün tarihleri tek formata çevirirsin, bütün şehir isimlerini küçük harfe indirip aynı yazıma getirirsin, sayısal sütunları gerçekten sayı tipine dönüştürürsün, "M/Male/erkek" gibi varyasyonları tek bir "Male" etiketinde birleştirirsin. Böylece her özellik (feature) kendi içinde tutarlı hâle gelir ve model veriyi doğru okuyabilir.
+
+Küçük bir terim uyarısı: buradaki "standardization" kelimesi "biçimsel standartlaştırma" anlamında kullanılmış. Bunu ileride istatistikte göreceğin "standardization" (veriyi ortalama 0, standart sapma 1 olacak şekilde ölçekleme, yani z-score) ile karıştırma. İkisi aynı kelime ama farklı şeyler; bu metindeki, veriyi ortak bir biçime/kurala sokmak anlamında.
+
+Tek paragrafta toparlarsak: Yapısal hatalar, verinin içeriğinin değil biçiminin bozuk olduğu durumlardır; tutarsız biçimler (aynı bilginin farklı yazımları), yanlış veri tipleri (sayının metin olarak tutulması gibi) ve yanlış etiketlenmiş kategoriler (aynı kategorinin farklı isimlerle görünmesi) bunların üç ana türüdür. Çözüm standardizasyondur, yani tüm bu tutarsızlıkları tek bir ortak biçime sokmak; böylece her özellik kendi içinde tutarlı olur ve model veriyi yanlış yorumlamaz.
+
+Soru: inconsistent formats ve mislabeled categories çok mu benzer ?
+
+Benzer görünüyorlar çünkü ikisi de "aynı şey farklı yazılmış" durumuna benziyor, ama aralarında net bir ayrım var. Farkı şöyle yakala.
+
+**Inconsistent formats** biçim/format meselesidir. Değer aslında doğrudur, sadece yazım kalıbı farklıdır. Tarih örneği en net olanı: "01/05/2024" ile "2024-05-01" aynı tarihtir, hiçbiri yanlış değildir, sadece formatları farklıdır. Burada bir "kategori" yoktur; sürekli/biçimsel bir verinin (tarih, telefon, para, ölçü) farklı kalıplarda yazılması söz konusudur. Sorun değerin kendisinde değil, sunuluş biçimindedir.
+
+**Mislabeled categories** ise kategorik bir değişkendeki etiket meselesidir. Burada veri, sınırlı sayıda gruptan birine ait olmalıdır (cinsiyet, ülke, ürün tipi gibi) ve sorun, aynı kategoriye farklı etiketler verilmesi ya da etiketin yanlış olmasıdır. "Male", "M", "erkek" hepsi tek bir kategoriye işaret eder ama farklı etiketlenmiştir. Buradaki mesele bir formatlama kalıbı değil, kategori isimlendirmesinin tutarsızlığıdır.
+
+Ayrımı netleştiren soru şu: veri kategorik mi, değil mi? Tarih, fiyat, telefon gibi şeyler kategori değildir, onların sorunu "format"tır. Cinsiyet, şehir, ürün tipi gibi sınırlı seçenekli şeyler kategoriktir, onların sorunu "label"dır. Yani inconsistent format daha çok sayısal/biçimsel alanlarda, mislabeled categories ise kategorik alanlarda görülür.
+
+İtiraf edeyim, pratikte sınır bazen bulanıklaşır. Mesela "İstanbul" vs "istanbul" örneği hem bir biçim tutarsızlığı (büyük-küçük harf) hem de aynı kategorinin farklı yazımı gibi görünebilir. Bu yüzden ikisini kafanda şöyle ayır: inconsistent format "doğru değer, yanlış kalıp" demektir; mislabeled category "aynı grup, farklı/yanlış isim" demektir. Çözümleri de farklıdır: formatı düzeltmek için ortak bir biçim kuralı uygularsın (tüm tarihleri YYYY-MM-DD yap), kategorileri düzeltmek için ise eş anlamlı etiketleri tek bir isimde birleştirirsin (M/erkek/Male → Male).
+
+Soru:Hocam missing value'dan kastımız sadece eksik olan değerler mi  ?
+
+Büyük ölçüde evet, ama "eksik" kelimesinin altında düşündüğünden daha fazlası var; çünkü bir değerin "eksik" sayılması her zaman hücrenin boş olması demek değil. Açayım.
+
+En temel hâliyle missing value, bir gözlemde olması gereken bir özelliğin değerinin bulunmaması demektir. Tabloda o hücre boştur. Mesela bir müşteri formunda "yaş" sütununda bazı satırlar doldurulmamıştır. Buraya kadar tam senin dediğin gibi, "eksik olan değer".
+
+Ama işin püf noktası şu: eksiklik her zaman boş hücre olarak görünmez. Bazen değer oradadır ama aslında "eksik"i temsil eder. Mesela bir sütunda yaş olarak "-1", "0", "999" gibi değerler vardır; bunlar gerçek yaş değil, "veri girilmedi" anlamına gelen yer tutuculardır. Ya da metinsel olarak "N/A", "unknown", "bilinmiyor", "-", boş string ("") yazılmıştır. Bunlar teknik olarak hücreyi doldurur ama anlamca eksiktir. Bu yüzden missing value avında sadece boş hücreleri değil, "eksikliği gizleyen sahte değerleri" de yakalaman gerekir; yoksa model "999 yaşında müşteri" gibi saçma bir şeyi gerçek sanır.
+
+İşin asıl önemli kısmı ise şu: missing value'da kritik olan sadece "eksik var mı" değil, "neden eksik" sorusudur. Çünkü eksikliğin sebebi, onu nasıl ele alacağını belirler. Bunun üç tipi vardır ve daha önce bunları karıştırdığını biliyorum, o yüzden net ayırayım:
+
+MCAR (Missing Completely At Random): değer tamamen rastgele eksik, hiçbir şeyle ilişkisi yok. Mesela bir sensör rastgele arızalanıp bazı ölçümleri kaçırmış. Burada eksiklik bilgi taşımaz.
+
+Eksikliğin sebebi başka bir şeyse MAR, eksik olan değerin kendisiyse MNAR. Örneklerle netleşecek.
+
+MAR(Missing At Random) için bir hastane örneği düşün. Bir veri setinde tansiyon ölçümleri var ama bazıları eksik. Baktığında görüyorsun ki eksik tansiyonların çoğu çocuk hastalara ait, çünkü o hastanede çocuklara rutin tansiyon ölçülmüyor. Burada tansiyonun eksik olması, hastanın **yaşına** (gözlemlenen başka bir değişken) bağlı; tansiyonun kendi değerine değil. Yani çocuk olduğu için ölçülmemiş, tansiyonu yüksek ya da düşük olduğu için değil. Eksikliğin sebebini başka bir sütun (yaş) açıklıyor, işte bu MAR. Güzel tarafı şu: yaş bilgisini bildiğin için bu eksikliği makul şekilde tahmin edip doldurabilirsin.
+
+Bir MAR örneği daha: bir ankette "maaş" sorusunu kadınlar erkeklerden daha sık boş bırakıyor olsun. Eğer boş bırakma oranı kişinin **cinsiyetine** bağlıysa ama maaşın kendi miktarına bağlı değilse, bu MAR'dır. Cinsiyet gözlemlenen bir değişken, ona dayanıp eksikliği modelleyebilirsin.
+
+MNAR(Missing Not At Random) için ise klasik örnek terazi. İnsanlardan kilolarını yazmalarını istiyorsun ve bazı kilolar eksik. Ama eksikliğin sebebi şu: fazla kilolu insanlar kilolarını **utandıkları için** yazmıyor. Yani kilonun eksik olması, doğrudan kilonun kendi değerine bağlı (yüksek olduğu için gizleniyor). Burada elindeki başka hiçbir sütun bu eksikliği tam açıklayamaz, çünkü eksikliğin sırrı tam da göremediğin o değerin içinde saklı. İşte bu yüzden MNAR en zorudur: eksik veriyi doldurmaya kalktığında yanılırsın, çünkü eksik olanlar sistematik olarak belli bir yönde (yüksek kilolar) ve sen bunu göremiyorsun.
+
+Bir MNAR örneği daha: bir memnuniyet anketinde, hizmetden çok memnuniyetsiz olan müşteriler anketi hiç doldurmadan kapatıyor olsun. Sonuçta elindeki cevaplar olduğundan daha olumlu görünür, çünkü en olumsuzlar sistematik olarak eksik. Eksiklik doğrudan cevabın kendisine (memnuniyetsizliğe) bağlı, o yüzden MNAR.
+
+Tek cümlede farkı yakala: MAR'da "neden eksik?" sorusunun cevabı elindeki başka bir sütundadır (yaş, cinsiyet gibi) ve onu kullanıp telafi edebilirsin; MNAR'da ise cevap, göremediğin eksik değerin ta kendisindedir (yüksek kilo, düşük memnuniyet gibi), bu yüzden eksikliğin içinde gizli bir yanlılık vardır ve doldurması en risklisidir.
+
+Tek paragrafta toparlarsak: Missing value temelde "olması gereken bir değerin bulunmaması"dır, evet; ama bu sadece boş hücre değil, eksikliği gizleyen sahte değerler (999, N/A, "-") olarak da karşına çıkar. Daha da önemlisi, asıl mesele eksiğin var olması değil, neden eksik olduğudur (MCAR, MAR, MNAR), çünkü bu sebep, eksikliği silmen mi yoksa doldurman (imputation) mı gerektiğini ve nasıl yapacağını belirler.
+
+Missing values appear when some entries in a dataset are left blank, marked as NaN, None or special strings like "Unknown". If not handled properly, they can reduce accuracy, create bias and break algorithms that require complete data.
+
+Keeps models accurate
+Prevents bias
+Maintains sample size
+Allows correct use of ML algorithms
+
+Reasons Behind Missing Values in the Dataset
+Data can be missing from a dataset for several reasons and understanding the cause is important for selecting the most effective way to handle it. Common reasons for missing data include:
+
+Technical issues: Failed data collection or errors during data transmission.
+Human errors: Mistakes like incorrect data entry or oversights(dikkatsizlik) during data processing.
+Privacy concerns: Missing sensitive or personal information due to confidentiality policies.(Gizlilikle ilgili endişeler: Gizlilik politikaları nedeniyle hassas veya kişisel bilgilerin eksik olması.)
+Data processing issues: Errors that occur during data preparation.
+
+By identifying the reason behind the missing data, we can better assess its impact whether it's causing bias or affecting the analysis and select the proper handling method such as imputation or removal.
+
+Functions
+
+Descriptions
+
+.isnull() 		Detect missing values
+.notnull()		Detect non-missing values
+.info()			Summary with missing counts
+.isna()			Same as isnull().
+dropna()		Remove missing rows/columns
+fillna()		Fill missing values
+replace()		Replace specific values
+drop_duplicates()	Remove duplicate rows
+unique()		Get unique values in a Series/DataFrame
+
+Representation of Missing Values in Datasets
+Missing values can appear in different forms, so using a consistent and well-documented format is important for clean data handling.
+
+Common representations include:
+
+Blank cells: Empty entries in spreadsheets or CSV files.
+Special values: Placeholders like "NA", "NaN", "NULL" or numbers such as -999.
+Codes or flags: Labels like "MISSING" or "UNKNOWN" to indicate specific types of missing data.
+
+https://www.geeksforgeeks.org/data-analysis/handling-missing-values-machine-learning/
+
+Kaggle:
+
+Buradan ciddi derecede öğrenmeye çalış.
+
+https://www.kaggle.com/code/rolmez/handling-missing-values-strategies-and-practice
+
+Handling Missing Values: Strategies and Practice
+
+1. Introduction 
+Missing values are a common problem in machine learning and data science projects. Failure to handle missing data correctly can skew the results of machine learning models or reduce the model's accuracy. To overcome these obstacles, we must either carefully remove missing values or carefully complete them. Either way, our goal is to create a complete dataset that will put our analysis on a solid footing. Ignoring missing data can directly affect the performance and reliability of our models. Therefore, it is extremely important to know the different techniques for dealing with missing values and choose the right method. While dealing with missing values is not our ultimate goal, it plays a critical role in data preprocessing steps and can help to significantly improve model performance. 
+
+2. Types of Missing Data 
+Missing data types are categorized into 3 groups in the literature:
+
+a. Missing Completely At Random (MCAR) In the MCAR case, there is no relationship between the missing data and the other values in the data set. In other words, the missing values are completely independent of the other data. As the missing values increase, the overall information content of the data set decreases. This can affect the accuracy and reliability of the analysis results.
+
+b. Missing At Random (MAR) MAR is a type of missing data where the missing data is correlated with other observed values. In this case, missing data does not occur randomly, but is missing according to a specific pattern. This pattern can be explained by a variable for which we have information about the cause of the missingness. If missing data of this type is ignored, the results of the analysis may not reflect the real situation.
+
+c. Missing Not At Random (MNAR) MNAR is a type of missing data where the missing data is due to unobserved data and cannot be explained by other observed data. If there is a structure or pattern in the missing data and this pattern cannot be explained by the observed data, it can be categorized as MNAR.
+
+Eksik veriyle başa çıkmanın yöntemleri temelde iki büyük gruba ayrılır: silmek ya da doldurmak. Hangisini seçeceğin, az önce belirlediğin tipe (MCAR/MAR/MNAR) ve eksik oranına bağlı. Sırayla gidelim.
+
+Birinci grup, **silme (deletion).** İki türü var. Satır silme (listwise deletion), eksik değer içeren tüm satırı atmaktır. Bunu yalnızca eksiklik MCAR ise (tamamen rastgele) ve eksik oran düşükse (kabaca %5'in altı) güvenle yapabilirsin; çünkü rastgele eksikse, sildiğin satırlar veriyi yanlı hale getirmez. Ama MAR ya da MNAR'da satır silmek tehlikelidir: mesela MNAR'daki kilo örneğinde, eksikleri silersen tüm yüksek kilolu insanları veriden atmış olursun ve veri sistematik olarak çarpılır. Sütun silme ise, bir sütunun çoğu eksikse (mesela %60+) o sütunu tamamen atmaktır; çünkü o kadar boş bir sütundan zaten güvenilir bilgi çıkmaz.
+
+İkinci grup, **doldurma (imputation).** Burada eksik değerleri makul tahminlerle yerine koyarsın. En basit yöntemler istatistiksel doldurmadır: sayısal sütunlarda ortalama (mean) ya da medyan ile, kategorik sütunlarda en sık görülen değer (mode) ile doldurma. Burada önemli bir nüans: eğer sütunda aykırı değerler varsa ortalama yerine medyan kullan, çünkü ortalama outlier'dan etkilenip yanıltır (bu, robust scaling'de konuştuğumuz mantığın aynısı). Bu basit yöntemler hızlıdır ama dağılımı bir miktar bozar, çünkü tüm eksikleri tek bir değere eşitlersin.
+
+Daha gelişmiş doldurma yöntemleri de var. Tahmine dayalı doldurma (model-based imputation), eksik değeri diğer sütunları kullanarak bir modelle tahmin eder; mesela KNN imputation, eksik kaydın en benzer komşularına bakıp onların değerinden doldurur. Bu özellikle MAR'da çok işe yarar, çünkü MAR'da eksikliği açıklayan başka sütunlar vardır ve model tam da onları kullanır. Hatırla, hastane örneğinde yaşa bakıp tansiyonu tahmin edebiliyorduk; işte model-based imputation bunu yapar.
+
+Şimdi tipe göre stratejiyi bağlayalım, çünkü asıl önemli kısım bu. MCAR ise: eksik rastgele olduğu için silme de doldurma da güvenli, oran düşükse sil, yüksekse ortalama/medyan ile doldur. MAR ise: eksikliği başka sütunlar açıkladığı için doldurma tercih et, özellikle KNN ya da model-based imputation gibi diğer değişkenleri kullanan yöntemler en iyisidir; satır silmekten kaçın çünkü yanlılık yaratır. MNAR ise: en zoru, çünkü eksikliğin sebebi göremediğin değerin kendisinde. Burada basit doldurma da silme de yanıltır. Genelde ya alan bilgisiyle özel bir modelleme yaparsın, ya da "bu değer eksikti" bilgisinin kendisini bir özellik olarak eklersin (missing indicator); çünkü MNAR'da eksik olmanın kendisi bilgi taşır (kilosunu gizleyen kişi muhtemelen yüksek kilolu).
+
+Son olarak hayati bir uygulama kuralı, çünkü daha önce data leakage'i konuştuk: doldurma parametrelerini (ortalama, medyan vb.) yalnızca eğitim verisinden hesaplarsın, sonra hem train'e hem test'e aynısını uygularsın. Yani train'in ortalamasıyla test'in eksiklerini doldurursun, test'in kendi ortalamasını kullanmazsın. scikit-learn'de bunun için `SimpleImputer` ya da `KNNImputer` kullanırsın ve tıpkı scaler gibi `fit` sadece train'de, `transform` her ikisinde olur.
+
+Tek paragrafta toparlayayım: Eksik veriyle başa çıkmanın iki ana yolu silme ve doldurmadır. MCAR'da oran düşükse silme, yüksekse ortalama/medyan ile doldurma güvenlidir; MAR'da eksikliği açıklayan diğer sütunları kullanan KNN/model-based imputation tercih edilir ve satır silmekten kaçınılır; MNAR'da ise basit yöntemler yanıltıcı olduğu için ya alan bilgisiyle özel modelleme yapılır ya da eksikliğin kendisi bir özellik olarak eklenir. Tüm bunlarda doldurma parametreleri yalnızca eğitim verisinden öğrenilir ve `fit` sadece train'de, `transform` her iki sette uygulanarak data leakage önlenir.
+
+Not: loc etiket (label) tabanlı çalışır, o yüzden 895:912 aralığında bitiş dahildir (912 de gelir). Eğer pozisyon tabanlı seçim yapmak istersen iloc kullanılır ve orada bitiş hariçtir.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
