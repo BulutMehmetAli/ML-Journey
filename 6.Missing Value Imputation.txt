@@ -1,0 +1,1128 @@
+Missing Value Imputation
+
+Missing Value'nun Doğru Tanımı
+
+Missing value, bir değerin "olması gerektiği aralıkta olmaması" değil, bir hücrede hiçbir değerin bulunmamasıdır — yani veri tamamen yok/boş (NaN, NULL, None). Missing value'da hücre boştur, orada hiçbir şey yazmaz.
+
+Neden Diğerleri Missing Value Değil?
+
+Aradaki temel fark şu: error, inconsistency ve noise'da hücrede bir değer VAR, sadece bu değer ya yanlış, ya farklı formatta, ya da gürültülü. Missing value'da ise hücrede hiçbir değer yok.
+
+Somut örneklerle ayıralım:
+
+Error: Age = -5 → hücrede bir değer var (-5), ama bu değer imkansız. Hücre boş değil, dolu ama yanlış.
+
+Inconsistency: Gender = "MALE" → hücrede bir değer var ("MALE"), doğru bir bilgi ama standart olmayan formatta. Hücre boş değil, dolu ve aslında doğru.
+
+Noise: Weight = 70.3 (gerçek ağırlık 70.0 iken) → hücrede bir değer var (70.3), ama üzerine rastgele bir sapma binmiş. Hücre boş değil, dolu ve büyük ölçüde doğru, sadece küçük bir gürültü payı var.
+
+Missing Value: Age = NaN → hücrede hiçbir değer yok. Boş.
+
+Neden Bu Ayrım Önemli?
+
+Çünkü çözüm yöntemleri tamamen farklı:
+
+Missing value'yu doldurursunuz (imputation) — çünkü orada hiçbir şey yok, bir şey eklemeniz gerekiyor
+Error'ı düzeltirsiniz ya da NaN'a çevirip sonra doldurursunuz — çünkü orada yanlış bir değer var, onu değiştirmeniz gerekiyor
+Inconsistency'yi standartlaştırırsınız — değeri silmiyor veya doldurmuyorsunuz, sadece formatını düzeltiyorsunuz
+Noise'u yumuşatırsınız (smoothing/filtering) — değeri atmıyorsunuz, sadece üzerindeki rastgele sapmayı azaltıyorsunuz
+Peki Aralarında Hiç Bağlantı Yok mu?
+
+Var, ama bu bağlantı "hepsi aynı şey" değil, "biri diğerine dönüşebilir" şeklinde:
+
+Bir error'ı (örneğin Age = -5) tespit edip gerçek NaN'a çevirirseniz (np.nan yaparsanız), o an artık bir missing value'ya dönüşür, bundan sonra missing value yöntemleriyle (mean, median, KNN vs.) doldurabilirsiniz. Bunu daha önce konuşmuştuk (-1, 258 gibi sentinel value'ları NaN'a çevirme örneğinde).
+
+Yani error, missing value'ya dönüştürülebilir, ama bu, error'ın kendisinin missing value olduğu anlamına gelmez — sadece siz onu bilinçli olarak o forma çeviriyorsunuz.
+
+Özetle
+
+Bu dört kavram (error, inconsistency, noise, missing value), hepsi "düşük veri kalitesi" (data quality issues) şemsiyesi altında toplanan kardeş kavramlardır, ama biri diğerinin genel adı değildir. Missing value, sadece "hücrede değer yok" durumuna özel bir isimdir; diğer üçünde hücrede bir değer vardır, sadece o değer sorunludur. Bu yüzden "tümüne missing value diyebilir miyiz" sorusunun cevabı hayır — ama "tümü aynı genel kategoriye (data quality issues) mi ait" sorusunun cevabı evet.
+
+What Are Missing Values?
+Missing values, often represented as NaN (Not a Number) in pandas or NULL in databases, are essentially holes in your dataset. They’re the empty cells in your spreadsheet, the blanks in your survey responses, the data points that got away. In the world of data, not all absences are created equal, and understanding the nature of your missing values is crucial for deciding how to handle them.
+
+Why Do Missing Values Occur?
+Missing values can sneak into your data for a variety of reasons. Here are some common reasons:
+
+Data Entry Errors: Sometimes, it’s just human error. Someone might forget to input a value or accidentally delete one.
+
+Sensor Malfunctions: In IoT or scientific experiments, a faulty sensor might fail to record data at certain times.
+
+Survey Non-Response: In surveys, respondents might skip questions they’re uncomfortable answering or don’t understand.
+
+Merged Datasets: When combining data from multiple sources, some entries might not have corresponding values(ilgili değerler) in all datasets.
+
+Data Corruption: During data transfer or storage, some values might get corrupted and become unreadable.
+
+Intentional Omissions: Some data might be intentionally left out due to privacy concerns or irrelevance.
+
+Bazı veriler kasıtlı olarak boş bırakılıyor. Mesela bir hastanın HIV durumu gibi hassas bilgiler gizlilik nedeniyle veri setine dahil edilmeyebilir. Ya da bir analizle hiç ilgisi olmayan bir sütun veri toplama aşamasında zaten doldurulmamış olabilir. Yani eksiklik bir hata değil, bilinçli bir karar.
+
+Sampling Issues: The data collection method might systematically miss certain types of data.
+Sampling Issues: Veri toplama yöntemi bazı grupları sistematik olarak kaçırıyor. Mesela telefon anketiyle veri topluyorsun ama telefonu olmayan insanlar hiç dahil edilemiyor. Bu rastgele bir eksiklik değil, belirli bir grup sürekli eksik kalıyor.
+
+Time-Sensitive Data: In time series data, values might be missing for periods when data wasn’t collected (e.g., weekends, holidays).
+Time-Sensitive Data: Zaman serisi verisinde belirli dönemlerde veri toplanmamış. Mesela bir hisse senedinin fiyatını takip ediyorsun ama hafta sonları borsa kapalı, dolayısıyla o günlere ait veri yok. Eksiklik verinin kendisindeki bir problemden değil, o zaman diliminde ölçüm yapılmamış olmasından kaynaklanıyor.
+
+Types of Missing Data
+Understanding the type of missing data you’re dealing with can help you choose the most appropriate imputation method. Statisticians generally categorize missing data into three types:
+
+1-Missing Completely at Random (MCAR): The missingness is totally random and doesn’t depend on any other variable. For example, if a lab sample was accidentally dropped.
+
+2-Missing at Random (MAR): The probability of missing data depends on other observed variables but not on the missing data itself. For example, men might be less likely to answer questions about emotions in a survey.
+
+3-Missing Not at Random (MNAR): The missingness depends on the value of the missing data itself. For example, people with high incomes might be less likely to report their income in a survey.
+
+MAR'da eksikliğin nedeni gözlemlediğin başka bir değişkenle açıklanabiliyor. Erkek duygusal soruyu atladı, ama sen onun cinsiyetini biliyorsun. Yani "bu kişi erkek, o yüzden atladı" diyebiliyorsun. Eksikliği elindeki veriyle açıklayabiliyorsun, cinsiyet gözlemlenmiş bir değişken.
+
+MNAR'da ise eksikliğin nedeni bizzat o sorunun cevabında saklı. Geliri yüksek olan gelir sorusunu atlıyor. Ama sen o kişinin gelirini bilmiyorsun, zaten o yüzden eksik. Eksikliği açıklayan şey, yani yüksek gelir, gözlemleyemediğin şeyin ta kendisi.
+
+Kısacası fark şu: MAR'da "neden atladı" sorusunun cevabı elindeki başka bir sütunda var. MNAR'da ise "neden atladı" sorusunun cevabı tam olarak o eksik değerin kendisinde saklı, onu hiç göremiyorsun.
+
+Why Care About Missing Values?
+Missing values can significantly impact your analysis:
+
+They can introduce bias if not handled properly.
+
+Bu ifade şunu söylüyor: **"Eğer doğru şekilde ele alınmazlarsa, eksik değerler analize önyargı (bias) sokabilir."** Bunun anlamı şu — eksik veriler rastgele değil de belirli bir örüntüye (pattern) sahipse, onları yanlış yöntemle (örneğin körü körüne silerek veya ortalamayla doldurarak) ele almak, veri setinin gerçek dağılımını bozar ve sonuçta yanlı, gerçeği yansıtmayan bir analiz/model ortaya çıkar. Örneğin bir gelir anketinde yüksek gelirli kişiler gelir sorusunu daha sık atlıyorsa (bu MNAR'a bir örnek), siz bu eksik satırları direkt silerseniz, elinizde kalan veri sistematik olarak **düşük gelirli kişilere doğru kaymış** olur; artık veri setiniz toplumu doğru temsil etmiyordur, ortalama gelir hesaplasanız bile gerçek ortalamadan çok daha düşük bir sonuç çıkar. Benzer şekilde, eksik değerleri sütunun genel ortalamasıyla doldurmak da, eğer eksiklik belirli bir gruba (örneğin sadece belirli bir hastalığa sahip hastalara) yoğunlaşmışsa, o grubun gerçek karakteristiğini "ortalamaya" çekerek maskeler, model bu grubu doğru öğrenemez. Yani bias, veri toplama ya da veri temizleme sürecinde belirli bir alt grubun sistematik olarak yanlış temsil edilmesi anlamına gelir, ve bunun kaynağı çoğu zaman "eksikliğin rastgele olduğunu varsayıp" MCAR mantığıyla hareket etmek ama gerçekte durumun MAR ya da MNAR olmasıdır — bu yüzden imputation yöntemine karar vermeden önce eksikliğin **hangi tipte** olduğunu anlamak, bias riskini en aza indirmenin ilk ve en kritik adımıdır.
+
+Many machine learning algorithms can’t handle missing values out of the box.
+Buradaki out of the box nedir ?
+"Out of the box" herhangi bir ek ayar veya müdahale olmadan, kutudan çıktığı gibi çalışmak demek. Yani varsayılan haliyle, hiçbir şey yapmadan direkt kullanmak.
+
+Cümle şunu söylüyor: çoğu ML algoritması eksik verilerle hiçbir şey yapmadan çalışamıyor, önce eksiklikleri ele alman gerekiyor.
+
+Çalışamıyordan kastımız doğru sonuç üretemiyor değil mi ?
+
+Hayır, daha temel bir şey. Hata fırlatıyor, yani çalışmayı tamamen reddediyor. Sklearn'deki çoğu model NaN içeren veriyle karşılaşınca direkt ValueError veriyor, yanlış sonuç üretmiyor, hiç çalışmıyor.
+
+Hocam "out of the box" burada **"herhangi bir ek ayar veya müdahale yapmadan, kutudan çıktığı gibi, varsayılan haliyle"** anlamına gelen bir İngilizce deyim.
+
+Cümleyi açalım: **"Birçok makine öğrenmesi algoritması eksik değerleri out of the box (yani hazır/varsayılan haliyle, siz bir şey yapmadan) işleyemez."**
+
+Yani şunu söylüyor: Bir modeli (örneğin scikit-learn'deki bir Linear Regression ya da Logistic Regression) kurup direkt eksik değer (`NaN`) içeren veriyle eğitmeye çalışırsanız, model **hiçbir ek müdahale/ön işleme olmadan** bunu kabul etmez.
+
+**Pratikte ne oluyor?**
+from sklearn.linear_model import LogisticRegression
+model = LogisticRegression()
+model.fit(X, y)  # X içinde NaN varsa...
+
+Bu kod, veri içinde `NaN` olduğu için **doğru sonuç üretmez**, doğrudan **hata fırlatır** (`ValueError: Input contains NaN`), yani çalışmayı tamamen reddeder. Modelin çalışabilmesi için önce sizin bu eksik değerleri (mean/median/mode ile doldurma, silme vs.) elle temizlemeniz gerekir — model bunu kendisi "kutudan çıktığı gibi" halletmiyor.
+
+**Karşı örnek (istisna):** Az önce bahsettiğim gibi, XGBoost, LightGBM gibi bazı modern ağaç tabanlı algoritmalar bu kuralın **dışında**, onlar NaN'ı kendi içlerinde otomatik olarak işleyebiliyor, yani onlar için "out of the box" NaN toleransı **var**. Ama klasik algoritmaların (Linear/Logistic Regression, SVM, KNN gibi) çoğu için bu geçerli değil, onlarda mutlaka önce sizin missing value handling yapmanız gerekiyor.
+
+They can lead to(neden olur) loss of important information if instances with missing values are simply discarded.
+
+Hocam burada **"simply discarded"** ifadesi **"basitçe/düşünmeden atılırsa, silinirse"** anlamına geliyor.
+
+**"Simply" kelimesinin vurgusu önemli** — burada "simply" (basitçe, sorgulamadan) kelimesi, işin **düşünülmeden, otomatik bir refleks olarak** yapıldığını ima ediyor. Yani:
+
+- Bir satırda **herhangi bir sütunda** eksik değer görüyorsunuz
+- Hiç analiz etmeden, "eksik var, sil gitsin" mantığıyla direkt o **satırın tamamını** siliyorsunuz (bu, daha önce kaynakta bahsedilen **listwise deletion** yöntemi)
+
+**Neden bu "basit" bir hareket, ve neden sorun yaratır?**
+
+Çünkü o satırı silerken, sadece eksik olan **bir hücreyi** değil, o satırdaki **diğer tüm dolu, geçerli bilgiyi de** birlikte siliyorsunuz. Kaynaktaki örnek tam da bunu anlatıyor:
+
+Titanic veri setinde `Age` sütununda 177 eksik değer var. Eğer siz "Age eksikse o satırı sil" derseniz, o 177 yolcunun sadece yaşını değil, aynı zamanda `Pclass` (kaçıncı sınıf), `Sex` (cinsiyet), `Fare` (bilet ücreti) gibi **tamamen dolu, geçerli ve değerli** bilgilerini de kaybetmiş olursunuz. Oysa bu bilgiler "hayatta kalma tahmini" için gayet kullanışlı olabilirdi.
+
+**Özetle:** "Simply discarded" = "düşünülmeden, sorgulanmadan direkt silinirse" demek, ve bu ifadedeki eleştiri şu: bir sütundaki tek bir eksiklik yüzünden, o satırdaki **diğer tüm geçerli bilgiyi de** kaybetmek **verimsiz ve gereksiz bir bilgi kaybıdır** — bu yüzden kaynak, deletion yöntemini sadece **çok fazla** eksik değer içeren satırlar için (örneğin "en az 4 sütunda eksik varsa sil" gibi bir eşik belirleyerek) kullanmayı öneriyor, her eksik gördüğünüzde reflekssel olarak silmeyi değil.
+
+Eksik değeri olan satırı direkt silersen o satırdaki diğer bilgileri de kaybediyorsun.
+Titanic'te Age sütununda 177 eksik var. Bu satırları silseydin o yolcuların Pclass, Sex, Fare gibi bilgilerini de çöpe atmış olurdun. Oysa bu bilgiler hayatta kalma tahmini için değerli. Yani bir sütundaki eksiklik yüzünden diğer sütunlardaki geçerli bilgiyi de kaybediyorsun.
+
+Eksik veri, bir gözlemde olması gereken değerin bulunmamasıdır; NaN/NULL olarak açıkça görünebileceği gibi sahte yer tutucularla (999, N/A gibi) gizlenmiş de olabilir, ve asıl önemlisi eksikliğin tipi (MCAR/MAR/MNAR), onunla nasıl başa çıkılacağını belirler. 
+--------------------
+Soru:Hocam age sütununu düşünelim bazı kutularda -1 ya da 258 gibi değerler var. Bunlar missing value mu olur?
+
+Elcevap:
+
+Hocam çok iyi bir soru, gerçekten sınırda kalan bir durum. Kısa cevap: **Evet, bunlar teknik olarak "missing value" sayılır, ama görünüş olarak "error" gibi dururlar** — bu ikisinin kesiştiği bir nokta.
+
+## Neden Missing Value Sayılır?
+
+Bu tür değerlere **"sentinel value"** ya da **"disguised missing value"** (gizlenmiş/maskelenmiş eksik değer) denir. Yani birileri (genelde eski sistemler, sensörler ya da veri girişi yapan kişiler) gerçek bir `NaN` yazmak yerine, **"bu değer yok/bilinmiyor"** anlamına gelecek şekilde **imkansız bir sayı** kullanmayı tercih etmiştir:
+
+- `-1` → "yaş bilinmiyor" anlamında kullanılmış olabilir (çünkü gerçek hayatta yaş negatif olamaz, bu yüzden "geçersiz/yok" işareti olarak seçilmiş)
+- `258` → benzer şekilde, "bilinmiyor" ya da "sistem hata kodu" anlamında kullanılmış olabilir (özellikle eski sistemlerde `999`, `9999` gibi "sentinel" değerler çok yaygındır)
+
+Bu, kaynağınızda da geçen şu cümleyle birebir örtüşüyor: *"Eksik veri, NaN/NULL olarak açıkça görünebileceği gibi sahte yer tutucularla (999, N/A gibi) gizlenmiş de olabilir."*
+
+## Neden "Error" da Denebilir?
+
+Aynı zamanda bu değerler **fizyolojik olarak imkansız** olduğu için saf "error" tanımına da uyar (yaş -1 ya da 258 olamaz). Bu yüzden literatürde bazı kaynaklar bunu "error", bazıları "disguised missing value" olarak sınıflandırır — **kesin, evrensel bir çizgi yok**, tıpkı daha önce konuştuğumuz "mistke → mistake" örneğinde olduğu gibi.
+
+## Pratikte Ne Yapmalısınız?
+
+**Kavramsal etiketten daha önemlisi, ne yapacağınız:**
+
+1. **Önce tespit edin** — `df['Age'].describe()` veya `df['Age'].value_counts()` ile bu tür imkansız değerleri bulun
+2. **Gerçek NaN'a çevirin** — bunları pandas'ın tanıyacağı gerçek eksik değere dönüştürün:
+python
+df['Age'] = df['Age'].apply(lambda x: np.nan if (x < 0 or x > 120) else x)
+3. **Sonra normal missing value işlemi uygulayın** — artık bunlar gerçek `NaN` olduğu için mean/median/interpolation gibi öğrendiğimiz yöntemlerle doldurabilirsiniz
+
+**Özetle:** İsimlendirme (error mu missing value mu) aslında ikincil bir tartışma; asıl önemli olan, bu tür **"maskeli eksik değerleri"** fark edip onları gerçek `NaN`'a çevirmeniz, çünkü pandas `-1` ya da `258` gibi bir sayıyı **kendiliğinden** "eksik" olarak tanımaz, siz onu ona öğretmek zorundasınız.
+--------------------
+Improperly handled missing values can lead to incorrect conclusions or predictions.
+
+That’s why it’s crucial to have a solid strategy for dealing with missing values.
+
+The Dataset
+First things first, let’s introduce our dataset. We’ll be working with a golf course dataset that tracks various factors affecting the crowdedness of the course. This dataset has a bit of everything – numerical data, categorical data, and yes, plenty of missing values
+
+As we can see, our dataset contains 20 rows and 8 columns:
+Date: The date of the observation
+Weekday: Day of the week (0–6, where 0 is Monday)
+Holiday: Boolean indicating if it’s a holiday (0 or 1)
+Temp: Temperature in Celsius
+Humidity: Humidity percentage(yüzdelik nem)
+Wind: Wind condition (0 or 1, possibly indicating calm or windy)
+Outlook: Weather outlook (sunny, overcast, or rainy)
+Crowdedness: Percentage of course occupancy
+
+Method 1: Listwise Deletion
+Listwise deletion, also known as complete case analysis, involves removing entire rows that contain any missing values. This method is simple and preserves the distribution of the data, but it can lead to a significant loss of information if many rows contain missing values.
+
+👍 Common Use: Listwise deletion is often used when the number of missing values is small and the data is missing completely at random (MCAR). It’s also useful when you need a complete dataset for certain analyses that can’t handle missing values.
+
+In Our Case: We’re using listwise deletion for rows that have at least 4 missing values. These rows might not provide enough reliable information, and removing them can help us focus on the more complete data points. However, we’re being cautious and only removing rows with significant missing data to preserve as much information as possible.(mümkün olduğunca fazla bilgiyi korumak için önemli ölçüde missing data varsa siliyoruz)
+
+Method 2: Simple Imputation – Mean and Mode
+Simple imputation involves replacing missing values with a summary statistic of the observed values. Common approaches include using the mean, median, or mode of the non-missing values in a column.
+
+👍 Common Use: Mean imputation is often used for continuous variables when the data is missing at random and the distribution is roughly symmetric. Mode imputation is typically used for categorical variables.
+
+In Our Case: We’re using mean imputation for Humidity and mode imputation for Holiday. For Humidity, assuming the missing values are random, the mean provides a reasonable estimate of the typical humidity. For Holiday, since it’s a binary variable (holiday or not), the mode gives us the most common state, which is a sensible guess for missing values.
+
+-----------------------
+Soru:Hocam mod'a göre yapılan tahminlerde ufak bir sıkıntıdan söz edemez miyiz . Diyelim ki bir gün ya tatil ya da değil. Bunu sıcaklık , yağmur vs farklı parametrelerimizin olduğunu varsay. Biz eğer ki mod'a göre missing value imputation yaparsak bu sefer yanlış yapmış olmaz mıyız , yani mantıklı mı sence ?
+
+Elcevap:Hocam gerçekten çok yerinde ve ileri seviye bir eleştiri, tam da mod imputation'ın en büyük zayıflığına parmak basıyorsunuz. Cevap: **Evet, haklısınız, bu gerçekten mantıksal bir sıkıntı içeriyor**, sebeplerini açayım.
+
+## Sorunun Özü
+
+Mod imputation, eksik değeri doldururken **sadece o sütunun kendi içindeki genel dağılıma** bakar, **diğer sütunlarla olan ilişkiyi tamamen görmezden gelir**. Sizin örneğinizde:
+
+- `Holiday` sütununda diyelim ki 20 günün 15'i "tatil değil" (0), 5'i "tatil" (1)
+- Mod = 0 (tatil değil), çünkü daha sık geçiyor
+- Eğer `Holiday` eksik olan **her satırı** köre körüne 0 ile doldurursanız, aslında elinizdeki `Temp`, `Weekday`, `Crowdedness` gibi **diğer bilgileri hiç kullanmamış olursunuz**
+
+## Neden Bu Yanlış Olabilir?
+
+Diyelim ki eksik olan günün `Weekday` değeri **Pazar**, `Crowdedness` (doluluk) çok **düşük**, ve diğer Pazar günlerinin çoğu tatil olarak işaretlenmiş. Bu durumda mantıken o günün de tatil (1) olma ihtimali yüksektir. Ama mod imputation bunu **hiç dikkate almaz**, sadece "genelde tatil değil daha sık görülüyor" diyerek 0 yazar — işte tam burada **yanlış bir tahmin** yapmış olursunuz, çünkü elinizdeki **ilişkili bilgiyi (Weekday, Crowdedness) kullanmadan**, sadece kaba bir "en sık görüleni" mantığıyla hareket etmişsinizdir.
+
+## Bu Durumda Doğrusu Ne Olurdu?
+
+İşte tam bu yüzden, daha önce bahsettiğim **"eksik olan konuya göre yöntem"** meselesi devreye giriyor:
+
+1. **Eğer `Holiday` ile diğer sütunlar arasında güçlü bir ilişki varsa** (yani MAR türü bir eksiklik), mod yerine **model tabanlı imputation** (örneğin lojistik regresyon veya KNN Imputer) kullanmak çok daha mantıklı olur — bu yöntemler `Weekday`, `Temp`, `Crowdedness` gibi diğer sütunlara bakarak "bu satırın Holiday olma ihtimali" için daha isabetli bir tahmin üretir.
+
+2. **`Weekday` bilgisini kullanarak koşullu mod (conditional mode)** uygulamak da bir ara çözüm olabilir: "Tüm veri setinin modu" yerine, "aynı `Weekday`'e sahip diğer günlerin modu" kullanılabilir:
+```python
+df['Holiday'] = df.groupby('Weekday')['Holiday'].transform(lambda x: x.fillna(x.mode()[0]))
+```
+Bu, "Pazar günlerinin çoğu tatilse, eksik olan Pazar günü de muhtemelen tatildir" mantığını daha doğru yansıtır.
+
+## Genel Prensip
+
+Mod (ve mean/median) imputation'ın temel zayıflığı, **her zaman "sütunlar arası ilişkiyi görmezden gelmesidir"** — sadece tek bir sütunun kendi içindeki dağılıma bakar. Bu yöntemler **basit, hızlı ve MCAR** (tamamen rastgele eksiklik) durumunda makul bir tahmindir, ama sizin örneğinizdeki gibi **diğer değişkenlerle ilişkili (MAR) bir eksiklik** söz konusuysa, mod/mean/median gibi basit yöntemler **sistematik olarak yanlış tahminler** üretebilir, tam da az önce konuştuğumuz "bias" (önyargı) kavramının pratikte nasıl ortaya çıktığının güzel bir örneği.
+
+**Özetle:** Sezginiz doğru, mod her zaman güvenilir bir tahmin değildir; onu kullanmadan önce "bu sütun başka sütunlarla ilişkili mi?" sorusunu sormak, ve eğer öyleyse koşullu mod, KNN, ya da model tabanlı imputation gibi daha "akıllı" yöntemlere yönelmek gerekir.
+-----------------------
+
+Median: Veriyi küçükten büyüğe sıralayıp ortadaki değeri alıyorsun. Eleman sayısı tekse ortadaki eleman, çiftse ortadaki iki elemanın ortalaması.
+Mesela [3, 7, 1, 9, 4] → sıralayınca [1, 3, 4, 7, 9] → ortadaki 4, median = 4.
+Mod: En çok tekrar eden değer.
+Mesela [3, 7, 3, 9, 3, 7] → 3 üç kez tekrar ediyor, mod = 3.
+
+InterPolation:
+Eksik değeri komşu değerlere bakarak tahmin etmek. Yani "bu iki değerin arasında ne olabilir" diye hesaplıyor.
+
+Mesela sıcaklık verisinde şöyle bir durum var:
+
+Pazartesi: 20
+Salı: NaN
+Çarşamba: 24
+
+Linear interpolation burada Salı'yı 22 olarak dolduruyor, çünkü 20 ile 24'ün tam ortası. Mantıklı çünkü sıcaklık bir günde birden 10 derece atlamaz, kademeli değişiyor.
+
+Zaman serisi verilerinde çok kullanışlı. Ama Titanic gibi verilerde pek işe yaramaz, çünkü satırlar arasında zaman sırası yok, 45 yaşındaki bir yolcunun yanındaki 20 yaşındaki yolcudan interpolation yapmak anlamsız.
+
+Method 3: Linear Interpolation
+Linear interpolation estimates missing values by assuming a linear relationship between known data points. It’s particularly useful for time series data or data with a natural ordering.
+
+👍 Common Use: Linear interpolation is often used for time series data, where missing values can be estimated based on the values before and after them. It’s also useful for any data where there’s expected to be a roughly linear relationship between adjacent points
+
+In Our Case: We’re using linear interpolation for Temperature. Since temperature tends to change gradually over time and our data is ordered by date, linear interpolation can provide reasonable estimates for the missing temperature values based on the temperatures recorded on nearby days.
+
+.interpolate() 
+
+Python Pandas interpolate() method is used to fill NaN values in the DataFrame or Series using various interpolation techniques to fill the missing values rather than hard-coding the value.
+
+DataFrame.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None, **kwargs) 
+
+Teker teker gidelim.
+
+**method:** Nasıl interpolasyon yapılacağını belirliyor. `linear` iki nokta arasında düz çizgi çiziyor, en yaygın kullanılan. `time` zaman serisi için, değerleri zaman aralığına göre hesaplıyor. `quadratic`, `cubic` eğrisel interpolasyon yapıyor, daha karmaşık örüntüler için. Başlangıç için `linear` yeterli, diğerleri ileri seviye.
+
+**axis:** 0 ise sütun bazında dolduruyor, yani üst ve alt komşulara bakıyor. 1 ise satır bazında dolduruyor, sağ ve sol komşulara bakıyor.
+
+**limit:** Arka arkaya kaç tane NaN dolduracağını sınırlıyor. Mesela `limit=2` dersen en fazla 2 ardışık NaN dolduruyor, daha fazlası NaN kalıyor. Çok uzun boşlukları doldurmak istemediğinde kullanıyorsun.
+
+**limit_direction:** Hangi yönde dolduracağını belirliyor. `forward` ileriye doğru, yani önceki değere bakıyor. `backward` geriye doğru, sonraki değere bakıyor. `both` iki yönde de dolduruyor.
+
+**limit_area:** `inside` sadece iki geçerli değerin arasındaki NaN'ları dolduruyor. `outside` ise verinin başındaki veya sonundaki NaN'ları dolduruyor, yani extrapolation yapıyor.
+
+**inplace:** Zaten biliyorsun, DataFrame'i yerinde değiştiriyor.
+
+**downcast:** Sonucu mümkün olan en küçük veri tipine indirgiyor, az önce `pd.to_numeric`'te konuşmuştuk.
+
+Hocam peki bir şey soracağım bu interpolate fonksiyonu bana çok mantıklı gelmedi . Çünkü 100 ile 60 arasında değerler var ya  farkı 40 /4 = 10 , sonra her birine 10 ekleyip devam ediyor. Bu yöntem gerçekten de mantıklı mı
+
+Haklısın, her zaman mantıklı değil. Bu yöntem şu varsayıma dayanıyor: iki değer arasındaki değişim düzgün ve kademeli. Yani gerçek hayatta da o iki nokta arasında doğrusal bir ilişki var.
+Sıcaklık verisi için mantıklı. Pazartesi 20 derece, Çarşamba 24 derece ise Salı'nın 22 olması makul, sıcaklık bir günde zıplamaz.
+Ama Titanic'teki yaş verisi için mantıklı değil. 20 yaşındaki bir yolcunun yanındaki 80 yaşındaki yolcudan interpolation yapmak saçma, çünkü satırlar arasında hiçbir zaman ilişkisi yok.
+Yani interpolation'ın mantıklı olması için iki koşul lazım: verinin doğası kademeli değişiyor olmalı, ve satırlar arasında sıralı bir ilişki olmalı. Zaman serisi bu iki koşulu da sağlıyor, o yüzden orada çok kullanılıyor. Rastgele sıralanmış verilerde ise pek işe yaramıyor.
+
+method='index' interpolasyon yaparken index değerlerini dikkate alıyor. Yani index'ler eşit aralıklı değilse bunu hesaba katıyor.
+linear ile farkı şu: linear NaN'ların arasındaki adım sayısına bakıyor ve eşit böldürüyor. index ise index'teki gerçek sayısal değerlere bakıyor.
+Senin veride index 0,1,2,3... şeklinde eşit aralıklı olduğu için fark göremezsin. Ama şöyle bir durumda fark ortaya çıkar:
+index 0:   10
+index 2:   NaN
+index 8:   40
+linear dersen 0 ile 8 arasında 1 NaN var, (10+40)/2 = 25 yapar. Ama index dersen index 2, index 0 ile 8 arasında 2/8 noktasında, yani 10 + (40-10) * 2/8 = 17.5 yapar. Çok daha doğru çünkü gerçek konumu dikkate alıyor.
+
+values da index ile aynı mantıkta çalışıyor, index'teki sayısal değerlere göre interpolasyon yapıyor. Pratikte ikisi arasında neredeyse hiç fark yok, values eski pandas versiyonlarından kalma bir alias. Yeni kodlarda index kullanmak daha doğru.
+
+`spline` eğrisel interpolasyon yapıyor. `linear` iki nokta arasına düz çizgi çizerken, `spline` eğri çiziyor. Yani değişim daha yumuşak ve doğal görünüyor.
+
+Kullanırken `order` parametresi zorunlu:
+
+python
+s.interpolate(method='spline', order=2)
+
+`order` eğrinin derecesini belirliyor. `order=1` linear ile aynı, `order=2` ikinci derece eğri, `order=3` daha yumuşak bir eğri.
+
+Sıcaklık veya ses dalgası gibi doğada düzgün eğri çizen verilerde `linear`'dan daha iyi sonuç veriyor. Ama basit veri bilimi projelerinde `linear` genellikle yeterli, `spline` ileri seviye bir tercih.
+
+**Is linear interpolation always a valid imputation strategy?**
+
+Linear interpolation assumes that the rate of change between two known values is constant, distributing the difference equally across missing points. While computationally simple, this assumption only holds under two conditions: the underlying process changes gradually and continuously, and the observations are ordered in a meaningful sequence such as time.
+
+For time series data such as temperature or stock prices, these conditions are typically satisfied, making linear interpolation a reasonable choice. However, for datasets where rows have no inherent ordering or sequential relationship, such as passenger records, the method loses its justification entirely. Interpolating between an observation at row 50 and row 54 implies a progression between those records that simply does not exist.
+
+Furthermore, even in time series, linear interpolation fails when the underlying process is nonlinear. In such cases, higher-order methods such as polynomial or spline interpolation provide a more accurate approximation at the cost of increased complexity.
+
+Soru: interpolate() fonksiyonu için diyelim ki 6 farklı değerimiz var: 10  NA NA NA NA 90 . Ben ortadaki değer için 50 , sonra diğerleir için de ortalam değer vs olarak doldurmak istiyorum. Bunu nasıl yaoabilirm ?
+
+Elcevap:
+
+Hocam aslında istediğiniz şey **tam olarak `interpolate()`'in varsayılan davranışı (`method='linear'`)** ile zaten oluyor, ekstra bir şey yapmanıza gerek yok. Hesaplayarak gösterelim.
+
+## Kod
+
+```python
+import pandas as pd
+import numpy as np
+
+s = pd.Series([10, np.nan, np.nan, np.nan, np.nan, 90])
+result = s.interpolate(method='linear')
+print(result)
+```
+
+## Sonuç
+
+```
+0    10.0
+1    26.0
+2    42.0
+3    58.0
+4    74.0
+5    90.0
+```
+
+## Mantığı Anlatayım
+
+Linear interpolation şu hesabı yapar: **başlangıç ve bitiş değeri arasındaki farkı, aradaki boşluk sayısına eşit olarak böler.**
+
+- Başlangıç: `10`, Bitiş: `90` → fark: `90 - 10 = 80`
+- Aradaki boşluk sayısı (adım sayısı): 6 elemanınız var, aralarında **5 adım** var (10'dan 90'a 5 sıçrama ile gidiyorsunuz)
+- Her adımda eklenecek miktar: `80 / 5 = 16`
+
+Böylece:
+```
+10 → 10+16=26 → 26+16=42 → 42+16=58 → 58+16=74 → 74+16=90
+```
+
+## Sizin "50" Beklentinizle Örtüşüyor mu?
+
+Evet! Ortadaki iki değere bakarsanız (`42` ve `58`), bunların ortalaması: `(42+58)/2 = 50` çıkıyor. Yani **tam ortadaki nokta simetrik olarak 50'ye denk geliyor**, tam sizin sezgisel beklediğiniz gibi — çünkü linear interpolation zaten uçlar arasında **eşit aralıklı, simetrik** bir dağılım yapıyor, bu yüzden tam ortası her zaman iki uç değerin ortalamasına eşit çıkar.
+
+## Özetle
+
+Herhangi bir özel parametre ya da manuel hesaplama yapmanıza gerek yok, sadece:
+```python
+df['sutun'] = df['sutun'].interpolate(method='linear')
+```
+yazmanız, sizin istediğiniz "ortada 50'ye yakın, eşit aralıklı" doldurmayı otomatik olarak yapar.
+
+Method 4: Forward/Backward Fill
+
+Forward fill ve backward fill, eksik değerleri komşu satırlardaki değerlerle doldurma yöntemleridir. Hatırla, daha önce ortalama/medyan/mode ile doldurmayı konuştuk; bunlar farklı bir mantık kullanır: eksik yere bir istatistik değil, hemen yanındaki dolu değeri kopyalar. İkisini açayım.
+
+Forward fill (ileri doldurma, ffill), bir eksik değeri kendinden bir önceki (yukarıdaki) dolu değerle doldurur. Yani "son bilinen değer neyse onu taşı" mantığı. Mesela bir sütunda 25, NaN, NaN, 30 varsa, forward fill bunu 25, 25, 25, 30 yapar; eksikler en son görülen 25 ile dolar.
+
+Backward fill (geri doldurma, bfill), tam tersi: eksik değeri kendinden bir sonraki (aşağıdaki) dolu değerle doldurur. Yani "bir sonraki bilinen değeri geriye taşı" mantığı. Aynı 25, NaN, NaN, 30 dizisinde backward fill bunu 25, 30, 30, 30 yapar; eksikler bir sonraki dolu değer olan 30 ile dolar.
+
+df['sutun'].ffill()   # forward fill
+df['sutun'].bfill()   # backward fill
+
+Asıl önemli soru şu: bunlar ne zaman mantıklı? Bu yöntemler özellikle sıralı/zaman serisi (time series) verilerinde anlamlıdır, çünkü orada satırların sırası bir şey ifade eder ve ardışık değerler birbirine yakındır. Mesela saatlik sıcaklık ölçümünde bir saat eksikse, bir önceki saatin sıcaklığını taşımak (ffill) gayet makuldür, çünkü sıcaklık bir saatte çok değişmez. Ya da bir hisse senedinin günlük fiyatında bir gün eksikse, son bilinen fiyatı taşımak mantıklıdır.
+
+Ama dikkat: sırasız, bağımsız verilerde (mesela rastgele sıralı müşteri kayıtları) bu yöntemler anlamsızdır, hatta yanıltıcıdır. Çünkü 100. müşterinin geliri eksik diye 99. müşterinin gelirini ona kopyalamak saçmadır; aralarında bir ilişki yok. Orada ortalama/medyan ile doldurma daha doğrudur. Yani forward/backward fill'in mantığı, "komşu satırlar birbiriyle ilişkili" varsayımına dayanır; bu varsayım sadece sıralı verilerde geçerlidir.
+
+Küçük bir pratik not: ffill ile dizinin en başındaki eksik dolmaz (öncesinde taşınacak değer yok), bfill ile de en sondaki eksik dolmaz (sonrasında değer yok). Bu yüzden bazen ikisini birlikte kullanırsın ya da kalan tek tük eksiği başka yöntemle kapatırsın.
+
+Soru:Peki interpolate ile farkı nedir ?
+
+Forward/backward fill kopyalar, interpolate ise hesaplar. Hatırla, ffill bir önceki değeri olduğu gibi taşıyordu, bfill bir sonrakini. Interpolate ise eksik değeri, komşularına bakıp aralarında mantıklı bir geçiş değeri üreterek doldurur. Yani var olan bir değeri kopyalamaz, yeni bir ara değer hesaplar.
+
+Diyelim sıralı bir veride 10, NaN, 20 var. Üç yöntem şunu yapar: forward fill bunu 10, 10, 20 yapar (öncekini kopyalar). Backward fill 10, 20, 20 yapar (sonrakini kopyalar). Interpolate ise 10, 15, 20 yapar; yani 10 ile 20 arasını çizgisel olarak böler ve tam ortadaki 15'i hesaplar. İşte temel fark bu: interpolate, iki dolu değer arasında düzgün bir geçiş varsayar ve eksik noktayı o geçişin üzerine oturtur.
+
+df['sutun'].interpolate()
+
+Varsayılan hâli doğrusal (linear) interpolasyondur, yani noktaları düz bir çizgiyle birleştirip aradaki değeri okur. Daha karmaşık geçişler için method='polynomial', method='spline' gibi seçenekler de var ama linear çoğu zaman yeterli.
+
+Asıl mesele, hangisinin ne zaman daha mantıklı olduğu. Interpolate, verinin kademeli/sürekli değiştiği durumlarda en iyisidir. Mesela saatlik sıcaklık ölçümünde saat 14'te 20°, saat 16'da 24° ölçülmüş ama saat 15 eksikse; interpolate bunu 22° yapar, ki bu çok makuldür çünkü sıcaklık zaten kademeli artıyordu. Burada forward fill 20° derdi (saat 15'i hâlâ 14 gibi gösterirdi), bu daha kaba bir tahmin olurdu.
+
+Forward/backward fill ise verinin basamaklı, sabit kaldığı durumlarda daha mantıklıdır. Mesela bir sözleşmenin aylık ücreti değişene kadar sabit kalıyorsa, eksik ayı bir önceki ücretle doldurmak (ffill) doğrudur; orada interpolate yapıp ara değer uydurmak yanlış olurdu çünkü ücret kademeli değil, basamaklı değişiyor. Aynı şekilde kategorik verilerde (tatil mi değil mi gibi) interpolate hiç kullanılmaz; "yarım tatil" diye bir ara değer olamaz, orada ffill ya da mode mantıklıdır.
+
+Tek paragrafta: Forward/backward fill var olan komşu bir değeri olduğu gibi kopyalar (önceki ya da sonraki), interpolate ise iki komşu değer arasında hesaplanmış bir ara değer üretir (mesela 10 ve 20 arasına 15). Interpolate, sıcaklık gibi kademeli ve sürekli değişen sayısal verilerde idealdir; forward/backward fill ise sabit kalıp basamaklı değişen verilerde ya da kategorik verilerde daha doğrudur. Yani veri iki nokta arasında düzgün akıyorsa interpolate, sabit kalıp sıçrıyorsa fill kullanırsın.
+
+Forward fill (or "last observation carried forward") propagates the last known value forward to fill gaps, while backward fill does the opposite. This method assumes that the missing value is likely to be similar to the nearest known value.
+
+👍 Common Use: Forward/backward fill is often used for time series data, especially when the value is likely to remain constant until changed (like in financial data) or when the most recent known value is the best guess for the current state.
+
+In Our Case: We’re using a combination of forward and backward fill for Outlook. Weather conditions often persist for several days, so it’s reasonable to assume that a missing Outlook value might be similar to the Outlook of the previous or following day.
+
+.fillna()
+Sometimes csv file has null values, which are later displayed as NaN in Data Frame. Just like the pandas dropna() method manages and remove Null values from a data frame, fillna() manages and let the user replace NaN values with some value of their own. 
+
+Syntax: DataFrame.fillna(value=None, method=None, axis=None, inplace=False, limit=None, downcast=None, **kwargs)
+
+Parameters: 
+
+value : Static, dictionary, array, series or dataframe to fill instead of NaN. 
+method : Method is used if user doesn't pass any value. Pandas have different methods like bfill, backfill, or ffill which fills the place with value in the Forward index or Previous/Back respectively. 
+axis: axis takes int or string value for rows/columns. Input can be 0 or 1 for Integer and 'index' or 'columns' for String 
+inplace: It is a boolean which makes the changes in data frame itself if True. 
+limit : This is an integer value which specifies maximum number of consecutive forward/backward NaN value fills. 
+downcast : It takes a dict which specifies what dtype to downcast to which one. Like Float64 to int64. 
+**kwargs : Any other Keyword arguments
+
+'ffill' → forward fill:Bu yöntem, eksik değeri kendinden önceki geçerli değerle doldurur.
+'bfill' → backward fill:Bu yöntem eksik değeri kendinden sonraki ilk geçerli değerle doldurur.
+
+method parametresi kullanıldığında value= parametresi kullanılmaz.
+limit, doldurma işleminin kaç ardışık NaN için uygulanacağını sınırlar.
+Eğer zaman serisinde 100 satır üst üste NaN varsa ve siz ffill yaparsanız, 100 satır boyunca aynı değer taşınır. Bu veri analizini ciddi şekilde bozabilir.
+limit, bu tür “aşırı doldurma” riskini engeller.
+method → doldurma yönünü ve stratejisini belirler
+limit → kaç ardışık eksik değerin doldurulacağını sınırla
+bfill, backfill'in kısaltması. Pandas her ikisini de kabul ediyor, sadece yazım farkı.
+Aynı şekilde ffill de forwardfill'in kısaltması.
+
+Method 5: Constant Value Imputation
+This method involves replacing all missing values in a variable with a specific constant value. This constant could be chosen based on domain knowledge or a safe default value.
+
+Domain knowledge, verinin geldiği alanı bilen birinin sahip olduğu uzmanlık bilgisi demek.
+
+Mesela Titanic'teki `Cabin` sütununda çok fazla NaN var. Bunu 0 veya "Unknown" ile doldurabilirsin ama bir gemi mühendisi veya tarihçi "3. sınıf yolcuların büyük çoğunluğunun kayıtlı bir kabini yoktu" diyebilir. O zaman NaN'ı "No Cabin" ile doldurmak istatistiksel bir karardan değil, alan bilgisinden geliyor.
+
+Ya da tıbbi bir veri setinde bir test sonucu eksikse, doktor "bu test sadece belirli hastalarda yapılır, eksikse negatif kabul edilir" diyebilir. Bu da domain knowledge ile yapılan constant imputation.
+Başka bir örnek verecek olursak:
+Sen bir veri bilimcisin ve elinde hastane verisi var. Bir sütunda ilaç dozu eksik. Sen matematiksel olarak ortalama ile doldurabilirsin ama bu tehlikeli olabilir.
+Ama yanında bir doktor var ve diyor ki: "bu sütun çocuk hastalar için doz, eğer eksikse o hasta çocuk değildir, 0 yaz." İşte bu doktorun sahip olduğu bilgi domain knowledge. Sen veri bilimci olarak bunu bilemezsin, sadece o alanda uzman biri bilebilir.
+Yani domain knowledge, verinin geldiği alanı anlayan birinin "bu değer eksikse şu anlama gelir" diyebilmesi.
+
+👍 Common Use: Constant value imputation is often used when there’s a logical default value for missing data, or when you want to explicitly flag that a value was missing (by using a value outside the normal range of the data).
+
+In Our Case: We’re using constant value imputation for the Wind column, replacing missing values with -1. This approach explicitly flags imputed values (since -1 is outside the normal 0–1 range for Wind) and it preserves the information that these values were originally missing.
+
+Method 6: KNN Imputation
+K-Nearest Neighbors (KNN) imputation estimates missing values by finding the K most similar samples in the dataset (just like KNN as Classification Algorithm) and using their values to impute the missing data. This method can capture complex relationships between variables.
+
+👍 Common Use: KNN imputation is versatile and can be used for both continuous and categorical variables. It’s particularly useful when there are expected to be complex relationships between variables that simpler methods might miss.
+
+In Our Case: We’re using KNN imputation for Crowdedness. Crowdedness likely depends on a combination of factors (like temperature, holiday status, etc.), and KNN can capture these complex relationships to provide more accurate estimates of missing crowdedness values.
+
+Let’s recap how each method tackled our data:
+
+1.Listwise Deletion: Helped us focus on more complete data points by removing rows with extensive missing values.
+
+2.Simple Imputation: Filled in Humidity with average values and Holiday with the most common occurrence.
+
+3.Linear Interpolation: Estimated missing Temperature values based on the trend of surrounding days.
+
+4.Forward/Backward Fill: Guessed missing Outlook values from adjacent days, reflecting the persistence of weather patterns.
+
+5.Constant Value Imputation: Flagged missing Wind data with -1, preserving the fact that these values were originally unknown.
+
+6.KNN Imputation: Estimated Crowdedness based on similar days, capturing complex relationships between variables.
+
+Each method tells a different story about our missing data, and the "right" choice depends on what we know about our golf course operations and what questions we’re trying to answer.
+
+Don’t just blindly apply imputation methods. Understand your data, consider the context, and choose the method that makes the most sense for your specific situation.
+
+Warning: The Purpose and Limitations of Missing Value Imputation
+While we’ve explored various imputation techniques, we need to understand their purpose and limitations:
+
+1.Not a Magic Solution: Imputation is not a cure-all for missing data. It’s a tool to make your data usable, not to create perfect data.
+
+2.Potential for Bias: Imputed values are educated guesses. They can introduce bias if not done carefully, especially if the data is Not Missing At Random (NMAR).
+
+3.Loss of Uncertainty: Most simple imputation methods don’t account for the uncertainty in the missing values, which can lead to overconfident models.
+
+Şöyle düşün. Age sütununda NaN var ve median 28. Ortalama ile doldurdun, artık o kişinin yaşı kesinlikle 28 yazıyor. Ama gerçekte o kişinin yaşı 15 de olabilirdi, 60 da. Sen bu belirsizliği yok edip "kesinlikle 28" dedin.
+Model de artık o değeri gerçek bir gözlemmiş gibi görüyor, "bu değer aslında tahmin edilmiş, belirsizlik var" bilgisine sahip değil. Bu yüzden model olduğundan daha emin davranıyor, yani overconfident oluyor.
+Bunu çözmek için multiple imputation gibi yöntemler var. Tek bir değer yerine birden fazla olası değer üretiyor ve bu belirsizliği modele yansıtıyor. Ama bu ileri seviye bir konu, şu an bilmen yeterli.
+
+4.Data Distortion: Aggressive imputation can distort relationships in your data. Always check if imputation has significantly altered your data’s distribution or correlations.
+
+5.Document Your Process: Always clearly document your imputation methods. This transparency is crucial for reproducibility and for others to understand potential biases in your results.
+
+Again, the goal of imputation is to make your data usable while minimizing bias and information loss. It’s not about creating perfect data, but about making the best use of the information you have. Always approach imputation with caution and critical thinking.
+
+## Bildiğin altı yöntem, detaylı
+
+**Listwise Deletion (satır silme).** Eksik değer içeren satırları tamamen atmak. En basit yöntem ama en riskli olabilen. Yalnızca eksiklik MCAR ise (tamamen rastgele) ve eksik oran düşükse (kabaca %5 altı) güvenle kullanılır; çünkü rastgele eksikse, silinen satırlar veriyi yanlı hale getirmez. MAR/MNAR'da tehlikelidir: hatırla, MNAR'daki kilo örneğinde eksikleri silersen tüm yüksek kilolu insanları atmış olursun ve veri sistematik çarpılır. Bir de çok veri kaybetme riski var; az sayıda eksikli ama çok sütunlu bir veride, her satırda bir-iki eksik varsa neredeyse tüm veriyi silebilirsin.
+
+**Simple Imputation (basit istatistiksel doldurma).** Sayısal sütunlarda ortalama (mean) ya da medyan, kategorik sütunlarda en sık değer (mode) ile doldurma. Senin örneğinde Humidity'yi ortalama, Holiday'i mode ile doldurmuştuk. Hızlı ve sezgisel ama bir bedeli var: tüm eksikleri tek bir değere eşitlediğin için verinin varyansını (yayılımını) azaltır, dağılımı yapay olarak daraltır. Önemli nüans: sütunda aykırı değer varsa ortalama yerine medyan kullan, çünkü ortalama outlier'dan etkilenip yanıltır.
+
+**Linear Interpolation (doğrusal interpolasyon).** İki dolu değer arasına hesaplanmış bir ara değer koyar (10 ve 20 arasına 15). Senin örnekte Temperature için kullanıldı, çünkü sıcaklık komşu günler arasında kademeli değişir. Yalnızca sıralı/zaman serisi veride ve değer kademeli/sürekli değiştiğinde mantıklı. Kategorik veride asla kullanılmaz (yarım kategori olamaz).
+
+**Forward/Backward Fill.** Eksik değeri komşu satırdan kopyalar; ffill öncekini, bfill sonrakini taşır. Senin örnekte Outlook (hava durumu) için kullanıldı, çünkü hava durumu ardışık günlerde kalıcılık gösterir (bugün yağmurluysa yarın da olma ihtimali yüksek). Interpolation'dan farkı: kopyalar, hesaplamaz. Sabit kalıp basamaklı değişen verilerde ve kategorik sıralı verilerde idealdir.
+
+**Constant Value Imputation (sabit değerle doldurma / işaretleme).** Eksikleri özel bir sabitle (mesela -1) doldurmak. Senin örnekte Wind için yapıldı. Buradaki asıl amaç dolgu değil işaretleme: -1 gerçek bir rüzgar değeri değil, "bu değer aslında eksikti" bilgisini veride tutmanın yolu. Hatırla MNAR'da "eksik olmanın kendisi bilgi taşır" demiştik; işte bu yöntem o bilgiyi koruyor. Bu mantığın daha temiz versiyonu missing indicator'dır (aşağıda anlatacağım).
+
+**KNN Imputation.** Eksik kaydın en benzer komşularına (K nearest neighbors) bakıp onların değerinden doldurur. Senin örnekte Crowdedness için kullanıldı, çünkü "benzer günler benzer kalabalık" mantığı var. Bu, diğer sütunları kullanarak doldurduğu için MAR'da çok güçlüdür (eksikliği açıklayan değişkenler varsa onları kullanır). Bedeli: hesaplama maliyeti yüksektir ve tüm veriyi ölçeklemen gerekir (KNN mesafe tabanlı, hatırla feature scaling şart).
+
+## Hangi durumda hangisi: karar mantığı
+
+Seçimi iki eksene göre yaparsın: **verinin tipi** (sayısal mı, kategorik mi, sıralı mı) ve **eksikliğin sebebi** (MCAR/MAR/MNAR).
+
+Önce şunu sor: **veri sıralı/zaman serisi mi?** Eğer öyleyse (günlük ölçümler, fiyatlar) komşuluk anlamlıdır: kademeli değişen sayısal değer için interpolation, sabit kalıp sıçrayan ya da kategorik değer için forward/backward fill kullan. Bunlar sırasız veride anlamsızdır.
+
+Veri sırasız/bağımsız kayıtlarsa (her satır ayrı bir müşteri/gözlem), komşuluk işe yaramaz, şunlara bakarsın:
+
+Eksik oran çok yüksekse (%50-60+) o sütunu silmeyi düşün, zaten güvenilir bilgi çıkmaz. Eksik oran çok düşük ve MCAR ise listwise deletion en temizi. Sayısal bir sütunu dolduracaksan ve outlier yoksa ortalama, outlier varsa medyan kullan. Kategorik sütunda mode kullan. Eksikliği başka sütunlar açıklıyorsa (MAR) ve doğruluk önemliyse KNN ya da model-based imputation tercih et, çünkü diğer değişkenlerden faydalanır. Eksikliğin kendisi anlamlıysa (MNAR, mesela gelirini gizleyenler) sabit değerle işaretle ya da missing indicator ekle.
+
+Özetle karar zinciri: sıralıysa → interpolation (kademeli) / fill (basamaklı-kategorik); sırasızsa → oran çok yüksekse sütunu sil, MCAR+düşük oran ise satır sil, basit doldurma için sayısalda ortalama/medyan kategorikte mode, MAR'da KNN, MNAR'da işaretleme.
+
+## Öğrenmeni önereceğim ekstra şeyler
+
+**Missing indicator (eksiklik bayrağı).** Constant value imputation'ın daha temiz hali. Eksik değeri doldururken, ayrıca "bu hücre eksikti mi?" bilgisini tutan yeni bir ikili sütun (0/1) eklersin. Böylece hem değeri doldurmuş olursun hem de eksik olma bilgisini kaybetmezsin. MNAR'da çok değerli, çünkü model "bu değer eksikti" gerçeğini bir özellik olarak kullanabilir. scikit-learn'de `SimpleImputer(add_indicator=True)` ile ya da `MissingIndicator` ile yapılır. Bunu mutlaka öğren, sık kullanacaksın.
+
+**scikit-learn imputer'ları ve data leakage.** Bu en kritik olanı, çünkü gerçek projede şart. `SimpleImputer`, `KNNImputer` gibi sınıfları öğren ve şunu hep hatırla: doldurma parametrelerini (ortalama, medyan, komşular) yalnızca eğitim verisinden hesaplarsın. Yani `fit` sadece train'de, `transform` her ikisinde. Test'in kendi ortalamasıyla doldurursan data leakage olur, tıpkı scaler'da konuştuğumuz gibi. Manuel `fillna` yerine bu sınıfları kullanmayı öğren, çünkü train/test ayrımını doğru yönetirler.
+
+**Iterative Imputer (gelişmiş, ileri seviye).** Her eksik sütunu, diğer tüm sütunları kullanan bir regresyon modeliyle tahmin eden döngüsel bir yöntem (MICE algoritmasına dayanır). KNN'den daha güçlü olabilir ama daha karmaşık ve yavaş. Şimdi sadece var olduğunu bil, adını duyduğunda yabancı kalmazsın; derinine TEKNOFEST'te gerçek bir veriyle uğraşırken inersin.
+
+**Pipeline kavramı (kuvvetle öneririm).** scikit-learn'de imputation + scaling + model adımlarını tek bir `Pipeline` nesnesinde birleştirebilirsin. Bunun büyük faydası: tüm bu adımlarda `fit`'in sadece train'e uygulanmasını otomatik garanti eder, yani data leakage'i yapısal olarak engeller. Eksik veri ve scaling'i ayrı ayrı öğrendin; bir sonraki adımın bunları Pipeline ile birleştirmek olmalı. Bu, dağınık koddan profesyonel iş akışına geçişin.
+
+Tek paragrafta toparlayayım: Bildiğin altı yöntem (listwise deletion, simple imputation, interpolation, forward/backward fill, constant value, KNN) eksik veriyle başa çıkmanın temel araçları; seçimi verinin sıralı olup olmamasına ve eksikliğin tipine göre yaparsın (sıralıda interpolation/fill, sırasızda oran ve MCAR/MAR/MNAR'a göre silme/ortalama-medyan-mode/KNN/işaretleme). Bundan sonra öğrenmen gerekenler: missing indicator (eksikliği bayraklama), scikit-learn'in imputer sınıfları ve onlarla data leakage'i önleme, ileri seviye olarak iterative imputer, ve hepsini birleştiren Pipeline yapısı; özellikle imputer'lar + leakage disiplini ve Pipeline, gerçek bir projeye geçişte seni dağınıklıktan kurtaracak iki kilit konu.
+
+KNN Imputer:
+
+Missing data is a common issue in data analysis and machine learning, often leading to inaccurate models and biased results. One effective method for addressing this issue is the K-Nearest Neighbors (KNN) imputation technique.
+
+KNN imputation is a technique used to fill missing values in a dataset by leveraging the K-Nearest Neighbors algorithm. This method involves finding the k-nearest neighbors to a data point with a missing value and imputing the missing value using the mean or median of the neighboring data points. This approach preserves the relationships between features, which can lead to better model performance compared to simpler imputation methods like mean or median imputation.
+
+How KNN Imputer Works?
+Identifying Missing Values: The first step is to identify the missing values in the dataset, typically marked as NaN (Not a Number).
+Finding Nearest Neighbors: For each data point with a missing value, the KNN imputer finds the k-nearest neighbors based on a specified distance metric (e.g., Euclidean distance, cosine similarity).
+Imputing Missing Values: The missing value is then imputed using the mean or median of the values from the k-nearest neighbors
+
+Implementing KNN Imputer in Python for Missing Data
+Choosing the Right Parameters for KNN Imputer
+The performance of the KNN Imputer depends on the choice of parameters:
+
+n_neighbors: The number of neighbors to consider for imputation. A smaller value may be more sensitive to noise, while a larger value may oversmooth the data.
+weights: Determines how to weight the contributions of the neighbors. Options include:
+uniform: All neighbors have equal weight.
+distance: Weights neighbors by their distance, giving closer neighbors more influence.
+p: The power parameter for the Minkowski distance metric. p=1 corresponds to Manhattan distance, and p=2 corresponds to Euclidean distance.
+
+imputer = KNNImputer(n_neighbors=3, weights='distance')
+
+The KNNImputer class from the scikit-learn library provides a straightforward way to implement KNN imputation.
+
+Hocam KNN Imputer'ın parametrelerini detaylıca açıklayayım.
+
+## KNN Imputer Mantığı (Kısa Hatırlatma)
+
+Eksik bir değeri doldururken, o satıra **en çok benzeyen** (diğer sütunlardaki değerleri en yakın olan) **K tane komşu satıra** bakar, onların ortalamasını (veya ağırlıklı ortalamasını) alarak tahmin üretir. Yani mean/median gibi "tüm sütunun genel ortalaması" değil, "bana en çok benzeyenlerin ortalaması" mantığıyla çalışır.
+
+---
+
+## 1. `n_neighbors` — Kaç Komşuya Bakılacak
+
+Kaç tane en yakın komşunun dikkate alınacağını belirler.
+
+```python
+from sklearn.impute import KNNImputer
+imputer = KNNImputer(n_neighbors=5)
+```
+
+**Küçük değer (örneğin `n_neighbors=1` veya `2`):**
+- Sadece en yakın 1-2 komşuya bakar
+- **Gürültüye (noise) karşı hassastır** — eğer o 1-2 komşu, tesadüfen anormal/aykırı bir değere sahipse, tahmininiz de bozulur
+- Çok "lokal" bir tahmin yapar, genele bakmaz
+
+**Büyük değer (örneğin `n_neighbors=20`):**
+- Çok daha fazla komşuya bakıp ortalama alır
+- **Oversmoothing (aşırı düzleştirme)** riski taşır — yani gerçekte birbirinden farklı olması gereken hastaların tahminleri birbirine çok benzer/yakın çıkmaya başlar, "kişiselleştirilmiş" tahmin özelliğini kaybeder
+- Daha "genel/ortalamaya yakın" ama daha az isabetli tahminler üretebilir
+
+**Pratik öneri:** Genelde `5` civarı makul bir başlangıç noktasıdır, veri setinizin büyüklüğüne göre `3-10` arası denenip **cross-validation** ile hangisinin en iyi sonucu verdiğine bakılır.
+
+---
+
+## 2. `weights` — Komşuların Etkisi Nasıl Ölçülecek
+
+Komşulardan alınan değerlerin **eşit mi yoksa mesafeye göre mi** ağırlıklandırılacağını belirler.
+
+**`weights='uniform'` (varsayılan):**
+```python
+imputer = KNNImputer(n_neighbors=5, weights='uniform')
+```
+Tüm K komşu **eşit ağırlığa** sahiptir, basit aritmetik ortalama alınır. Örneğin 5 komşunun değeri `[70, 72, 68, 90, 71]` ise, hepsi eşit önemde sayılıp ortalama alınır: `(70+72+68+90+71)/5`.
+
+**`weights='distance'`:**
+```python
+imputer = KNNImputer(n_neighbors=5, weights='distance')
+```
+**Daha yakın olan komşular, daha uzak olanlardan daha fazla söz sahibi olur** (mesafenin tersiyle orantılı ağırlık verilir). Yani eksik değere sahip satıra **çok benzeyen** bir komşunun tahmine etkisi, **daha az benzeyen** bir komşuya göre daha büyük olur.
+
+**Ne zaman hangisini kullanmalı?**
+- Eğer komşularınızın "benzerlik derecesi" gerçekten önemliyse (yani bazı komşular çok daha yakın/benzer, bazıları uzak ama yine de K içinde kalmışsa) → `'distance'` daha isabetli sonuç verir
+- Basit ve hızlı bir çözüm istiyorsanız → `'uniform'` yeterlidir
+
+---
+
+## 3. `p` — Mesafe Ölçüm Yöntemi (Minkowski Distance Parametresi)
+
+KNN, "en yakın komşuları" bulurken satırlar arasındaki **mesafeyi** hesaplaması gerekir. `p` parametresi bu mesafenin **nasıl hesaplanacağını** belirler.
+
+**`p=1` → Manhattan Distance (Şehir Bloğu Mesafesi)**
+İki nokta arasındaki mesafeyi, her boyuttaki **farkların mutlak değerlerinin toplamı** olarak hesaplar:
+$$d = |x_1 - x_2| + |y_1 - y_2|$$
+Sanki bir şehirde sadece dikey/yatay sokaklardan gidebiliyormuş gibi düşünün, çapraz kestirme yapamazsınız.
+
+**`p=2` → Euclidean Distance (Öklid Mesafesi, varsayılan)**
+Bizim günlük hayatta bildiğimiz **"kuş uçuşu" düz çizgi mesafesi**:
+$$d = \sqrt{(x_1-x_2)^2 + (y_1-y_2)^2}$$
+İki nokta arasında düz bir çizgi çekip mesafeyi ölçmek gibi.
+
+```python
+imputer = KNNImputer(n_neighbors=5, p=2)  # Euclidean (varsayılan)
+imputer = KNNImputer(n_neighbors=5, p=1)  # Manhattan
+```
+
+**Ne zaman hangisini kullanmalı?**
+- `p=2` (Euclidean) çoğu durumda varsayılan ve genel amaçlı iyi bir tercih
+- `p=1` (Manhattan), özellikle **yüksek boyutlu veri** (çok fazla sütun) ya da **aykırı değerlere karşı biraz daha dayanıklı** bir mesafe ölçümü istediğinizde tercih edilebilir, çünkü kareler almadığı için büyük farkları Euclidean kadar "abartmaz"
+
+---
+
+## Örnek — Üçünü Birlikte Kullanmak
+
+```python
+from sklearn.impute import KNNImputer
+
+imputer = KNNImputer(n_neighbors=5, weights='distance', p=2)
+df_imputed = imputer.fit_transform(df[['Age', 'BMI', 'Cholesterol']])
+```
+
+Bu örnek: **en yakın 5 komşuya bakar**, **mesafesi yakın olanlara daha fazla ağırlık verir**, mesafeyi **Euclidean (düz çizgi)** yöntemiyle hesaplar.
+
+---
+
+## Pratik Not — `KNNImputer` Sadece Sayısal Sütunlarla Çalışır
+
+KNN Imputer, mesafe hesapladığı için **sadece sayısal (numeric) sütunlarda** kullanılabilir, kategorik sütunlar (Gender, Smoker gibi string) doğrudan verilemez, önce encode edilmesi (sayısala çevrilmesi, örneğin one-hot encoding) gerekir.
+
+Bizim `realworld_medical_dirty.csv` veri setinde `Age`, `BMI`, `Cholesterol`, `Blood_Pressure` gibi sayısal sütunlarda KNN Imputer'ı denemek isterseniz, birlikte uygulayabiliriz — ister misiniz?
+
+Soru: neden fit_transform kullandık ?
+
+Elcevap:
+
+Hocam `fit_transform()` aslında iki ayrı işlemi **tek adımda birleştiren** bir fonksiyon. Ayrı ayrı açıklayayım.
+
+## `fit()` Ne Yapar?
+
+Modelin (burada KNNImputer) veriden **öğrenmesini/hesaplama yapmasını** sağlar. KNN Imputer için bu, verilen veri setindeki **tüm satırlar arasındaki mesafeleri hesaplayıp**, hangi satırların birbirine "komşu" olduğunu **öğrenmesi** anlamına gelir. Bu aşamada henüz hiçbir değer doldurulmaz, sadece **komşuluk yapısı öğrenilir**.
+
+```python
+imputer.fit(df[['Age', 'BMI']])
+```
+
+## `transform()` Ne Yapar?
+
+`fit()` aşamasında öğrenilen bilgiyi **kullanarak** asıl işlemi (burada eksik değerleri doldurma) gerçekleştirir.
+
+```python
+df_filled = imputer.transform(df[['Age', 'BMI']])
+```
+
+## `fit_transform()` Neden Kullanıyoruz?
+
+İki adımı **tek satırda, tek seferde** yapmak için:
+```python
+df_filled = imputer.fit_transform(df[['Age', 'BMI']])
+```
+Bu, şu iki satırla **tamamen aynı işi** yapar:
+```python
+imputer.fit(df[['Age', 'BMI']])
+df_filled = imputer.transform(df[['Age', 'BMI']])
+```
+Ama tek satırda, daha kısa ve pratik.
+
+## Peki Neden Bazen Ayrı Ayrı `fit()` ve `transform()` Kullanılır?
+
+İşte burada, daha önce konuştuğumuz **çok kritik bir konu** devreye giriyor: **Data Leakage (Veri Sızıntısı)**.
+
+Eğer elinizde bir **train/test split** varsa (yani modeli eğitmek için ayırdığınız bir kısım, test etmek için ayırdığınız başka bir kısım varsa), şu şekilde ilerlemeniz gerekir:
+
+```python
+# SADECE train verisiyle "öğren" (fit)
+imputer.fit(X_train)
+
+# Öğrenilen bilgiyi HEM train'e HEM test'e uygula (transform)
+X_train_filled = imputer.transform(X_train)
+X_test_filled = imputer.transform(X_test)
+```
+
+**Neden test verisinde `fit_transform()` değil sadece `transform()` kullanılır?**
+Çünkü eğer test verisiyle de `fit()` yaparsanız, imputer test verisinin bilgisini de "görmüş" ve öğrenmiş olur — bu, modelinizin gerçek dünyada hiç görmediği veriye önceden "bakmış" olması anlamına gelir, yani **data leakage** oluşur, bu da modelin gerçek performansını olduğundan iyi göstermenize (yanıltıcı sonuçlara) yol açar.
+
+## Bizim Şu Anki Durumumuz İçin
+
+Şu an sadece **keşif/öğrenme amaçlı**, tüm veri setini (`df`) tek parça olarak inceliyoruz, henüz bir train/test ayrımı yapmadık. Bu aşamada `fit_transform()` kullanmak **tamamen doğru ve normal**, çünkü henüz "gelecekte modelin görmemesi gereken bir test verisi" kavramımız yok. Ama ileride bir model kurup train/test ayırdığınızda, bu noktayı hatırlayıp **sadece train'e `fit`, ikisine de `transform`** mantığını uygulamanız gerekecek — bu, tam da az önce "missing value handling ile data leakage ilişkisi" başlığında bahsettiğim konunun KNN Imputer özelinde karşımıza çıkmış hali.
+
+While the KNN Imputer is powerful, it has limitations:
+
+Computational Cost: The algorithm can be computationally expensive for large datasets due to the distance calculations.
+Scalability: Performance may degrade with high-dimensional data or large numbers of neighbors.
+Data Quality: Imputation quality depends on the quality and quantity of the available data.
+To mitigate these issues, consider using dimensionality reduction techniques or combining KNN Imputation with other imputation methods.
+
+Conclusion
+KNN imputation is a robust technique for handling missing data, leveraging the power of the K-nearest neighbors algorithm to estimate missing values based on the patterns in the data. Despite its computational demands, it remains a popular choice due to its simplicity and effectiveness. By understanding its workings, advantages, and limitations, data scientists can effectively incorporate KNN imputation into their data preprocessing pipelines, enhancing the quality and reliability of their machine learning models.
+
+Multivariate (çok değişkenli), bir analiz ya da yöntemin **birden fazla değişkeni (sütunu/özelliği) aynı anda dikkate alarak** çalışması anlamına gelir; bunun karşıtı olan **univariate (tek değişkenli)** ise sadece **tek bir sütuna** bakarak işlem yapar, diğer sütunlarla olan ilişkiyi tamamen göz ardı eder. Örneğin mean/median/mode imputation univariate bir yaklaşımdır, çünkü `Age` sütunundaki eksik bir değeri doldururken sadece **`Age` sütununun kendi içindeki** ortalamasına/en sık değerine bakar, o kişinin `Weight`, `Gender`, `Cholesterol` gibi diğer bilgilerini hiç hesaba katmaz. Multivariate imputation ise (KNN Imputer, IterativeImputer gibi) tam tersine, eksik bir `Age` değerini tahmin ederken o satırdaki **diğer tüm sütunları** (Weight, Cholesterol, Gender vs.) da inceleyip, "bu diğer özelliklere sahip kişilerin genelde kaç yaşında olduğu" mantığıyla çok daha isabetli bir tahmin üretir — tam da az önce konuştuğumuz "tatil/sıcaklık" örneğindeki gibi, sadece tek bir sütunun genel ortalamasına değil, ilişkili diğer değişkenlere de bakarak karar verir. Bu ayrım sadece imputation için değil, istatistik ve makine öğrenmesinin genelinde geçerlidir: örneğin "univariate analiz" bir sütunun dağılımını tek başına incelerken (histogram, ortalama, standart sapma gibi), "multivariate analiz" birden fazla sütun arasındaki ilişkiyi, korelasyonu ya da birlikte değişimi inceler (scatter plot, korelasyon matrisi, çoklu regresyon gibi); dolayısıyla "multivariate" kelimesini gördüğünüzde aklınıza hep **"birden fazla değişkeni birlikte, aralarındaki ilişkiyi göz önünde bulundurarak ele alan yaklaşım"** gelmeli.
+
+Creating Missing Value Indicators
+While techniques like mean, median, or mode imputation fill in the gaps left by missing data, they inherently discard one piece of information: the fact that a value was missing in the first place. Sometimes, the absence of data itself carries predictive strength. For instance:
+
+"if customers who don't provide their age tend to behave differently, knowing that the age was missing could be a valuable signal for your model."
+
+"Örneğin, yaşını paylaşmayan müşteriler farklı davranma eğilimindeyse, yaşın eksik olduğunu bilmek modeliniz için değerli bir sinyal olabilir."
+
+Burada anlatılmak istenen şu: Bazı durumlarda, bir müşterinin belirli bir bilgiyi paylaşmamayı tercih etmesi, rastgele değil, o müşterinin karakterini/davranışını yansıtan bilinçli bir seçimdir. Yani eksikliğin kendisi, tesadüf değil, bir davranış göstergesidir.
+
+Somut Bir Örnekle Açalım
+
+Diyelim ki bir e-ticaret sitesinde üyelik formu var, "Yaş" alanı zorunlu değil (isteğe bağlı). Şunu gözlemlediniz:
+
+Yaşını giren müşteriler → genelde düzenli alışveriş yapan, sadık müşteriler
+Yaşını girmeyen müşteriler → gizlilik konusunda daha hassas, daha az bilgi paylaşan, ve istatistiksel olarak daha az sıklıkla alışveriş yapan, daha çabuk siteden ayrılan kullanıcılar
+
+Burada dikkat edin: yaşın kendi değeri (25 mi 40 mı) önemli değil, "yaşını hiç girmemiş olması" bile başlı başına bir bilgi taşıyor — bu kişi muhtemelen daha temkinli/gizlilik odaklı bir kullanıcı profiline sahip, ve bu profil özelliği satın alma davranışıyla ilişkili olabilir.
+
+Neden Bu, Mean/Mode Imputation'da Kaybolur?
+
+Eğer siz bu eksik yaş değerlerini mean (örneğin ortalama yaş: 35) ile doldurursanız, model artık bu kişinin "yaşını gizlemeyi tercih eden" özel bir davranış grubunda olduğunu hiç göremez — sanki o kişi de diğer herkes gibi normal şekilde yaşını paylaşmış gibi görünür, oysa gerçekte paylaşmamış olması kendi başına anlamlı bir sinyaldi, ve bu sinyal dolduruldukça kayboluyor.
+
+Bunu Nasıl Koruyoruz? (Hatırlarsanız Missing Indicator)
+
+Bu yüzden daha önce bahsettiğimiz Missing Indicator tekniği devreye giriyor:
+
+python
+df['Age_was_missing'] = df['Age'].isnull().astype(int)  # 1 = eksikti, 0 = doluydu
+df['Age'] = df['Age'].fillna(df['Age'].mean())  # sonra normal şekilde dolduruyoruz
+
+Bu şekilde:
+
+Age sütunu artık dolu (model bunu kullanabilir)
+Age_was_missing sütunu ise "bu kişi yaşını paylaşmayı reddetmiş miydi" bilgisini ayrı bir özellik (feature) olarak koruyor
+
+Model, eğitim sırasında Age_was_missing = 1 olan müşterilerin (yaşını gizleyenlerin) belki de daha az satın alma yaptığını kendisi öğrenebilir, çünkü bu bilgiyi artık görmeye devam ediyor, imputation ile silinmemiş oluyor.
+
+MNAR Kavramıyla Bağlantısı
+
+Bu aslında tam olarak daha önce konuştuğumuz MNAR (Missing Not At Random) durumunun somut bir örneği: eksikliğin kendisi, verinin değeriyle ilişkili (yaşı büyük/küçük olduğu için değil, "gizliliğe önem veren bir kişilik" olduğu için eksik) — bu yüzden MNAR durumlarında sadece imputation yapmak yetmez, mutlaka missing indicator eklemek gerekir, aksi halde modelin öğrenebileceği değerli bir bilgiyi kaybedersiniz.
+
+Soru:Eğer böyle yaparsak diyelim ki 1m+ kayıt var bu extra hafıza gerektirmez mi ?
+
+Hocam gerçekten pratik ve yerinde bir soru, hesaplayarak bakalım ne kadar ek yük getiriyor.
+
+## Ek Bellek Ne Kadar?
+
+Bir `missing indicator` sütunu, sadece **0 ve 1** değerleri içerir, bu yüzden en küçük veri tipiyle (`int8` veya `bool`) saklanabilir.
+
+**Hesaplama (1 milyon kayıt için):**
+```python
+df['Age_was_missing'] = df['Age'].isnull().astype('int8')
+```
+- `int8` tipi, her değer için sadece **1 byte** kullanır
+- 1.000.000 satır × 1 byte = **1 MB**
+
+Yani **1 milyon kayıtlık bir missing indicator sütunu sadece ~1 MB yer kaplar.** Karşılaştırma için, `float64` tipindeki normal bir sayısal sütun aynı satır sayısında **8 MB** kaplar — yani missing indicator, normal bir sütunun **1/8'i** kadar bile yer tutmuyor.
+
+## `bool` Tipini Kullanırsanız Daha da Az
+
+```python
+df['Age_was_missing'] = df['Age'].isnull()  # zaten bool tipinde döner
+```
+Pandas'ta `bool` tipi de genelde **1 byte** kullanır (bazı durumlarda daha da optimize edilebilir), yani `int8` ile pratik olarak aynı, hatta bazen daha verimli.
+
+## Peki Gerçekten Sorun Yaratır mı?
+
+**Tek bir missing indicator için:** Hayır, 1 MB gibi bir ek yük, günümüz bilgisayarlarında (hatta orta seviye bir sunucuda bile) tamamen ihmal edilebilir.
+
+**Ama dikkat edilmesi gereken senaryo:** Eğer veri setinizde **çok fazla sütun** varsa (örneğin 50 sütun) ve **hepsine** missing indicator eklerseniz:
+```
+50 sütun × 1 MB = 50 MB ekstra
+```
+Bu da hâlâ büyük bir sorun değil, ama **gereksiz** olabilir — çünkü her sütunda missing indicator eklemenin bir anlamı yok, sadece **MNAR olduğunu düşündüğünüz** (eksikliğin anlamlı olduğu) sütunlara eklemeniz yeterli.
+
+## Asıl Dikkat Edilmesi Gereken Nokta — Bellek Değil, Boyutsallık (Dimensionality)
+
+Buradaki gerçek maliyet **bellek değil**, **feature sayısının artması** (yani modelin işleyeceği sütun sayısının artması). Eğer körü körüne **her sütuna** missing indicator eklerseniz:
+- Model daha fazla, çoğu **gereksiz/gürültülü** feature ile karşılaşır
+- Eğitim süresi biraz uzar
+- Overfitting riski artabilir (özellikle az veri, çok feature varsa)
+
+Bu yüzden pratik kural şu: **sadece gerçekten MNAR olduğuna inandığınız, davranışsal bir anlam taşıdığını düşündüğünüz sütunlara** missing indicator ekleyin, her sütuna otomatik/refleks olarak eklemeyin.
+
+## Özetle
+
+- **Bellek açısından:** 1M+ kayıtta bile missing indicator'lar (doğru tip ile, `int8`/`bool`) neredeyse **ihmal edilebilir** bir yük (~1 MB/sütun) getirir, bu yüzden bellek endişesi pratikte gerçek bir sorun değil
+- **Asıl dikkat edilmesi gereken:** Kaç sütuna eklediğiniz — bellekten çok, gereksiz feature'ların modeli "kirletmesi" ve boyutsallığın artmasından kaynaklanan performans/overfitting riski, sizin sorduğunuz "bellek" sorusundan daha kritik bir konu
+
+This is where missing value indicators come into play. An indicator is simply a new binary feature added to your dataset that flags whether the original value in a specific column was missing or not. Typically, it takes a value of 1 if the data was missing and 0 otherwise.
+
+Why Use Indicators?
+The primary motivation is to preserve the information conveyed by the pattern of missingness. Here are some scenarios:
+
+Missing Not At Random (MNAR): If the reason a value is missing is related to the target variable or other features in a way that simple imputation cannot capture, the indicator variable explicitly provides this signal to the model.
+Complementing Imputation: You can use indicators alongside imputation. First, create the indicator feature. Then, impute the missing values in the original column using mean, median, KNN, or another method. This approach gives the model both an estimated value and the knowledge that this value was originally missing. Tree-based models, like Random Forests or Gradient Boosting, can often effectively utilize this combination.
+Simplicity: Creating indicators is computationally inexpensive and straightforward to implement.
+
+Approaches
+While useful, keep these points in mind:
+
+Dimensionality: Adding indicators increases the number of features in your dataset. This might be a concern for models sensitive to high dimensionality if you have many columns with missing data.
+Model Choice: Linear models might struggle to interpret the combined information from an imputed value and its indicator unless interaction terms are explicitly created. Tree-based models generally handle this interaction more naturally.
+MCAR: If data is truly Missing Completely At Random (MCAR), the indicator variable might not provide any additional predictive value, as the missingness pattern is purely random and unrelated to other variables or the target.
+Creating missing value indicators is a valuable technique in your feature engineering toolkit. It's simple to implement and ensures that potentially valuable information about data missingness isn't lost during the imputation process. Use it, especially when you suspect the missingness pattern itself might be informative or when using tree-based models.
+
+
+Address kullanımı hakkında ekstra bilgi:
+
+Hocam burada **"address"** bir **fiil (verb)** olarak kullanılıyor, İngilizcede çok yaygın bir kullanım biçimi ve **"ele almak, çözmek, üstesinden gelmek"** anlamına geliyor. Türkçede "adres" kelimesiyle karıştırılmasın, buradaki anlamı tamamen farklı.
+
+## Cümleyi Çevirelim
+
+**"Multivariate imputation techniques address this by examining the values of other features when estimating the missing data."**
+
+→ **"Çok değişkenli (multivariate) imputation teknikleri, eksik veriyi tahmin ederken diğer özelliklerin (feature'ların) değerlerine bakarak bu sorunu ele alır/çözer."**
+
+## "Address" Kelimesinin Bu Bağlamda Kullanımı
+
+İngilizce akademik/teknik yazılarda **"address a problem/issue/limitation"** çok sık geçen bir kalıptır, şu anlama gelir:
+
+> "Bir soruna/kısıtlamaya **çözüm getirmek**, onu **hedef alıp iyileştirmek**"
+
+Yani cümlenin öncesinde muhtemelen bir **sorun/kısıtlama** anlatılmıştı (büyük ihtimalle mean/median/mode gibi univariate — tek değişkenli — yöntemlerin, diğer sütunlarla ilişkiyi göz ardı etmesi sorunuydu, tam da az önce konuştuğumuz "mod imputation'ın sıcaklık/tatil örneğindeki zayıflığı" gibi). Bu cümle de **"multivariate yöntemler, bu bahsedilen soruna bir çözüm sunuyor"** demek istiyor.
+
+## "Address" Kelimesinin Diğer Yaygın Kullanımları (Aynı Anlamda)
+
+Bu tarz akademik/teknik metinlerde şu kalıpları da sık göreceksiniz, hepsi benzer anlamda:
+- **"tackle this issue"** → bu sorunu ele almak
+- **"solve/resolve this problem"** → bu sorunu çözmek
+- **"mitigate this limitation"** → bu kısıtlamayı hafifletmek
+- **"overcome this challenge"** → bu zorluğun üstesinden gelmek
+
+Hepsi kabaca **"bir soruna çözüm/yaklaşım getirmek"** anlamında birbirinin yerine kullanılabilir, "address" bunlar arasında en **nötr ve en sık kullanılan** olanı, bu yüzden akademik metinlerde bu kadar sık karşınıza çıkıyor.
+
+## Cümlenin Bağlama Oturması
+
+Muhtemelen bu cümleden önce şuna benzer bir şey yazıyordu: *"Univariate imputation (mean/median/mode) yöntemleri her sütunu tek başına ele alır, diğer sütunlarla ilişkiyi göz ardı eder."* Sonra bu cümle geliyor: *"Multivariate yöntemler (KNN Imputer, IterativeImputer gibi) **bu eksikliği/soruna çözüm getirerek**, diğer sütunlara da bakarak daha isabetli tahmin üretir."*
+
+**Özetle:** "Address" burada "adres" değil, **"bir soruna yönelik çözüm sunmak/o sorunu ele almak"** anlamında kullanılmış, teknik/akademik İngilizcede çok sık karşınıza çıkacak bir kalıp.
+
+-----
+
+Using Imputers in Scikit-learn
+
+Data is often incomplete, containing missing entries represented typically as NaN (Not a Number) in NumPy arrays or Pandas DataFrames. Many Scikit-learn algorithms cannot process datasets with missing values, making a strategy to handle them essential. Simply dropping rows or columns with missing data might discard valuable information, especially if the dataset isn't very large. A common alternative is imputation: replacing missing values with substitute values derived from the non-missing data.
+
+Scikit-learn provides a convenient transformer for basic imputation tasks: SimpleImputer. Located in the sklearn.impute module, it allows you to fill missing values using various strategies.
+
+Using SimpleImputer
+The SimpleImputer follows the standard Scikit-learn transformer API, meaning it has fit and transform methods.
+
+	1.fit(X): During the fit step, the imputer calculates the statistic (e.g., mean, median, mode) from the non-missing values in each column of the training data X. This learned statistic is stored internally.
+	2.transform(X): The transform step uses the statistics learned during fit to fill the missing values (marked as np.nan or another specified marker) in the input data X.
+
+It's important to fit the imputer only on the training data and then use it to transform both the training and the test data. This prevents data leakage, ensuring that information from the test set doesn't influence the imputation values used for the training set.
+
+Imputation Strategies
+
+SimpleImputer supports several imputation strategies via the strategy parameter:
+
+mean: Replaces missing values using the mean along each column. Suitable only for numerical data. Can be sensitive to outliers.
+median: Replaces missing values using the median along each column. Also only for numerical data. Generally more effective against outliers than the mean.
+most_frequent: Replaces missing values using the mode (the most frequent value) along each column. Can be used with both numerical and categorical data.
+constant: Replaces missing values with a fixed value specified by the fill_value parameter. This can be useful if missing values have a specific meaning or if you want to use a placeholder like 0 or -1 for numerical data, or "Missing" for categorical data.
+
+Indicating Missing Values
+
+Sometimes, the fact that a value was missing might itself be useful information for a machine learning model.[Bazen, bir değerin eksik olması gerçeği, makine öğrenimi modeli için başlı başına yararlı bir bilgi olabilir.]
+
+Normalde bir değerin kendisi (örneğin yaş = 45) bilgi taşır. Ama bazı durumlarda, o değerin var olmaması, eksik bırakılmış olmasının kendisi de ayrı bir bilgi taşıyabilir — çünkü bu eksiklik rastgele değil, bilinçli bir davranışın sonucu olabilir.
+Somut Örnek
+
+Bir sigorta şirketi düşünün, formda "sigara içiyor musunuz?" sorusu var, cevap isteğe bağlı. Şunu fark ediyorsunuz:
+
+Bu soruyu cevaplayanlar genelde düşük riskli (sigara içmeyen) kişiler
+Bu soruyu boş bırakanlar, istatistiksel olarak daha yüksek oranda aslında sigara içen kişiler (çünkü bilinçli olarak bu bilgiyi paylaşmak istemiyorlar, muhtemelen prim artışından çekiniyorlar)
+Burada Smoker sütununun eksik olması, "bu kişi muhtemelen sigara içiyor ve bunu gizlemek istiyor" şeklinde dolaylı bir sinyal taşıyor. Yani eksikliğin kendisi, hedef değişkenle (risk seviyesi) ilişkili.
+
+Neden "Mümkün" Bu?
+
+Çünkü insanlar (ya da sistemler) veriyi rastgele eksik bırakmazlar çoğu zaman — eksik bırakma davranışının kendisi bir motivasyona/karaktere/duruma bağlıdır. Bu, tam olarak daha önce konuştuğumuz MNAR (Missing Not At Random) kavramı: eksikliğin kendisi, o değerin ne olduğuyla ilişkilidir.
+
+df['Smoker_was_missing'] = df['Smoker'].isnull().astype(int)
+
+Sometimes, the fact that a value was missing might itself be useful information for a machine learning model. SimpleImputer allows you to keep track of which values were imputed by setting the add_indicator parameter to True. When set, the transformer appends binary indicator columns to the output. Each indicator column corresponds to a column in the input that had missing values, with a 1 marking entries that were originally missing and 0 otherwise.
+
+Bu yeni sütun, modelinize "bu kişi bu soruyu cevaplamamış" bilgisini ayrı bir özellik olarak sunar. Model, eğitim sırasında Smoker_was_missing = 1 olan kişilerin gerçekten daha yüksek risk taşıdığını kendisi öğrenebilir — bu da modelin tahmin gücünü artırır, çünkü elinizdeki ek, gizli bir sinyali kaybetmemiş olursunuz.
+
+Özetle: Bu "mümkün" çünkü eksiklik çoğu zaman tesadüf değil, insan davranışının ya da sistemin bir yansımasıdır, ve bu davranış genelde tahmin etmeye çalıştığınız şeyle (hedef değişkenle) bir şekilde ilişkilidir.
+
+Imputation Techniques
+While imputation is a standard technique, it's not without drawbacks. It makes assumptions about the data (e.g., that the median is a reasonable substitute) and can potentially distort relationships between variables or reduce variance. The choice of strategy (mean, median, most_frequent, constant) should be guided by the nature of your data and the algorithm you intend to use. For instance, median is often preferred over mean for numerical data with outliers. most_frequent or constant (with a meaningful fill_value) are necessary for categorical features if using SimpleImputer.
+
+In practice, you often need to apply different imputation strategies to different columns (e.g., median for numerical, most frequent for categorical). This is typically handled using Scikit-learn's ColumnTransformer, which allows applying different transformers to different subsets of columns, often within a larger Pipeline. We will cover ColumnTransformer and Pipelines in detail in Chapter 6. For now, understanding how SimpleImputer works provides a solid foundation for handling missing data.
+
+bknz: https://apxml.com/courses/getting-started-with-scikit-learn/chapter-4-data-preprocessing-feature-engineering/using-imputers
+
+
+The K-Nearest Neighbors (KNN) Imputer is a popular multivariate approach. Instead of using a simple statistic from the target column alone, it looks at the entire feature set to find data points (samples or rows) that are most similar to the one with the missing value. The missing value is then estimated based on the values observed in these neighboring points.[ Eksik değer daha sonra bu komşu noktalarda gözlemlenen değerlere dayalı olarak tahmin edilir.]
+
+The Intuition Behind KNN Imputation
+
+Imagine you have a dataset of houses with features like square footage, number of bedrooms, year built, and sale price. Suppose the 'year built' is missing for one house. Simple imputation might fill it with the average 'year built' of all houses. KNN Imputation, however, would look for other houses in the dataset that are similar in terms of square footage, number of bedrooms, and sale price (the features without missing values for that row). It identifies the 'k' most similar houses (the nearest neighbors) and then uses their 'year built' values (e.g., by averaging them) to estimate the missing value for the target house.
+
+The core idea rests on the assumption that a data point is likely to be similar to its neighbors in the feature space.
+
+How KNN Imputer Works
+
+1.Distance Calculation: For a sample containing a missing value in feature Xi, the imputer calculates the distance between this sample and all other samples. This calculation uses only the features present in both samples being compared[Bu hesaplamada, yalnızca karşılaştırılan her iki örnekte de bulunan özellikler dikkate alınır]. A common distance metric is the Euclidean distance, adapted to handle missing values (often referred to as nan_euclidean_distances in implementations).
+
+"Bu hesaplama, sadece karşılaştırılan iki örnekte de mevcut olan (eksik olmayan) özellikleri kullanır."
+
+Neden Böyle Bir Kurala İhtiyaç Var?
+
+KNN Imputer, eksik değeri olan bir satır ile diğer satırlar arasındaki mesafeyi hesaplarken, normal Euclidean distance formülünü kullanır:
+
+d = kök içerisinde (x1-y1)'in karesi + 
+(x2-y2)nin karesi + ….
+
+Ama sorun şu: Eğer karşılaştırdığınız iki satırdan birinde de başka bir sütunda eksik değer varsa, bu formülü doğrudan uygulayamazsınız — çünkü NaN - NaN ya da sayı - NaN matematiksel olarak tanımsızdır, hesaplanamaz., sadece her ikisinde de dolu olan sütunları kullanıyoruz.
+
+"Adapted to Handle Missing Values" Kısmı Neden Önemli?
+
+Cümlenin devamındaki nan_euclidean_distances fonksiyonu, tam da bu eksik değerleri atlayıp geri kalan sütunlarla mesafe hesaplayan özel bir Euclidean distance versiyonudur. Normal euclidean_distances fonksiyonu NaN görünce hata verir ya da yanlış sonuç üretir, ama nan_euclidean_distances bunu akıllıca es geçip, sadece ortak dolu sütunlarla hesaplama yapar (hatta kalan sütun sayısına göre bir ölçekleme/normalizasyon da uygular, çünkü daha az sütunla hesaplanan mesafe, doğal olarak daha küçük çıkar, bu da adil karşılaştırma için düzeltilir).
+
+Özetle
+
+Bu cümle şunu söylüyor: KNN Imputer, iki satır arasındaki benzerliği ölçerken, her iki satırda da eksik olmayan sütunları kullanır, eğer bir sütun herhangi birinde eksikse, o sütunu o karşılaştırma için görmezden gelir — bu sayede eksik değerlerin mesafe hesabını bozmasını (hata vermesini) önler.
+
+2.Identify Neighbors: It identifies the 
+k samples (rows) with the smallest distances to the sample with the missing value. These are the 'k' nearest neighbors.
+
+3.Imputation: The missing value in feature 
+Xi is imputed using the values of feature 
+Xi from the neighbors. If weights='uniform', the imputation is typically the average (for numerical features) of the neighbors' values. If weights='distance', closer neighbors are given more influence in the calculation, meaning the imputation value is a weighted average where weights are inversely proportional to the distance.
+
+n_neighbors parametresi, KNN Imputer'ın eksik bir değeri tahmin ederken kaç tane en yakın komşuya bakacağını belirler; yani eksik değere sahip bir satır için, ona en çok benzeyen (mesafe hesabına göre en yakın) n_neighbors kadar satır bulunur ve bu komşuların ilgili sütundaki değerlerinin ortalaması (ya da weights='distance' kullanılıyorsa mesafeye göre ağırlıklı ortalaması) alınarak eksik değer doldurulur. Bu parametrenin seçimi bir denge meselesidir: küçük bir değer (örneğin n_neighbors=1 veya 2) seçilirse, tahmin sadece bir-iki komşuya dayandığı için o komşuların gürültülü/aykırı olması durumunda tahmin de yanlış çıkabilir, yani modele karşı hassas (sensitive) bir davranış sergiler; büyük bir değer (örneğin n_neighbors=20) seçilirse, çok fazla komşunun ortalaması alındığı için tahminler birbirine çok benzemeye başlar, satırlar arasındaki gerçek, ince farklar kaybolur, yani oversmoothing (aşırı düzleştirme) riski oluşur. Pratikte genelde n_neighbors=5 civarı makul bir başlangıç noktası olarak kabul edilir, ama en doğru değeri bulmak için farklı değerlerin (3, 5, 7, 10 gibi) denenip modelin performansının (örneğin cross-validation ile) karşılaştırılması önerilir.
+
+Soru:oversmoothing underfitting ile aynı mı
+
+Cevap:
+
+## Ortak Nokta
+
+İkisi de aynı **temel soruna** işaret ediyor: **"Çok fazla genelleme yapıp, verideki gerçek/önemli detayları/farklılıkları kaybetmek."**
+
+- **Underfitting:** Bir modelin, eğitim verisindeki örüntüyü **yeterince öğrenememesi**, çok basit/genel bir yapı kurması (örneğin karmaşık bir ilişkiyi düz bir çizgiyle açıklamaya çalışmak)
+
+- **Oversmoothing:** KNN Imputer'ın çok fazla komşuya bakarak, eksik değerleri **birbirine çok benzer, genel bir ortalamaya** yakın tahmin etmesi, satırlar arasındaki gerçek farkları kaybetmesi
+
+## Fark Nerede?
+
+**Underfitting**, bir **model eğitim sürecine** ait bir kavramdır — modelin kendisinin (Linear Regression, Decision Tree gibi) veriyi öğrenme kapasitesiyle ilgilidir. Genelde modelin **çok basit** olması, ya da yeterince eğitilmemesi sonucu ortaya çıkar.
+
+**Oversmoothing** ise **veri ön işleme (preprocessing) aşamasına**, spesifik olarak **imputation'a** ait bir kavramdır — henüz model eğitimine bile gelmeden, **veri hazırlama** sürecinde ortaya çıkan bir sorundur. Model daha ortada yokken bile, veri zaten "aşırı düzleştirilmiş" olabilir.
+
+## Peki Aralarında Nedensel Bir Bağ Var mı?
+
+**Evet, dolaylı olarak var** — ve bu bağlantı önemli: Eğer siz `n_neighbors` çok büyük seçip **oversmoothing** yaparsanız (yani eksik değerleri hep birbirine yakın, "ortalamaya yakın" tahminlerle doldurursanız), bu **temizlenmiş/doldurulmuş veri** artık gerçek çeşitliliği yansıtmıyor demektir. Bu veriyle bir model eğittiğinizde, model de **gerçek örüntüyü tam olarak göremez**, çünkü veri zaten kısmen "düzleştirilmiş". Bu durumda model, aslında kendi hatası olmasa bile, **underfitting'e benzer bir performans sorunu** sergileyebilir — ama bunun kaynağı modelin kendisi değil, **ona giden verinin önceden fazla düzleştirilmiş olmasıdır**.
+
+## Basit Bir Benzetmeyle
+
+- **Oversmoothing** = fotoğrafı çekmeden önce **lensi bulanıklaştırmak** (veri hazırlama aşaması)
+- **Underfitting** = net bir fotoğrafı çekip, ama onu **yorumlarken çok kaba/basit bir analiz** yapmak (model aşaması)
+
+İkisi de sonuçta "detay kaybı" ile bitiyor, ama **nerede** ve **neden** kaybolduğu farklı — biri veri hazırlığında, diğeri modelin öğrenme sürecinde.
+
+## Özetle
+
+Aynı kavram değiller, ama **"aşırı genelleme sonucu detay/ayrım gücü kaybetme"** fikri ikisinde de ortak. Oversmoothing, imputation'a özel bir terim; underfitting ise daha genel, model performansına dair bir terim. Biri diğerine **yol açabilir** ama birbirlerinin **yerine geçen** (synonym) kelimeler değiller.
+
+Parameters
+n_neighbors: The number of neighboring samples (k) used for imputation. A smaller 
+k makes the imputation more sensitive to local patterns but also potentially more susceptible to noise. A larger k provides smoother estimates but might obscure local variations.
+
+weights: Determines how neighbor values contribute.
+	'uniform': All k neighbors contribute equally (simple average).
+	'distance': Closer neighbors have a stronger influence. The contribution is weighted by the inverse of the distance.
+
+metric: The distance metric used to find neighbors. The default nan_euclidean handles missing values appropriately during distance calculation.
+
+Advantages of KNN Imputer
+Uses Feature Relationships: Unlike simple methods, it uses information from other features, potentially leading to more accurate imputations, especially when features are correlated.
+Non-parametric: It makes fewer assumptions about the data distribution compared to model-based imputation like IterativeImputer.
+Versatile: Can theoretically handle different types of data if an appropriate distance metric is used (though standard implementations work best with numerical data).
+
+Disadvantages and Challenges
+
+Computational Cost: Finding nearest neighbors can be computationally intensive, especially for large datasets (many rows or many features). The complexity grows significantly with the number of samples.
+
+Sensitivity to Scaling: Because it's distance-based, KNN Imputer is highly sensitive to the scale of features. Features with larger ranges can dominate the distance calculation. It's almost always necessary to scale your numerical features (e.g., using MinMaxScaler or StandardScaler) before applying KNNImputer. Remember to fit the scaler only on the training data and transform both training and test sets.
+
+Choice of k: The performance depends on the choice of k. This often requires tuning, perhaps using cross-validation.
+
+Curse of Dimensionality: In very high-dimensional spaces, the concept of 'nearest' neighbors becomes less meaningful as distances tend to become more uniform. Its effectiveness might decrease as the number of features grows very large relative to the number of samples.
+
+Categorical Data: Standard KNNImputer expects numerical input. Categorical features need to be appropriately encoded (e.g., one-hot encoding) before applying the imputer. However, one-hot encoding can significantly increase dimensionality, potentially impacting performance.
+
+KNN Imputer, özellikler arası ilişkilerden yararlanarak, basit stratejilere kıyasla eksik verileri işlemek için daha gelişmiş bir yöntem sunar.However, its computational cost and sensitivity to scaling and the choice of 
+k mean it should be applied thoughtfully, particularly after ensuring features are appropriately preprocessed (scaled). It often provides a good balance between imputation quality and complexity when simple methods are insufficient.
+
+IterativeImputer Nedir?
+
+IterativeImputer, eksik değerleri doldururken her sütunu, diğer sütunları kullanan bir regresyon modeliyle tahmin eden bir yöntemdir. Scikit-learn'deki uygulaması, MICE (Multiple Imputation by Chained Equations) algoritmasına dayanır.
+
+Nasıl Çalışır? (Adım Adım Mantık)
+
+1. Başlangıç: Tüm eksik değerler önce basit bir yöntemle (genelde mean) geçici olarak doldurulur.
+
+2. Döngü başlar — sütun sütun ilerlenir:
+Diyelim ki Age, BMI, Cholesterol sütunlarınız var, hepsinde eksik değer var.
+
+Age'i tahmin et: Age sütununu hedef değişken yap, BMI ve Cholesterol'ü bağımsız değişken olarak kullanarak bir regresyon modeli kur (örneğin Linear Regression). Bu modelle, Age'i eksik olan satırların değerlerini tahmin edip güncelle.
+BMI'yi tahmin et: Şimdi BMI'yi hedef yap, Age (az önce güncellenmiş haliyle) ve Cholesterol'ü kullanarak tekrar bir model kur, BMI'deki eksikleri güncelle.
+Cholesterol'ü tahmin et: Aynı şekilde devam et.
+
+3. Bu döngü birkaç kez (iterasyon) tekrarlanır, her turda tahminler biraz daha iyileşir/stabilize olur, çünkü artık güncellenmiş değerlerle çalışılıyor. Belirlenen iterasyon sayısına ulaşınca ya da değerler artık pek değişmeyince (yakınsayınca) durur.
+
+from sklearn.experimental import enable_iterative_imputer  # deneysel özellik, önce bunu açmanız gerekiyor
+from sklearn.impute import IterativeImputer
+
+imputer = IterativeImputer(max_iter=10, random_state=0)
+df_imputed = imputer.fit_transform(df[['Age', 'BMI', 'Cholesterol']])
+
+Not: enable_iterative_imputer import'u gerekiyor çünkü daha önce scikit-learn dokümantasyonunda gördüğümüz gibi bu özellik hâlâ deneysel (experimental) olarak işaretli.
+
+Basit Bir Benzetmeyle Fark
+KNN Imputer: "Sana en çok benzeyen 5 kişiye bakayım, onların ortalama yaşını al, sana da onu yazayım." (komşuluk/benzerlik mantığı)
+IterativeImputer: "Senin boy, kilo, tansiyon bilgilerinden yola çıkarak, bu bilgilere sahip insanların genelde kaç yaşında olduğuna dair bir formül/model kurayım, o formülle senin yaşını hesaplayayım." (ilişki/model mantığı)
+Hangi Durumda Hangisi Tercih Edilir?
+Veri setiniz küçük/orta boyutluysa ve sütunlar arası ilişki karmaşık/doğrusal değilse → KNN Imputer genelde daha sezgisel ve hızlı sonuç verir
+Sütunlar arasında güçlü, açıklanabilir (regresyon ile modellenebilir) ilişkiler varsa ve veri seti büyükse → IterativeImputer genelde daha isabetli, çünkü explicit bir ilişki modeli kuruyor
+En sağlam yaklaşım: İkisini de deneyip, hangi yöntemin downstream model performansını (yani bu doldurulmuş veriyle eğitilen asıl ML modelinizin başarısını) daha çok artırdığına bakmak
+
+Özetle: Her ikisi de "multivariate" (diğer sütunlara bakan) yöntemler, ama KNN komşuluk/benzerlik, IterativeImputer ise regresyon/model kurma mantığıyla çalışıyor. Bizim realworld_medical_dirty.csv veri setinde isterseniz ikisini de deneyip sonuçları karşılaştırabiliriz.
+
+Hocam tabii, tablo yerine düz metin olarak yazayım.
+
+**Temel mantık açısından:** KNN Imputer, "bana en çok benzeyen satırlara bak, onların ortalamasını al" mantığıyla çalışırken, IterativeImputer "bu sütunu, diğer sütunları kullanarak bir regresyon modeliyle tahmin et" mantığıyla çalışır.
+
+**Yaklaşım türü açısından:** KNN Imputer örnek/satır tabanlı (instance-based) bir yöntemdir, IterativeImputer ise model tabanlıdır (model-based).
+
+**Tahmin üretme biçimi açısından:** KNN Imputer, komşu satırların ortalamasını ya da ağırlıklı ortalamasını alarak tahmin üretirken, IterativeImputer bir regresyon modelinin çıktısını (tahminini) kullanır.
+
+**İlişkileri yakalama biçimi açısından:** KNN Imputer sadece mesafeye (benzerliğe) dayalı çalışır, doğrusal olmayan ilişkileri de dolaylı yoldan yakalayabilir; IterativeImputer ise sütunlar arasındaki ilişkiyi seçilen modele göre (genelde doğrusal) açıkça modelliyor.
+
+**Hesaplama maliyeti açısından:** KNN Imputer, büyük veri setlerinde her satır için mesafe hesaplaması gerektirdiğinden yavaş kalabilir; IterativeImputer her sütun için ayrı model eğitmek zorunda olsa da genelde daha ölçeklenebilir bir yapı sunar.
+
+**Parametreler açısından:** KNN Imputer'da `n_neighbors`, `weights`, `p` gibi parametreler ayarlanırken, IterativeImputer'da `max_iter` ve kullanılacak `estimator` (regresyon modeli) seçilebiliyor.
+
+**Aykırı değerlere duyarlılık açısından:** KNN Imputer'da komşu seçimi mesafeye dayalı olduğu için outlier'lardan etkilenebilir; IterativeImputer'da bu duyarlılık, kullanılan regresyon modelinin doğasına bağlı değişir (Linear Regression outlier'a duyarlıdır, ama daha sağlam/robust modeller de seçilebilir).
+
+--------------
+## Kategorik Veride "Missing" Kategorisi Oluşturma
+
+Şu ana kadar kategorik sütunlardaki eksik değerleri hep **mode** ile dolduruyorduk (`Gender` eksikse en sık görülen değeri yaz gibi). Ama bu her zaman doğru yaklaşım değil.
+
+**Alternatif:** Eksik değeri, var olan kategorilerden birine **zorla eşlemek yerine**, kendi başına **yeni bir kategori** yapmak.
+
+```python
+df['Smoker'] = df['Smoker'].fillna('Unknown')
+```
+
+**Neden bu bazen mode'dan daha mantıklı?**
+
+Hatırlarsanız mod imputation'ın zayıflığını konuşmuştuk (tatil/sıcaklık örneği) — mode, eksik değeri **var olan en yaygın gruba** zorla dahil eder, ama gerçekte o kişi belki de **hiçbirine ait değil**. Örneğin bir ankette "Sigara içiyor musunuz?" sorusunu boş bırakan biri, illa "Hayır" (mod) grubuna ait olmak zorunda değil — belki de **cevap vermeyi tercih etmeyen, farklı bir davranış grubu**.
+
+`"Unknown"` kategorisi eklediğinizde:
+- Gerçek bilgiyi (Yes/No) **tahrif etmemiş** olursunuz, "sanki biliyormuşuz gibi" davranmazsınız
+- Model, `Unknown` kategorisine sahip kişilerin **kendine özgü bir davranış örüntüsü** olup olmadığını öğrenebilir (tıpkı missing indicator'da olduğu gibi, ama bu sefer ayrı bir sütun açmadan, direkt kategorik değişkenin içinde)
+
+**Ne zaman mode, ne zaman "Unknown" kullanmalı?**
+- Eksiklik gerçekten **MCAR** (tamamen rastgele) ise → mode kullanmak makul
+- Eksiklik **MNAR/MAR** ise (yani eksik olmanın kendisi bir anlam taşıyorsa) → `"Unknown"` kategorisi, bilgiyi kaybetmeden daha dürüst bir çözüm sunar
+
+---
+
+## Hangi Yöntem Ne Zaman Kullanılır — Özet Tablo
+
+Bunu tablo değil, düz metin olarak toparlayayım (daha önce tablo yerine metin istediğinizi hatırlıyorum):
+
+**Mean imputation**, sayısal ve **simetrik/normal dağılıma yakın** verilerde, eksiklik **MCAR** olduğunda kullanılır; hızlı ve basittir ama outlier'lara karşı hassastır.
+
+**Median imputation**, sayısal ama **çarpık (skewed) dağılıma sahip** veya **outlier içeren** verilerde tercih edilir; mean'e göre daha dayanıklıdır (robust).
+
+**Mode imputation**, kategorik verilerde ve eksiklik **MCAR** olduğunda kullanılır; ama eksiklik anlamlıysa (MNAR) yanıltıcı olabilir, bu durumda "Unknown" kategorisi daha güvenlidir.
+
+**Forward/Backward fill (ffill/bfill)**, zaman serisi verilerinde, değerlerin **ardışık/sıralı bir mantığı** olduğunda (örneğin sıcaklık, hisse fiyatı) kullanılır; sırasız/kategorik verilerde anlamsızdır.
+
+**Interpolation**, yine zaman serisi ya da sıralı sayısal verilerde, değerler arasında **doğrusal/mantıklı bir geçiş** beklendiğinde kullanılır.
+
+**KNN Imputer**, sütunlar arası **ilişki** olduğunu düşündüğünüzde ve veri seti **çok büyük olmadığında** (çünkü mesafe hesaplama maliyetlidir) tercih edilir; hem sayısal hem (encode edilmiş) kategorik veride kullanılabilir.
+
+**IterativeImputer (MICE)**, sütunlar arası **güçlü, modellenebilir ilişkiler** olduğunda ve daha büyük veri setlerinde KNN'e göre daha ölçeklenebilir bir alternatif olarak kullanılır.
+
+**Missing Indicator**, eksikliğin **kendisinin bir sinyal taşıdığını** (MNAR) düşündüğünüzde, hangi imputation yöntemini kullanırsanız kullanın **ek olarak** eklenmesi önerilen bir tekniktir.
+
+**Deletion (satır/sütun silme)**, sadece eksiklik **oranı çok düşükse** (örneğin %1-2) ve eksiklik gerçekten **MCAR** ise güvenle kullanılabilir; aksi halde bias riski taşır.
+--------------
+
+
+
