@@ -1,0 +1,818 @@
+How to Detect Outliers in Machine Learning
+
+In machine learning, outliers are data points that deviate significantly from the general distribution of the dataset. They may occur due to errors in data collection, natural variation or rare events. While sometimes they contain useful insights like in fraud detection but in many cases they negatively affect model accuracy and skew results making outlier detection a crucial preprocessing step.
+
+Impact on ML models: Can bias parameter estimation, increase variance and reduce model accuracy.
+Sources: Data entry errors, measurement noise, genuine rare events.
+Handling methods: Removal, transformation or robust algorithms less sensitive to outliers.
+Domain dependence: What is considered an outlier in one domain (e.g., finance) may be normal in another
+
+Types of Outliers 
+
+Detecting outliers is not always straightforward because they can take many forms:
+
+Global outliers: These are points that are extreme across the entire dataset. For example, a height of 450 cm in a human height dataset is globally abnormal.
+
+Contextual outliers: A value might only be abnormal within a certain context. For example, a temperature of 30°C in winter may be unusual for a city like Oslo but normal in Lagos.
+
+Collective outliers: A group of data points may appear normal individually, but collectively, they behave abnormally. For instance, a sudden cluster of high transaction amounts in banking over a short period may indicate fraud.
+
+
+1. Global Outlier (Point Anomaly) — Tüm veri setine göre tek başına aykırı olan nokta. Age = 999 örneğimiz tam olarak bu.
+
+2. Contextual Outlier — Bağlama göre aykırı olan değer. Yazın 30°C normal ama kışın aykırı — değerin kendisi değişmiyor, hangi bağlamda değerlendirildiği değişiyor.
+
+3. Collective Outlier — Tek tek normal ama birlikte anormal olan bir grup nokta. Örneğin normal bir kalp ritminde ardışık birkaç atımın birlikte anormal bir örüntü oluşturması (her biri tek başına normal aralıkta olsa bile).
+
+4. Univariate vs Multivariate Outlier (Boyut Sayısına Göre)
+
+Bu, "kaç sütuna bakarak" outlier tespit ettiğinize göre yapılan bir ayrım:
+
+Univariate Outlier — Tek bir değişkende aykırı olan değer (Z-score, IQR ile tespit ettiğimiz klasik outlier'lar).
+
+Age = 150 → tek başına Age sütununda aykırı
+
+Multivariate Outlier — Her bir değişken tek başına normal görünse de, kombinasyon olarak aykırı olan değer (hatırlarsanız KNN/LOF konuşurken bahsettiğimiz Age=30, BMI=45 örneği).
+
+Age = 30 (normal), BMI = 45 (yüksek ama tek başına aşırı değil)
+Ama bu KOMBİNASYON (30 yaşında BMI=45) tuhaf/nadir olabilir
+
+Neden önemli? Çünkü Global/Contextual/Collective sınıflandırması "neden anormal" sorusuna cevap verirken, Univariate/Multivariate ayrımı "kaç boyutta bakarak anlıyoruz" sorusuna cevap verir — bu iki sınıflandırma birbirini tamamlar, çakışmaz.
+
+5. Kaynağına Göre Sınıflandırma — Error-based vs Novelty-based
+
+Bu, outlier'ın "neden var olduğu" açısından yapılan bir ayrım, bizim daha önce konuştuğumuz Error/Noise/Outlier üçlüsüyle doğrudan bağlantılı:
+
+Error-based Outlier — Veri girişi hatası, ölçüm hatası, sensör arızası gibi bozulma kaynaklı aykırı değerler (Age=999 gibi).
+
+Novelty (Yenilik) Outlier — Veride gerçekten yeni, daha önce görülmemiş ama meşru bir örüntü (örneğin bir kredi kartı sisteminde, gerçekten yeni bir dolandırıcılık yöntemi ortaya çıktığında, bu "hata" değil, gerçek ve önemli bir sinyal).
+
+Neden bu ayrım kritik? Çünkü Error-based olanları silmek/düzeltmek isterken, Novelty olanları silmek büyük bir hata olur — çünkü onlar sizin asıl yakalamak istediğiniz şey olabilir (fraud detection, anomaly detection sistemlerinde amaç zaten bu "novelty"leri bulmaktır).
+
+6. Sabit (Static) vs Zaman Serisi (Temporal) Outlier
+
+Static Outlier — Zamana bağlı olmayan, sabit bir veri setindeki aykırı değer (bizim realworld_medical_dirty.csv örneğimiz gibi, her satır bağımsız).
+
+Temporal/Time-Series Outlier — Zaman içindeki bir trendden ani sapma (örneğin bir hisse senedinin fiyatının, geçmiş trendine göre aniden çok farklı bir yöne gitmesi — "flash crash" gibi). Bu, Collective Outlier'a benzer ama özellikle zaman boyutuna odaklanır.
+
+Outlier Sınıflandırmaları (Farklı Bakış Açıları)
+│
+├── NEDEN anormal? (Klasik Taksonomi)
+│   ├── Global (tek başına uzak)
+│   ├── Contextual (bağlama göre uzak)
+│   └── Collective (grup olarak anormal)
+│
+├── KAÇ BOYUTTA tespit ediliyor?
+│   ├── Univariate (tek sütun)
+│   └── Multivariate (birden fazla sütun kombinasyonu)
+│
+├── NEREDEN geliyor? (Kaynak)
+│   ├── Error-based (hata/bozulma kaynaklı)
+│   └── Novelty (gerçek, yeni ve önemli bir sinyal)
+│
+└── ZAMAN boyutu var mı?
+    ├── Static (zamana bağlı değil)
+    └── Temporal (zaman serisinde ani sapma)
+
+Outliers Detection Methods:
+
+1-Zscore 
+2-IQR
+
+3-Isolation Forest
+
+Isolation Forest is a useful and efficient algorithm used for anomaly detection making it a popular choice across industries like cybersecurity, finance, healthcare and manufacturing. It works by isolating data points that differ significantly from normal observations using random partitioning. Since anomalies are few and distinct, they are isolated faster than normal data, enabling quick identification of outliers with minimal computational effort.
+
+"Anomaliler ile normal gözlemler arasında önemli ölçüde farklı olan veri noktalarını, rastgele bölümleme (random partitioning) kullanarak izole ederek çalışır. Anomaliler az sayıda ve farklı olduğu için, normal veriye göre çok daha hızlı izole edilirler, bu da düşük hesaplama maliyetiyle hızlı bir şekilde aykırı değer tespiti yapılmasını sağlar."
+
+Şu ana kadar konuştuğumuz Z-score, IQR, KNN gibi yöntemler hep "normal olanı tanımlayıp, ondan uzak olanı bulma" mantığıyla çalışıyordu. Isolation Forest ise tam tersi bir mantıkla çalışıyor: "anomalileri, ne kadar kolay izole edilebildiklerine bakarak" buluyor.
+
+"Random Partitioning" (Rastgele Bölümleme) Ne Demek?
+
+Bunu bir oyun gibi düşünün: Elinizde bir veri seti var, ve bu veriyi rastgele bir sütun seçip, o sütunda rastgele bir eşik değer belirleyerek ikiye bölüyorsunuz. Bu işlemi tekrar tekrar yapıyorsunuz, her bölmede veri daha küçük parçalara ayrılıyor — tıpkı bir karar ağacı (decision tree) gibi, ama rastgele.
+
+Örnek: Age sütununda rastgele bir eşik seç: Age < 45?
+   ├── Evet → alt gruba git, tekrar rastgele böl
+   └── Hayır → alt gruba git, tekrar rastgele böl
+
+Bu bölme işlemi, her bir veri noktası kendi başına izole olana kadar (yani tek başına bir "dal"a düşene kadar) devam eder.
+
+Neden Anomaliler Daha Hızlı İzole Edilir?
+
+İşte cümlenin en can alıcı kısmı burası. Şunu düşünün:
+
+Normal bir veri noktası (örneğin Age=40, yoğun bölgede, birçok benzer değerin arasında), bu noktayı diğerlerinden ayırmak için çok sayıda bölme işlemi gerekir — çünkü etrafında birçok benzer nokta var, onları birbirinden ayırt etmek zaman alır.
+
+Bir anomali (örneğin Age=999), veri setinin geri kalanından zaten çok uzakta duruyor. Rastgele bir bölme yaptığınızda, bu nokta çok büyük ihtimalle ilk birkaç bölmede kendi başına, tek bir dala düşer — çünkü zaten hiçbir komşusu yok, onu izole etmek için çok az bölme yeterli.
+
+Somut Bir Benzetme
+
+Bunu bir kalabalık bir stadyum ile düşünün, ve amacınız belirli bir kişiyi izole etmek:
+
+Normal bir seyirci (kalabalığın ortasında, birçok kişiyle çevrili) → onu izole etmek için birçok adım gerekir (önce yarısını ayır, sonra çeyreğini, sonra...)
+Stadyumun bir köşesinde tek başına oturan biri (anomali, kimseyle çevrili değil) → onu 1-2 basit soru/bölmeyle hemen izole edebilirsiniz ("sağ tarafta mı? evet → işte bu o kişi")
+"Isolation" (İzolasyon) Skoru Nasıl Hesaplanır?
+
+Isolation Forest, birçok rastgele ağaç (tree) oluşturur (bir "orman" - forest), ve her ağaçta bir noktayı izole etmek için gereken ortalama bölme (split) sayısını ölçer:
+
+Az sayıda bölmeyle izole edilen noktalar → kısa yol (path length) → muhtemelen anomali
+Çok sayıda bölme gerektiren noktalar → uzun yol → muhtemelen normal
+Neden "Minimal Computational Effort" (Düşük Hesaplama Maliyeti)?
+
+Çünkü bu yöntem, mesafe hesaplama (KNN gibi) ya da mean/std hesaplama (Z-score gibi) gerektirmiyor — sadece rastgele bölmeler yapıyor, bu çok hızlı bir işlem. Ayrıca, anomalileri hızlıca bulduğu için (az bölme yeterli olduğu için), algoritmanın tüm ağacı sonuna kadar büyütmesine bile gerek kalmayabiliyor.
+
+Neden Bu Yöntem Farklı ve Değerli?
+
+Hatırlarsanız Z-score/IQR'ın normal dağılım varsayımına dayandığını, KNN'in ise mesafe hesaplamasının maliyetli olduğunu konuşmuştuk. Isolation Forest'ın avantajı:
+
+Dağılım varsayımı yok — normal dağılım olsun olmasın çalışır
+Yüksek boyutlu (çok sütunlu) veride de iyi çalışır — KNN'in "curse of dimensionality" sorununu daha az yaşar
+Büyük veri setlerinde hızlı — mesafe/istatistik hesaplamak yerine sadece rastgele bölme yapıyor
+
+from sklearn.ensemble import IsolationForest
+
+iso = IsolationForest(contamination=0.05)  # verinin ~%5'i anomali varsayımı
+outlier_labels = iso.fit_predict(df[['Age', 'BMI', 'Cholesterol']])
+# -1 = outlier, 1 = normal
+
+Özetle: Bu cümle, Isolation Forest'ın "anomalileri doğrudan tanımlamak yerine, onların ne kadar KOLAY izole edilebildiğine bakarak" çalıştığını anlatıyor — mantık şu: anomaliler, veri setinin geri kalanından zaten "yalnız/uzak" durduğu için, onları ayırmak (izole etmek) normal noktalara göre çok daha az işlem gerektirir, ve algoritma bu "izolasyon kolaylığını" bir anomali skoru olarak kullanır.
+
+Soru:Hocam o zaman somut bir örnek verir misin. Diyelim ki banka hesabıma 5 milyon lira para girişi var ama ben devlet memuruyum yani ortalama aylık 90 k gibi bir para geliri olan dataset.
+
+Elcevap:Hocam güzel bir örnek seçtiniz, adım adım Isolation Forest'ın bu senaryoda **nasıl çalışacağını** gösterelim.
+
+## Senaryo
+
+Elinizde bir bankanın **devlet memurları veri seti** var, aylık gelir sütunu şöyle dağılmış olsun (basitleştirerek):
+
+```
+Memur_1: 85.000 TL
+Memur_2: 92.000 TL
+Memur_3: 88.000 TL
+Memur_4: 95.000 TL
+Memur_5: 90.000 TL
+...
+Memur_998: 91.000 TL
+Memur_999: 87.000 TL
+Memur_1000 (SİZ): 5.000.000 TL  ← şüpheli işlem
+```
+
+Çoğu değer **85.000 - 95.000 TL** arasında yoğunlaşmış, sizin hesabınızdaki **5.000.000 TL** ise bu yoğun bölgeden **çok uzakta**.
+
+## Isolation Forest'ın Ağaç Kurma Süreci (Basitleştirilmiş)
+
+Algoritma, **rastgele bir eşik değer** seçip veriyi bölmeye başlar. Örneğin ilk bölme:
+
+**Bölme 1:** *"Gelir < 500.000 TL mi?"*
+```
+Evet (< 500.000)  → Memur_1, Memur_2, ..., Memur_999 (999 kişi)
+Hayır (≥ 500.000) → SİZ (tek başınıza!)
+```
+
+**Dikkat edin:** Sadece **1 bölme** ile siz **zaten tek başınıza izole oldunuz**! Çünkü 5.000.000 TL, veri setindeki **hemen hemen her rastgele eşik değerinin** üstünde kalıyor — hangi rastgele sayıyı seçerse seçsin (500.000, 1.000.000, 2.000.000 fark etmez), siz **neredeyse her zaman** "diğer taraf"a düşeceksiniz.
+
+## Normal Bir Memur İçin Aynı Süreci Yürütelim
+
+Şimdi **Memur_500'ün** (gerçek gelir 90.000 TL) izole edilme sürecine bakalım:
+
+**Bölme 1:** *"Gelir < 500.000 TL mi?"* → Evet, 999 kişiyle (siz dahil, sizin değeriniz bu grupta kalmadı çünkü siz zaten ayrıldınız) birlikte kalır.
+
+**Bölme 2:** *"Gelir < 90.500 TL mi?"* → Diyelim ki bu, geride kalan 999 kişiyi yaklaşık ikiye bölüyor (500 kişi altında, 499 kişi üstünde).
+
+**Bölme 3:** *"Gelir < 89.700 TL mi?"* → Yine kabaca ikiye böler.
+
+**Bölme 4, 5, 6...** → Her seferinde grup **yarıya iniyor** ama Memur_500'ü **diğer 500-1000 benzer memurdan** ayırmak için **onlarca bölme** gerekiyor, çünkü etrafında **çok fazla benzer değer** var, hiçbiri "tek başına" değil.
+
+## Path Length (Yol Uzunluğu) Karşılaştırması
+
+```
+SİZ (5.000.000 TL)    → izole olmak için: 1 bölme    (çok kısa yol!)
+Memur_500 (90.000 TL) → izole olmak için: ~10 bölme  (çok daha uzun yol)
+```
+
+Bu **büyük fark**, Isolation Forest'a şunu söylüyor: *"Bu nokta (5.000.000 TL), veri setinin geri kalanından o kadar uzak ki, onu ayırmak neredeyse hiç çaba gerektirmedi — bu güçlü bir anomali sinyali."*
+
+## Kod Üzerinden Görelim
+
+```python
+from sklearn.ensemble import IsolationForest
+import pandas as pd
+import numpy as np
+
+# Basit bir örnek veri seti oluşturalım
+np.random.seed(42)
+normal_gelirler = np.random.normal(90000, 3000, 999)  # 999 normal memur
+supheli_gelir = [5000000]  # sizin işleminiz
+
+gelirler = np.concatenate([normal_gelirler, supheli_gelir])
+df = pd.DataFrame({'Gelir': gelirler})
+
+iso = IsolationForest(contamination=0.001, random_state=42)
+df['anomaly'] = iso.fit_predict(df[['Gelir']])
+
+print(df.tail(1))  # sizin kaydınızı gösterir
+# anomaly = -1 çıkacaktır (anomali olarak işaretlendi)
+```
+
+## Neden Bu Yöntem Bankacılık/Fraud Detection'da Bu Kadar Popüler?
+
+Çünkü tam da sizin verdiğiniz senaryo gibi **fraud detection (dolandırıcılık tespiti)** durumlarında:
+
+1. **Anomaliler gerçekten az sayıda** (binlerce normal işlemden sadece birkaçı şüpheli)
+2. **Anomaliler genelde "aşırı" değerler** (çok yüksek/düşük tutarlar, alışılmadık saatlerde işlemler)
+3. **Hız çok önemli** — bankalar milyonlarca işlemi **gerçek zamanlı** taramak zorunda, Isolation Forest'ın düşük hesaplama maliyeti burada büyük avantaj
+
+## Gerçek Hayatta Daha Karmaşık Olurdu — Multivariate Kullanım
+
+Gerçek bir banka sistemi muhtemelen sadece "Gelir" sütununa değil, **birden fazla sütuna** birlikte bakardı:
+
+```python
+iso = IsolationForest(contamination=0.01)
+df['anomaly'] = iso.fit_predict(df[['Gelir', 'Islem_Saati', 'Islem_Lokasyonu', 'Gecmis_Ortalama_Islem']])
+```
+
+Bu durumda, belki tek başına 5.000.000 TL bile bazı meşru senaryolarda (örneğin ev satışı) mümkün olabilir, ama **"devlet memuru + gece yarısı + yurt dışı lokasyon + geçmiş ortalamanın 500 katı"** gibi bir **kombinasyon**, Isolation Forest için çok daha güçlü bir anomali sinyali oluşturur — tam da daha önce konuştuğumuz **Multivariate Outlier** kavramının pratikte nasıl işlediğinin bir örneği.
+
+---
+
+**Özetle:** Sizin 5.000.000 TL'lik işleminiz, diğer ~90.000 TL'lik gelirlerden **o kadar uzak** ki, rastgele bir bölme algoritması bile **tek bir adımda** onu geri kalan herkesten ayırabiliyor — bu **"kolay izole edilebilirlik"**, Isolation Forest'ın anomali tespitindeki temel gücü.
+
+Soru: Hocam şöyle yapsak 5 milyon tl değil de 150 bin olsa nasıl bölme yaparız ?
+
+Elcevap:Hocam çok isabetli bir soru, çünkü **150.000 TL** ile **5.000.000 TL** arasında **çok önemli bir fark** var — 150.000 TL, gelir dağılımına (85.000-95.000 TL) **görece daha yakın**, artık "bariz" bir anomali değil, **"sınırda/belirsiz"** bir durum. Bu bize Isolation Forest'ın **daha ince ayrıntılarını** göstermek için harika bir örnek.
+
+## Bölme Sürecini Elle Yürütelim
+
+Aynı veri seti: 999 memur `85.000-95.000 TL` arasında, siz `150.000 TL`.
+
+**Bölme 1:** *"Gelir < 120.000 TL mi?"* (rastgele seçilmiş bir eşik)
+```
+Evet → 999 memur (hepsi 85-95k arası, hepsi 120k altında)
+Hayır → SİZ (150.000 TL)
+```
+
+**Dikkat edin:** Bu sefer de **1 bölmede** izole oldunuz! Çünkü rastgele seçilen eşik (120.000 TL), yine **sizinle diğerleri arasında** bir yerde kalabilirdi.
+
+**Ama işte kritik fark burada:** Rastgele eşik **her zaman** böyle "iyi" bir yerde çıkmayabilir. Diyelim ki farklı bir ağaçta, rastgele eşik **170.000 TL** seçildi:
+
+**Bölme 1 (farklı bir ağaçta):** *"Gelir < 170.000 TL mi?"*
+```
+Evet → 999 memur + SİZ (150.000 TL de bu grupta kalır!)
+Hayır → kimse yok (boş)
+```
+
+Bu durumda **siz ilk bölmede izole olamadınız**, çünkü rastgele eşik **sizin üstünüzde** kaldı, sizi hâlâ "normal" grupla birlikte tutuyor. Bu ağaçta izole olmanız için **birkaç bölme daha** gerekecek.
+
+## Neden Bu Fark Önemli — Isolation Forest'ın "Orman" (Forest) Mantığı
+
+İşte tam burada **"Forest" (orman)** kelimesinin önemi ortaya çıkıyor — algoritma **tek bir ağaca** güvenmez, **yüzlerce farklı rastgele ağaç** kurar, her ağaçta **farklı rastgele eşikler** denenir:
+
+```
+Ağaç 1: eşik=120.000 → siz 1 bölmede izole oldunuz (kısa yol)
+Ağaç 2: eşik=170.000 → siz izole olamadınız, 5 bölme daha gerekti (uzun yol)
+Ağaç 3: eşik=140.000 → siz 2 bölmede izole oldunuz
+Ağaç 4: eşik=200.000 → siz izole olamadınız, 6 bölme gerekti
+...
+Ağaç 100: eşik=155.000 → siz izole olamadınız, 3 bölme gerekti
+```
+
+Sonunda, **tüm ağaçlardaki path length'lerin ORTALAMASI** alınır:
+
+```
+5.000.000 TL için: ortalama path length ≈ 1.2 (çok kısa, HER ağaçta hemen izole)
+150.000 TL için:   ortalama path length ≈ 3.8 (orta uzunlukta, bazı ağaçlarda kolay bazılarında zor)
+90.000 TL (normal) için: ortalama path length ≈ 9.5 (uzun, hiçbir ağaçta kolay izole olmuyor)
+```
+
+## Sonuç — Anomali Skoru "Siyah-Beyaz" Değil, "Gri Tonlu"dur
+
+Bu, sizin sorunuzun bana gösterdiği **çok değerli bir nokta**: Isolation Forest, "anomali mi değil mi" diye **ikili (binary)** bir karar vermiyor, aslında **sürekli bir "anomali skoru"** üretiyor:
+
+```python
+anomaly_scores = iso.decision_function(df[['Gelir']])
+```
+
+- **5.000.000 TL** → çok **düşük** (negatif) skor → **kesin anomali**
+- **150.000 TL** → **orta düzeyde düşük** skor → **"şüpheli ama kesin değil"**
+- **90.000 TL** → **yüksek/pozitif** skor → **kesinlikle normal**
+
+## Kod ile Gösterelim
+
+```python
+from sklearn.ensemble import IsolationForest
+import numpy as np
+import pandas as pd
+
+np.random.seed(42)
+normal_gelirler = np.random.normal(90000, 3000, 999)
+supheli_gelirler = [150000, 5000000]  # ikisini birlikte test edelim
+
+gelirler = np.concatenate([normal_gelirler, supheli_gelirler])
+df = pd.DataFrame({'Gelir': gelirler})
+
+iso = IsolationForest(contamination=0.002, random_state=42, n_estimators=200)
+iso.fit(df[['Gelir']])
+
+df['anomaly_score'] = iso.decision_function(df[['Gelir']])
+df['is_anomaly'] = iso.predict(df[['Gelir']])
+
+print(df.tail(2))
+```
+
+**Muhtemel çıktı:**
+```
+       Gelir  anomaly_score  is_anomaly
+150000.0       -0.08            -1        ← anomali ama "sınırda" bir skor
+5000000.0      -0.35            -1        ← çok daha güçlü/kesin bir anomali skoru
+```
+
+İkisi de `-1` (anomali) olarak işaretlenebilir, ama **`anomaly_score` değerlerine** baktığınızda, **5.000.000'un çok daha "kesin/güçlü"** bir anomali olduğunu, **150.000'in ise "sınırda, tartışmalı"** bir durum olduğunu görürsünüz.
+
+## `contamination` Parametresinin Rolü
+
+Bu noktada devreye **`contamination`** parametresi giriyor — bu, size **"verinin yaklaşık yüzde kaçının anomali olmasını bekliyorsunuz"** sorusunu soruyor. Eğer `contamination=0.001` (%0.1) derseniz, algoritma **sadece en uç, en kesin** anomalileri işaretler (belki sadece 5.000.000'u). Eğer `contamination=0.01` (%1) derseniz, **daha "gevşek"** bir eşik kullanır, 150.000 gibi **sınırda** değerler de anomali olarak işaretlenmeye başlayabilir.
+
+---
+
+**Özetle:** 150.000 TL gibi "orta derecede yüksek" bir değer için bölme süreci, **rastgele eşiğin nereye düştüğüne bağlı olarak değişken** sonuçlar verir — bazı ağaçlarda hızlı izole olur, bazılarında olmaz. Isolation Forest, bu **tutarsızlığı** (yani "bazen kolay bazen zor izole olma" durumunu) **ortalama path length** ile ölçüp, size **"ne kadar kesin bir anomali"** olduğuna dair **dereceli bir skor** verir — 5.000.000 gibi bariz bir aykırı değerden **daha az kesin ama yine de şüpheli** bir sinyal.
+
+Isolation: Instead of modelling normal behaviour, Isolation Forest isolates anomalies by focusing on their differences. Outliers that are rare and distinct. They are separated faster than normal points.
+
+Partitioning: Data is split using randomly selected features and random threshold values. These random splits efficiently separate anomalies from normal data.
+
+Anomaly Score: The anomaly score represents how easily a data point can be isolated. Fewer splits mean a higher anomaly score, hence a greater likelihood of being an outlier.
+
+Anormallik Puanı: Anormallik puanı, bir veri noktasının ne kadar kolay ayırt edilebileceğini gösterir. Bölünme sayısının az olması, daha yüksek bir anormallik puanı anlamına gelir; dolayısıyla bu veri noktasının bir aykırı değer olma olasılığı da daha yüksektir.
+
+Working of Isolation Forest
+
+Isolation Forest operates through a recursive partitioning process, creating multiple decision trees that help identify anomalies.Isolation Forest, özyinelemeli bir bölme süreciyle çalışır ve anomalileri tespit etmeye yardımcı olan çok sayıda karar ağacı oluşturur. Here's a step-by-step breakdown:
+
+Hocam bu ifadeyi açıklayayım — **"recursive partitioning"** (yinelemeli/özyinelemeli bölümleme) kavramı, tam olarak az önce elle yürüttüğümüz sürecin **teknik adı**.
+
+## Cümlenin Çevirisi
+
+**"Isolation Forest, özyinelemeli (recursive) bir bölümleme süreciyle çalışır."**
+
+## "Recursive" (Özyinelemeli) Ne Demek?
+
+**Recursive**, bir işlemin **kendi sonucu üzerinde tekrar tekrar uygulanması** anlamına gelir — yani bir bölme yaptıktan sonra, **ortaya çıkan her alt grup üzerinde aynı işlemi tekrar** uygularsınız, bu da **kendi içinde tekrarlayan** bir yapı oluşturur.
+
+## Az Önceki Örneğimize Bağlayalım
+
+Hatırlarsanız şunu yapmıştık:
+
+```
+Bölme 1: Gelir < 120.000 mi?
+   ├── Evet → 999 memur
+   │         ↓ (BURADA TEKRAR BÖLME YAPIYORUZ - recursive!)
+   │         Bölme 2: Gelir < 90.500 mi?
+   │            ├── Evet → 500 memur
+   │            │         ↓ (YİNE TEKRAR BÖLME - recursive!)
+   │            │         Bölme 3: Gelir < 89.700 mi?
+   │            │            ├── Evet → 250 memur (tekrar böl...)
+   │            │            └── Hayır → 250 memur (tekrar böl...)
+   │            └── Hayır → 499 memur (tekrar böl...)
+   └── Hayır → SİZ (izole oldunuz, artık bölmeye gerek yok)
+```
+
+İşte bu **"her seferinde ortaya çıkan alt gruba, aynı bölme işlemini tekrar tekrar uygulama"** süreci, tam olarak **recursive partitioning**'in kendisi.
+
+## Neden "Recursive" Kelimesi Kullanılıyor? (Programlama Bağlantısı)
+
+Bu terim, programlamadaki **recursive function (özyinelemeli fonksiyon)** kavramından geliyor — kendi kendini çağıran bir fonksiyon gibi düşünün:
+
+```python
+def bol(veri, derinlik=0):
+    if len(veri) <= 1:  # duruş koşulu (base case)
+        return derinlik
+    
+    rastgele_esik = rastgele_sec(veri)
+    sol, sag = veriyi_ikiye_ayir(veri, rastgele_esik)
+    
+    # fonksiyon kendi kendini tekrar çağırıyor - İŞTE RECURSION BU
+    return bol(sol, derinlik+1), bol(sag, derinlik+1)
+```
+
+Her çağrıda, fonksiyon **kendisini**, daha **küçük bir veri parçası** üzerinde **tekrar** çağırıyor — tıpkı bizim elle yaptığımız gibi, her bölmede daha küçük gruplarla **aynı işlemi** tekrarlıyoruz.
+
+## Ne Zaman Durur? (Base Case / Duruş Koşulu)
+
+Recursive bir süreç, sonsuza kadar devam edemez, mutlaka bir **"durma koşulu"** olmalı. Isolation Forest'ta bu:
+
+1. **Bir nokta tek başına kalana kadar** (izole oldu, artık bölünecek bir şey yok)
+2. **Ya da önceden belirlenen bir maksimum derinliğe (max depth) ulaşılana kadar** (çok büyük veri setlerinde, her noktayı sonuna kadar izole etmek yerine, belirli bir noktada durulur — bu da hesaplama süresini kısaltır)
+
+## Görsel Olarak — Ağaç Yapısı
+
+Bu recursive süreç, sonuçta bir **ağaç (tree)** yapısı oluşturur:
+
+```
+                    [Tüm Veri: 1000 kişi]
+                    /                    \
+        [Gelir<120k: 999 kişi]      [Gelir≥120k: SİZ, izole!]
+              /            \
+    [Gelir<90.5k: 500]   [Gelir≥90.5k: 499]
+        /        \             /        \
+     [250]      [250]       [249]      [250]
+      ...        ...          ...        ...
+```
+
+Her **dal (branch)**, bir önceki bölmenin **kendi üzerinde tekrarlanmasıyla** oluşuyor — bu yüzden "recursive" (özyinelemeli) deniyor, çünkü **aynı mantık, farklı ölçeklerde, tekrar tekrar** uygulanıyor.
+
+## Neden Bu Yapı Isolation Forest İçin Önemli?
+
+Bu recursive yapı sayesinde, algoritma:
+1. **Otomatik olarak** her noktanın "ne kadar derinlikte" izole olduğunu (path length) kaydedebiliyor
+2. **Büyük veri setlerini** küçük, yönetilebilir parçalara **adım adım** bölerek işleyebiliyor
+3. Karar ağaçlarıyla (Decision Tree) **aynı temel yapıyı** kullandığı için, hesaplama açısından **verimli ve iyi anlaşılmış** bir yöntemi temel alıyor
+
+---
+
+**Özetle:** "Recursive partitioning" derken kastedilen, Isolation Forest'ın **bir bölme yaptıktan sonra, ortaya çıkan her alt grup üzerinde AYNI bölme işlemini tekrar tekrar uygulaması** — bu, her nokta **kendi başına izole olana kadar** devam eden, **kendi içinde tekrarlayan (self-repeating)** bir süreç. Tıpkı bizim elle 150.000 TL örneğinde adım adım yaptığımız gibi, algoritma bu süreci **otomatik ve çok sayıda kez** (her ağaç için, yüzlerce ağaç boyunca) tekrarlıyor.
+
+1. Random Partitioning
+The algorithm begins by selecting a random feature from the dataset.
+It then splits the data at a random value within that feature’s range, dividing it into two parts.
+This process is repeated recursively which helps in creating binary trees where each branch represents a split in the data.
+
+2. Isolation Path
+The number of splits required to isolate a data point is called the isolation path.
+Anomalies have shorter paths since they differ more from the rest of the data.
+
+3. Ensemble of Trees
+Rather than relying on a single tree, it builds an ensemble of trees. Each tree is created independently with random splits helps in leading to diverse isolation paths for each data point across multiple trees.
+This ensures robustness and reliability in the results.
+
+4. Anomaly Scoring
+The anomaly score for each data point is calculated by averaging the path lengths across all trees.
+Shorter paths (fewer splits) shows that the point is more likely to be an anomaly.
+
+5. Classification
+A threshold on the anomaly score classifies data points as normal or anomalous.
+Points above the threshold → anomalies; below → normal.
+
+Applications
+Cybersecurity: Detects malicious network activity such as unusual traffic or unauthorized access.
+Finance: Identifies fraudulent transactions like sudden large purchases or rapid repeated payments.
+Healthcare: Spots unusual patient data, abnormal lab results or erroneous medical records.
+Retail: Detects anomalies in customer purchasing behavior to prevent fraud and understand trends.
+Manufacturing: Predicts equipment failures through anomaly detection in sensor readings.
+
+Advantages
+Efficiency and Scalability: Works well with large, high-dimensional datasets.
+No Data Distribution Assumptions: Performs effectively even on irregular data.
+Robust to Outliers: Handles noise effectively.
+Simplicity: Easy to implement and interpret.
+Low Computational Overhead: Ideal for real-time anomaly detection.
+
+Limitations
+Overfitting Risk: May overfit small or imbalanced datasets.
+Weakness for Global Anomalies: Struggles to detect anomalies spanning multiple regions.
+Sensitivity to Correlated Features: May cause unnecessary splits, reducing accuracy.
+Limited for Sequential Data: Not ideal for time-series or dependent data.
+Noise Sensitivity: High noise can cause false positives.
+
+Pros: Works well in high dimensions, efficient.
+Cons: Requires choosing contamination (expected outlier fraction).
+
+4-Local Outlier Factor
+
+Hocam tabii, LOF'a (Local Outlier Factor) geçelim.
+
+## LOF Nedir? Temel Fikir
+
+LOF, bir noktanın **"yerel yoğunluğunu"** (local density), **komşularının yoğunluğuyla karşılaştırarak** aykırı olup olmadığına karar veren bir yöntemdir. KNN'e benzer bir mantıkla (komşuluk/mesafe tabanlı) çalışır, ama KNN'den **kritik bir farkı** var — şimdi bunu açacağım.
+
+## KNN Distance'ın Eksik Kaldığı Nokta
+
+Hatırlarsanız KNN tabanlı outlier tespitinde, bir noktanın **komşularına olan mesafesine** bakıyorduk — mesafe büyükse outlier diyorduk. Ama bu yaklaşımın bir zayıflığı var: **veri setinde farklı yoğunluklara sahip bölgeler varsa**, KNN yanılabilir.
+
+## Somut Bir Örnekle Gösterelim
+
+Diyelim ki veri setinizde **iki farklı küme** var:
+
+```
+Küme A (sık/yoğun): birbirine çok yakın 100 nokta
+Küme B (seyrek/dağınık): birbirinden biraz uzak 20 nokta
+```
+
+**Küme B'deki bir nokta**, kendi kümesinin **normal bir üyesi** olsa bile, komşularına olan **mutlak mesafesi** Küme A'daki noktalara göre **daha büyük** olabilir — çünkü Küme B zaten **doğası gereği daha seyrek**. Eğer sadece "mesafe büyük mü" diye bakarsanız (saf KNN mantığı), Küme B'deki **tamamen normal** noktaları **yanlışlıkla outlier** olarak işaretleyebilirsiniz.
+
+## LOF'un Çözümü — "Göreceli Yoğunluk" Kavramı
+
+LOF, bir noktanın mesafesine **mutlak olarak** değil, **komşularının yoğunluğuyla kıyaslayarak, göreceli olarak** bakar. Sorduğu soru şu:
+
+**"Bu noktanın yoğunluğu, komşularının yoğunluğuna göre ne kadar düşük?"**
+
+- Eğer bir nokta, **kendi komşularıyla benzer yoğunlukta** bir bölgedeyse (yani komşuları da onun gibi "seyrek" bir bölgedeyse) → **normal** sayılır, LOF skoru ~1
+- Eğer bir nokta, **komşularına göre belirgin şekilde daha seyrek** bir bölgedeyse (komşuları yoğun bir kümede ama o nokta kenarda, tek başına) → **outlier** sayılır, LOF skoru **1'den büyük**
+
+## LOF Skorunun Yorumlanması
+
+```
+LOF ≈ 1     → normal (yoğunluğu komşularıyla benzer)
+LOF > 1     → outlier olma ihtimali var (komşularına göre daha seyrek bir bölgede)
+LOF >> 1    → güçlü outlier (komşularına göre çok daha izole)
+```
+
+## Görsel Bir Benzetme
+
+Bunu bir **şehir yoğunluğu** benzetmesiyle düşünün:
+
+- **İstanbul'un merkezinde** yaşayan biri, "evinden en yakın komşusuna 50 metre" olabilir — bu **normal**, çünkü etrafındaki herkes de böyle yakın yaşıyor
+- **Kırsal bir köyde** yaşayan biri, "evinden en yakın komşusuna 500 metre" olabilir — ama bu da **o köy için normal**, çünkü köydeki herkes birbirinden **benzer uzaklıkta**
+- **Asıl outlier**, İstanbul'un merkezinde yaşayıp ama **komşusuna 500 metre uzaklıkta** olan biri olurdu — çünkü bu, **çevresindeki yoğunluğa göre** anormal bir izolasyon
+
+LOF, tam olarak bu **"çevresine göre normal mi"** sorusunu soruyor, sadece **"mutlak olarak uzak mı"** sorusunu değil.
+
+## Kod Örneği
+
+```python
+from sklearn.neighbors import LocalOutlierFactor
+
+lof = LocalOutlierFactor(n_neighbors=20)
+outlier_labels = lof.fit_predict(df[['Age', 'BMI']])
+# -1 = outlier, 1 = normal
+
+# LOF skorlarının kendisini görmek isterseniz:
+lof_scores = -lof.negative_outlier_factor_  # pozitif değer olarak çevirir
+```
+
+## `n_neighbors` Parametresi — Yine Karşımıza Çıkıyor
+
+Hatırlarsanız KNN Imputer'da da bu parametreyi konuşmuştuk — burada da benzer bir mantık: **kaç komşuya bakarak yoğunluk hesaplanacağı**. Küçük değer → lokal, hassas sonuçlar; büyük değer → daha genel, düzleştirilmiş sonuçlar.
+
+## LOF vs Isolation Forest — Ne Zaman Hangisi?
+
+| Durum | Önerilen Yöntem |
+|---|---|
+| Veri setinde **farklı yoğunluklara sahip bölgeler/kümeler** var | **LOF** (yoğunluk farkını dikkate alır) |
+| Veri seti **büyük**, hız öncelikli | **Isolation Forest** (daha hızlı, ölçeklenebilir) |
+| Veri setinde **tek, homojen bir yoğunluk** var | İkisi de benzer sonuç verir, Isolation Forest daha pratik |
+| Sonuçları **yorumlamak** önemli | LOF, "neden outlier" sorusuna (yoğunluk farkı) daha **sezgisel** bir cevap verir |
+
+## Sizin Banka Örneğinize Uygulayalım
+
+Hatırlarsanız 999 memur + 1 şüpheli işlem örneğimiz **tek, homojen bir yoğunluğa** sahipti (hepsi tek bir "kümede"), bu senaryoda LOF ile Isolation Forest **benzer sonuç** verirdi. Ama eğer veri setinizde **hem devlet memurları hem de özel sektör çalışanları** olsaydı (iki farklı gelir yoğunluğu kümesi), LOF, her grubu **kendi içinde** değerlendirip, "bu kişi kendi grubuna göre normal mi" sorusuna **Isolation Forest'tan daha isabetli** cevap verebilirdi.
+
+---
+
+**Özetle:** LOF, bir noktanın **mutlak mesafesine değil, çevresindeki yoğunluğa göre göreceli konumuna** bakan bir yöntem — bu sayede **farklı yoğunluklara sahip bölgelerin** olduğu karmaşık veri setlerinde, saf mesafe tabanlı yöntemlerin (KNN gibi) yapabileceği **yanlış pozitif/negatif** hatalarını azaltır. Merak ettiğiniz bir nokta var mı, yoksa bunu gerçek bir veri setinde uygulamaya mı geçelim?
+
+Local outlier factor (LOF) is an algorithm used for Unsupervised outlier detection. It produces an anomaly score for outliers in the data set. It does this by measuring the local density deviation of a given data point with respect to the data points near it.
+
+Working of LOF
+Local density is calculated by estimating distances between data points that are neighbours i.e k-nearest neighbors. For each data point, local density can be calculated by comparing these we can check which data points have similar densities and which have a lesser density than its neighbors. The ones with the lesser densities are considered as the outliers.
+
+1. k-Distance and k-Nearest Neighbours
+k-distance refers to the distance between a point and its k-th nearest neighbour. It helps define the local neighbourhood of a point by finding the closest k data points. 
+
+2. Reachability Distance
+This distance is then used to calculate the reachability distance. It is defined as the maximum of the distance between two points and the k-distance of that point. Refer to the following equation where B is the point in the center and A is a point near to it.
+
+reachability-distancek(A,B)=max{k-distance(B), d(A,B)}
+
+Hocam bu, LOF algoritmasının **en kritik ama en kafa karıştırıcı** kavramlarından biri — "Reachability Distance" (Ulaşılabilirlik Mesafesi). Adım adım, resimdeki örnekle açıklayayım.
+
+## Önce Formülü Anlayalım
+
+$$reachability\text{-}distance_k(A, B) = \max\{k\text{-}distance(B), \ d(A, B)\}$$
+
+Bu formül şunu söylüyor: **A noktasından B noktasına olan "ulaşılabilirlik mesafesi"**, şu ikisinden **büyük olanına** eşittir:
+1. **`k-distance(B)`** → B noktasının, kendi **k'ıncı en yakın komşusuna** olan mesafesi
+2. **`d(A, B)`** → A ile B arasındaki **gerçek/ham mesafe**
+
+## Önce `k-distance(B)` Nedir, Onu Anlayalım
+
+`k-distance(B)`, B noktasının **"kendi doğal komşuluk yarıçapı"** gibi düşünülebilir — eğer `k=3` seçtiyseniz, B'nin **en yakın 3. komşusuna olan mesafesi** budur. Resimdeki **kırmızı çember**, tam olarak bu `k-distance(B)`'yi **görsel olarak** temsil ediyor — B (merkezdeki nokta) etrafında çizilmiş, B'nin komşuluk sınırını gösteren bir daire.
+
+## Resimdeki İki Farklı Durumu İnceleyelim
+
+**Durum 1 — Çemberin İÇİNDEKİ noktalar** (örneğin sağdaki ve sol alttaki noktalar):
+
+Bu noktalar, B'nin **kendi doğal komşuluk alanının içinde** kalıyor. Formüle göre:
+```
+d(A, B) < k-distance(B)
+```
+Yani **gerçek mesafe, B'nin kendi k-distance'ından daha küçük**. Bu durumda formül şunu seçer:
+```
+max{k-distance(B), d(A,B)} = k-distance(B)  (çünkü k-distance daha büyük)
+```
+**Yani çemberin içindeki noktalar için, reachability distance = B'nin kendi k-distance'ı olur, gerçek mesafe DEĞİL.**
+
+**Durum 2 — Çemberin DIŞINDAKİ nokta** (resimdeki en üstteki, çemberin dışına taşan çizgiyle bağlanan nokta):
+
+Bu nokta, B'nin doğal komşuluk alanının **dışında**. Formüle göre:
+```
+d(A, B) > k-distance(B)
+```
+Gerçek mesafe, k-distance'tan **daha büyük**. Bu durumda formül şunu seçer:
+```
+max{k-distance(B), d(A,B)} = d(A,B)  (çünkü gerçek mesafe daha büyük)
+```
+**Yani çemberin dışındaki noktalar için, reachability distance = gerçek/ham mesafenin kendisi olur.**
+
+## Peki Bu "max" Alma İşlemi Neden Yapılıyor? — Asıl Mantık Burada
+
+Bu, LOF'un **"küçük, önemsiz mesafe farklarını yumuşatma"** amacı taşıyan **akıllı bir hile**. Şöyle düşünün:
+
+Eğer bir nokta B'ye **çok yakınsa** (neredeyse üst üste), ham mesafe (`d(A,B)`) **çok küçük** çıkar (belki 0.01 gibi). Bu kadar küçük mesafe farkları, hesaplamalarda **gürültü/aşırı hassasiyet** yaratabilir — iki nokta arasında "0.01" ile "0.02" mesafe farkı, istatistiksel olarak **anlamlı bir fark değildir**, ama ham haliyle kullanılırsa yanlış bir hassasiyet izlenimi verir.
+
+**Formül bunu şöyle çözüyor:** *"Eğer bir nokta zaten benim (B'nin) doğal komşuluk alanımın içindeyse, gerçek mesafesi ne olursa olsun, onu benim k-distance'ım kadar 'standart' bir mesafede kabul edeyim — küçük farkları önemsemeyeyim, hepsini aynı 'yakınlık seviyesinde' sayayım."*
+
+Bu, bir nevi **"smoothing" (yumuşatma)** işlemi — çemberin içindeki tüm noktalar, ne kadar mikroskobik farklarla yakın olursa olsun, **aynı, standart bir "yakınlık" değeri** alıyor.
+
+## Neden Bu, LOF'un Sonraki Adımı (LRD) İçin Önemli?
+
+Metnin sonunda bahsedilen **LRD (Local Reachability Density)** hesabı, tam olarak bu **reachability distance'ların ortalamasını** kullanır:
+
+$$LRD(A) = {1}/{ortalama reachability distance}(A, komşular)
+
+Eğer bu mesafeler **çok küçük/gürültülü ham değerlerle** hesaplansaydı, LRD **kararsız/tutarsız** çıkabilirdi. Ama `max()` işlemiyle "standartlaştırılmış" mesafeler kullanıldığı için, LRD **daha stabil ve güvenilir** bir yoğunluk ölçümü oluyor.
+
+## Basit Bir Benzetmeyle Özetleyelim
+
+Bunu bir **"yakın çevre" tanımı** gibi düşünebilirsiniz — diyelim ki "eviniz civarı" 500 metre yarıçapında bir alan olarak tanımlı (bu sizin `k-distance`'ınız):
+
+- Eğer bir arkadaşınız size **200 metre** uzaklıkta oturuyorsa → *"civarımda oturuyor"* dersiniz, tam olarak 200 metre demek yerine, "civarımda" diye genelleştirirsiniz (formülde bu, `k-distance`'ın kullanılması)
+- Eğer bir arkadaşınız size **3 km** uzaklıkta oturuyorsa → artık "civarımda" diyemezsiniz, gerçek mesafeyi (3 km) kullanmanız gerekir (formülde bu, ham `d(A,B)`'nin kullanılması)
+
+---
+
+**Özetle:** Reachability Distance, iki nokta arasındaki mesafeyi **doğrudan/ham olarak değil**, hedef noktanın (B'nin) **kendi doğal komşuluk yarıçapıyla karşılaştırarak** hesaplar. Eğer komşu (A), B'nin doğal komşuluk alanının **içindeyse**, mesafe olarak **B'nin standart k-distance'ı** kullanılır (küçük farklar göz ardı edilir); eğer **dışındaysa**, gerçek mesafenin kendisi kullanılır. Bu, sonraki adımda hesaplanacak **yoğunluk (LRD)** değerinin daha **stabil ve güvenilir** olmasını sağlıyor.
+
+Hocam sadeleştirerek, adım adım anlatayım — reachability distance'ı zaten anladığınız için, üzerine inşa edeceğiz.
+
+## 3. Local Reachability Density (LRD) — "Bu Nokta Ne Kadar Yoğun Bir Bölgede?"
+
+## Formülü Basitleştirelim
+
+lrd_k(A) = 1/{A'nın komşularına olan ORTALAMA reachability distance'ı}
+
+**Sadece bunu bilmeniz yeterli: LRD, bir "ortalama mesafenin tersi (1/x)".**
+
+## Neden "Tersini" Alıyoruz?
+
+Çünkü **mesafe** ile **yoğunluk** ters orantılı kavramlardır:
+
+- **Mesafe küçükse** (komşular çok yakın) → **yoğunluk yüksek** olmalı
+- **Mesafe büyükse** (komşular uzak) → **yoğunluk düşük** olmalı
+
+Matematikte bunu ifade etmenin en basit yolu **1/mesafe** almaktır:
+```
+mesafe küçük (örn: 0.5) → 1/0.5 = 2   (yüksek yoğunluk)
+mesafe büyük (örn: 10)  → 1/10 = 0.1  (düşük yoğunluk)
+```
+
+## Somut Örnek
+
+Diyelim ki A noktasının 3 komşusuna olan reachability distance'ları: `2, 3, 4`
+
+**Adım 1 — Ortalamasını alın:**
+```
+(2+3+4) / 3 = 3
+```
+
+**Adım 2 — Tersini alın:**
+```
+LRD(A) = 1/3 ≈ 0.33
+```
+
+**Yorumu:** A noktası, komşularına **ortalama 3 birim** uzaklıkta — bu da ona **0.33 birimlik bir "yoğunluk"** değeri veriyor. Cümledeki *"noktalar birbirine yakınsa, mesafe azdır ve yoğunluk fazladır"* ifadesi tam olarak bunu söylüyor.
+
+---
+
+## 4. Local Outlier Factor (LOF) — "Ben mi Seyrek Bölgedeyim, Komşularım mı Seyrek?"
+
+Şimdi asıl soruya geliyoruz. LOF, bir noktanın **kendi LRD'sini**, **komşularının LRD'siyle karşılaştırır**.
+
+## Formülü Basitleştirelim
+
+LOF_k(A) = {A'nın komşularının ORTALAMA LRD'si}/{A'nın KENDİ LRD'si}
+
+Yani sadece bir **oran (bölme işlemi)**:
+```
+LOF = (komşuların yoğunluğu) / (benim yoğunluğum)
+```
+
+## Bu Oranı Yorumlayalım — 3 Senaryo
+
+**Senaryo 1 — LOF ≈ 1 (Benim yoğunluğum = komşularımın yoğunluğu)**
+```
+komşuların LRD'si = 5, benim LRD'im = 5
+LOF = 5/5 = 1
+```
+**Anlamı:** Ben, komşularımla **aynı yoğunlukta** bir bölgedeyim — **normal**.
+
+**Senaryo 2 — LOF < 1 (Ben komşularımdan daha yoğun bir bölgedeyim)**
+```
+komşuların LRD'si = 3, benim LRD'im = 6
+LOF = 3/6 = 0.5
+```
+**Anlamı:** Benim yoğunluğum, komşularımdan **daha yüksek** — ben aslında **kümenin merkezine yakın, sıkışık** bir yerdeyim. Bu **kesinlikle normal**, hatta "çok tipik" bir nokta.
+
+**Senaryo 3 — LOF > 1 (Komşularım benden daha yoğun bir bölgede)**
+```
+komşuların LRD'si = 8, benim LRD'im = 2
+LOF = 8/2 = 4
+```
+**Anlamı:** Komşularım **çok daha yoğun** bir bölgede yaşıyor, ben ise **onlara göre seyrek/tenha** bir yerdeyim — yani ben, **yoğun bir kümenin kenarında, tek başına kalmış** bir noktayım. **Bu bir outlier!**
+
+## Basit Bir Benzetmeyle Pekiştirelim
+
+Az önceki "şehir yoğunluğu" örneğimize dönelim:
+
+- Siz **İstanbul'un merkezinde** yaşıyorsunuz (yoğun bölge)
+- Komşularınız da hep **İstanbul merkezinde** yaşıyor (onlar da yoğun bölgede)
+- **LOF ≈ 1** → herkes aynı yoğunlukta, siz normalsiniz
+
+Şimdi farklı bir senaryo:
+- Siz, **İstanbul'un tam ortasında, tek başına bir köy evinde** yaşıyorsunuz (sizin çevreniz seyrek)
+- Ama sizin "komşularınız" olarak seçilen 5 kişi, aslında **çok yoğun bir apartman bölgesinde** yaşıyor
+- **LOF > 1** → komşularınız sizden çok daha yoğun bir yerde, siz onlara göre **"tuhaf bir şekilde izole"** — bu bir **outlier** sinyali
+
+## Görseldeki Grafiği (Image 2) Yorumlayalım
+
+Kırmızı çemberlerin **büyüklüğü**, o noktanın **LOF skorunu** temsil ediyor:
+- **Küçük kırmızı çemberler** (yoğun kümelerin içindeki noktalar) → **LOF ≈ 1**, normal noktalar
+- **Büyük kırmızı çemberler** (tek başına duran, uzak noktalar, örneğin sol üstteki yalnız nokta) → **LOF >> 1**, güçlü outlier'lar
+
+Yani çemberin **büyüklüğü = outlier olma derecesi**, ne kadar büyükse o kadar "şüpheli".
+
+---
+
+## Özet — İkisini Bir Cümlede Bağlayalım
+
+**LRD**, bir noktanın **"ne kadar yoğun bir yerde olduğunu"** ölçüyor (mesafenin tersi). **LOF** ise, bu yoğunluğu **komşularıyla kıyaslayarak**, *"ben komşularıma göre normal bir yoğunlukta mıyım, yoksa onlara göre tuhaf bir şekilde seyrek miyim?"* sorusuna cevap veriyor. **LOF > 1** çıkması, *"komşularım benden çok daha yoğun bir bölgede, ben aralarında yalnız kalmışım"* demek — işte bu yüzden outlier sayılıyorum.
+
+Hocam tabii, dört yöntemi de kapsamlı paragraflar halinde, tablodaki her sütunu (Type, Key Idea, Works Well For, Pros, Cons) açıklayarak toparlayayım.
+
+## Z-Score
+
+Z-Score, **istatistiksel (statistical)** bir tekniktir ve temel fikri, bir veri noktasının ortalamadan **kaç standart sapma** uzakta olduğunu ölçmektir — hatırlarsanız bunu detaylıca konuşmuştuk, formülü `(x-μ)/σ` idi. Bu yöntem, özellikle **normal dağılıma yakın, sürekli sayısal veriler** için iyi çalışır, çünkü ±3 standart sapma kuralı, ancak veri çan eğrisine benzediğinde anlamlı bir eşik oluşturur. En büyük avantajı **basitliği, hızı ve uygulama kolaylığıdır** — tek bir formülle, hiçbir karmaşık parametre ayarlamasına gerek kalmadan sonuç üretir. Ama en büyük dezavantajı, **çarpık (skewed) ya da normal olmayan verilerde güvenilmez** olmasıdır; hatırlarsanız `Quantity` sütununuzda uniform dağılım gördüğümüzde ve büyük örneklemli `normaltest` sonucunda p=0 çıktığında bu sınırlamayı birebir yaşamıştık — Z-Score, dağılımın gerçek şeklini göz ardı ederek yanıltıcı sonuçlar verebilir.
+
+## IQR (Interquartile Range)
+
+IQR de yine **istatistiksel** bir yöntemdir, ama Z-Score'dan farklı olarak mean/std yerine **medyan ve çeyrekler (Q1, Q3)** kullanır — bir noktayı, Q1'in 1.5×IQR altında ya da Q3'ün 1.5×IQR üstünde kalması durumunda aykırı olarak işaretler. Bu yöntem özellikle **tek değişkenli (univariate) veri** ve **boxplot tabanlı analizler** için uygundur, çünkü zaten boxplot'un "bıyıkları" (whiskers) tam olarak bu 1.5×IQR sınırına dayanır. En büyük gücü, **aşırı değerlere karşı dayanıklı (robust) ve non-parametrik olması**dır — yani IQR, verinin belirli bir dağılıma (normal dağılım gibi) uyduğunu **varsaymaz**, bu da onu Z-Score'a göre çok daha "güvenli" bir seçim yapar, hatırlarsanız Z-Score'un "masking effect" (aşırı değerin mean/std'yi bozarak kendini gizlemesi) sorununu da bu şekilde aşıyordu. Ama dezavantajı, **çok aşırı çarpık dağılımlara tam olarak uyum sağlayamamasıdır** — yani IQR, Z-Score kadar kırılgan olmasa da, verinin şekli çok asimetrikse yine de bazı sınırlamalar yaşayabilir.
+
+## Isolation Forest
+
+Isolation Forest, önceki ikisinden temelde farklı bir kategoriye aittir: **model tabanlı (model-based)** bir yaklaşımdır, yani basit bir formülle değil, rastgele ağaçlar kurarak çalışır. Temel fikri, hatırlarsanız detaylıca konuştuğumuz gibi, **anomalileri rastgele ağaç bölmeleriyle izole etmektir** — anomaliler, veri setinin geri kalanından uzak olduğu için **daha az bölmeyle** izole edilirler, bu da onları "kolay ayrılabilir" yapar. Bu yöntem özellikle **yüksek boyutlu (çok sütunlu) veri setlerinde** güçlüdür, çünkü mesafe hesaplamaya dayanmadığı için "curse of dimensionality" sorunundan Z-Score/IQR'a göre daha az etkilenir. Avantajları arasında **büyük veri setlerini verimli işleyebilmesi ve çok sayıda özellikle (feature) çalışabilmesi** sayılabilir — banka örneğimizdeki gibi, milyonlarca işlemi hızlıca taramak gerektiğinde tercih edilen yöntemdir. Ama dezavantajı, **`contamination` parametresinin (verinin ne kadarının anomali olduğuna dair varsayım) elle ayarlanması gerekmesi** ve bu parametreye göre sonuçların **değişkenlik göstermesidir** — tam da 150.000 TL örneğimizde gördüğümüz gibi, bu parametreyi nasıl ayarladığınız, "sınırdaki" bir değerin anomali sayılıp sayılmayacağını doğrudan etkiler.
+
+## Local Outlier Factor (LOF)
+
+LOF ise **yoğunluk tabanlı (density-based)** bir yöntemdir ve temel fikri, bir noktanın **yerel yoğunluğunu, komşularının yoğunluğuyla karşılaştırmaktır** — hatırlarsanız reachability distance ve LRD üzerinden bu oranı (`komşuların LRD'si / kendi LRD'si`) hesaplıyorduk. Bu yöntem özellikle **kümeleri olan ya da değişken yoğunluklara sahip veri setlerinde** çok güçlüdür, çünkü şehir-köy benzetmemizde gösterdiğimiz gibi, "mutlak mesafe" yerine "göreceli yoğunluk"a bakarak, farklı yoğunluktaki bölgelerdeki normal noktaların yanlışlıkla outlier sayılmasını engeller. En büyük avantajı, **yerel (local) aykırılıkları başarıyla tespit edebilmesidir** — yani bir nokta, genel veri setine göre "normal" görünse bile, kendi yakın çevresine göre tuhaf duruyorsa LOF bunu yakalayabilir; bu, Z-Score ve IQR'ın **hiç yapamayacağı** bir şeydir çünkü onlar sadece tüm veri setine göre "global" bir bakış açısı sunar. Ama dezavantajları da var: **`n_neighbors` (kaç komşuya bakılacağı) parametresine karşı hassastır**, yanlış bir `k` seçimi sonuçları ciddi şekilde değiştirebilir; ayrıca **hesaplama maliyeti daha yüksektir**, çünkü her nokta için komşularla mesafe/yoğunluk hesaplaması gerekir, bu da Isolation Forest'a göre daha yavaş çalışmasına yol açar.
+
+---
+
+## Genel Bir Sentezle Bitirelim
+
+Bu dört yöntemi birlikte düşündüğümüzde, aslında **iki temel eksende** ayrıldıklarını görürsünüz: **istatistiksel/basit yöntemler (Z-Score, IQR)** hızlı ve yorumlanabilir ama tek boyutlu ve sınırlı bir bakış açısı sunarken, **model/yoğunluk tabanlı yöntemler (Isolation Forest, LOF)** çok boyutlu ilişkileri ve karmaşık veri yapılarını yakalayabilir ama parametre seçimine daha duyarlı ve hesaplama açısından daha maliyetlidirler. Pratikte, gerçek bir veri biliminde genellikle **önce basit yöntemlerle hızlı bir tarama yapılır (Z-Score/IQR)**, sonra şüpheli/karmaşık durumlar için **daha güçlü yöntemlere (Isolation Forest/LOF) geçilir** — tam da bizim şu ana kadarki öğrenme sıramızın izlediği mantık.
+
+Soru: Bunlardan başka şu anlık öğrenmem gereken var mı ? 
+
+Elcevap:Hocam bu dörtlü gerçekten **outlier tespitinde en çok kullanılan, temel araç seti** — sizin şu anki seviyeniz için **fazlasıyla yeterli**, hatta oldukça kapsamlı bir kapsama sahipsiniz. Kısa bir değerlendirme yapayım.
+
+## Elinizdeki Dörtlü Neden Yeterli?
+
+Bu dört yöntem, birbirini **tamamlayan, farklı yaklaşımları** kapsıyor:
+
+- **Z-score** → univariate, dağılım (normal) varsayımlı, hızlı
+- **IQR** → univariate, dağılımdan bağımsız, outlier'a dayanıklı
+- **Isolation Forest** → multivariate, dağılım varsayımı yok, büyük veri setinde hızlı, model tabanlı
+- **LOF** → multivariate, yerel yoğunluk tabanlı, "komşuluk" mantığıyla çalışan (KNN'e benzer)
+
+Bu dördü bilmeniz, **gerçek dünyadaki neredeyse her outlier tespiti senaryosunu** kapsıyor — sektörde de bu dört yöntem **en sık kullanılanlar**.
+
+## Şu An İçin Ekstra Öğrenmenize Gerek Olmayan, Ama İsimlerini Bilmenizde Fayda Olan Yöntemler
+
+Bunlar **"şimdi öğren"** değil, **"ileride karşınıza çıkarsa şaşırmayın"** kategorisinde:
+
+**1. One-Class SVM** — Isolation Forest'a benzer bir amaç güder (normal veriyi bir "sınır" içine hapsedip, dışında kalanı anomali sayar), ama SVM tabanlı, hesaplama maliyeti daha yüksek. Isolation Forest genelde tercih edildiği için, bunu **ayrıntılı bilmenize gerek yok**.
+
+**2. DBSCAN (Clustering tabanlı)** — Hatırlarsanız daha önce "commonly used statistical techniques" listesinde kısaca değinmiştim. Veriyi kümelere ayırıp, **hiçbir kümeye ait olmayan** noktaları outlier sayar. LOF ile benzer bir mantık taşır (yoğunluk tabanlı), şu an için **LOF bilmeniz yeterli**.
+
+**3. Autoencoders (Derin Öğrenme Tabanlı)** — Bir neural network, veriyi **sıkıştırıp geri açarak** (reconstruction), "geri açma hatası yüksek olan" noktaları anomali sayar. Bu **ileri seviye bir teknik**, GAN projenize benzer bir derin öğrenme altyapısı gerektiriyor — şimdilik gündeminizde olmasına gerek yok, ileride derin öğrenmeye geçtiğinizde karşınıza çıkabilir.
+
+## Benim Önerim
+
+Şu anki dörtlünüz **gerçekten sağlam ve yeterli** — bir mülakatta "outlier tespiti için hangi yöntemleri bilirsin" diye sorulsa, bu dört yöntemi **doğru şekilde açıklayabilmeniz** (ne zaman hangisini kullanacağınızı bilmeniz dahil, ki siz bunu zaten sorgulayarak öğrendiniz) **fazlasıyla güçlü bir cevap** olur. Ekstra yöntem öğrenmek yerine, şu an sahip olduğunuz bu dördünü **pratikte, gerçek veri setinde uygulayarak** pekiştirmeniz çok daha değerli olur.
+
+**Önerim:** Bu 4 yöntemi `realworld_medical_dirty.csv` ya da Cafe Sales veri setinizde **hepsini birlikte deneyip sonuçlarını karşılaştırmak** — böylece "aynı veri setinde bu 4 yöntem ne kadar farklı/benzer sonuç veriyor" sorusuna kendi gözünüzle şahit olursunuz, bu da öğrenmenizi çok daha kalıcı hale getirir. İster misiniz?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
