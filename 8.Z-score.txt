@@ -40,8 +40,7 @@ ML'de Varyans — Sizin İçin Çok Önemli Bir Bağlantı
 
 Hatırlarsanız GitHub'a "Bias and Variance" diye bir not atmıştınız — işte tam burada, istatistikteki bu "varyans" kavramı, ML'deki bias-variance tradeoff kavramıyla doğrudan bağlantılı:
 
-İstatistiksel varyans: Verinin ortalamadan ne kadar yayıldığı
-ML'deki model varyansı: Modelin, farklı eğitim veri setlerinde eğitildiğinde tahminlerinin ne kadar değiştiği/tutarsızlaştığı
+İstatistiksel varyans: Verinin ortalamadan ne kadar yayıldığı ML'deki model varyansı: Modelin, farklı eğitim veri setlerinde eğitildiğinde tahminlerinin ne kadar değiştiği/tutarsızlaştığı
 
 Yüksek model varyansı, modelin eğitim verisindeki küçük dalgalanmalara (noise'a) çok fazla duyarlı olması, yani overfitting anlamına gelir — model, eğitim verisindeki gürültüyü bile "öğrenmeye" çalışır, bu da farklı bir veri setinde tahminlerinin çok değişken/kararsız çıkmasına yol açar. Yani "varyans" kelimesi hem istatistikte (veri yayılımı) hem ML'de (model kararlılığı) kullanılıyor, ama ikisinin kökeninde aynı matematiksel mantık (ortalamadan/beklenen değerden sapmaların karesi) yatıyor.
 
