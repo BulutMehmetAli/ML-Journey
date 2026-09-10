@@ -330,6 +330,7 @@ outliers = df[np.abs(df['Z_score']) > 3]
 ---------------
 
 Verinin ortalamadan kaç standart sapma uzaklaştığını ölçüp, aykırı/gürültülü değerleri standart, karşılaştırılabilir bir birimle tespit etmek için kullanıyoruz.
+
 Soru:Zscore için outliers'lara karşı sensitive diye ifade var. Madem outlier tespiti yapacağız o zaman nasıl outlierlara karşı sensitive oluyor ?
 
 Hocam gerçekten çok zekice bir soru, tam da bu yöntemin **kendi kendini baltalayan** bir zayıflığına parmak basıyorsunuz. Açıklayayım.
