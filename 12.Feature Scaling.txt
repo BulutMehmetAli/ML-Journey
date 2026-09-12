@@ -1,0 +1,333 @@
+Feature Scaling(ölçeklendirmek):
+
+https://scikit-learn.org/stable/auto_examples/preprocessing/plot_scaling_importance.html
+
+A high-performing model means a system, framework, or machine learning algorithm that consistently reaches or beats its goals with great speed, accuracy, and efficiency
+
+In machine learning, the difference between a high-performing model and one that struggles often comes down to small details. One of the most overlooked steps in this process is feature scaling. While it may seem minor, how you scale data can affect model accuracy, training speed, and stability. However, not all scaling methods are equally effective in every scenario. Some techniques improve performance and ensure balance across features, while others may unintentionally distort the underlying relationships in the data.
+
+Metnin özü: Makine öğrenmesinde yüksek performanslı bir model ile zorlanan bir model arasındaki fark çoğu zaman küçük detaylara iner. Bu süreçte en çok göz ardı edilen (overlooked) adımlardan biri feature scaling'dir. Küçük gibi görünse de verini nasıl ölçeklediğin; model doğruluğunu, eğitim hızını ve kararlılığını etkiler. Ancak her ölçekleme yöntemi her senaryoda eşit derecede etkili değildir; bazıları performansı artırıp özellikler arası dengeyi sağlarken, bazıları farkında olmadan verideki gerçek ilişkileri bozabilir (distort). Şimdi konuyu açalım.
+
+Sezgiden başlayalım, çünkü mesele aslında çok basit bir adaletsizlik problemi. Hatırla, feature vector konusunda her örneği bir sayı vektörü olarak düşünmüştük ve her özellik (feature) bir eksendi. Şimdi şöyle bir veri düşün: bir kişinin "yaşı" (mesela 25-60 arası) ve "geliri" (mesela 30.000-200.000 arası) iki özellik olsun. Bu iki sayının ölçekleri taban tabana zıt; gelir on binlerce, yaş ise onlarca. Birçok makine öğrenmesi algoritması mesafe ya da büyüklük üzerinden çalıştığı için, gelir gibi büyük sayılı bir özellik yaşı tamamen ezer. Model "gelir çok önemli, yaş neredeyse önemsiz" sanır; oysa bu sadece sayıların büyüklüğünden kaynaklanan sahte bir baskınlıktır, gerçek önemleriyle ilgisi yoktur. İşte feature scaling, tüm özellikleri karşılaştırılabilir bir aralığa çekerek bu haksızlığı ortadan kaldırma işlemidir.
+
+Neden bu kadar önemli? Üç tür algoritma için kritik. Birincisi, **mesafe tabanlı algoritmalar** (KNN, K-Means, SVM): bunlar noktalar arası uzaklığı hesaplar, ve ölçeklenmemiş veride büyük sayılı özellik mesafeyi domine eder, sonuç çarpık çıkar. İkincisi, **gradient descent ile eğitilen modeller** (lineer/lojistik regresyon, sinir ağları): özellikler farklı ölçeklerdeyse optimizasyon yüzeyi çarpık olur, gradient inişi zikzak çizerek çok yavaş yakınsar; ölçeklersen eğitim hem hızlanır hem stabilleşir (metindeki "training speed and stability" tam bunu kastediyor). Üçüncüsü, **regularizasyon kullanan modeller**: ceza terimi tüm katsayılara eşit uygulandığı için, özellikler farklı ölçekteyse ceza adaletsiz dağılır. Buna karşılık ağaç tabanlı modeller (Decision Tree, Random Forest, XGBoost) ölçeklemeye duyarsızdır, çünkü onlar mesafeye değil, "şu eşikten büyük mü küçük mü" kararına bakar; bu yüzden ağaç modellerinde scaling çoğu zaman gereksizdir.
+
+Şimdi iki ana yöntemi açalım:
+
+**Normalization (Min-Max scaling):** veriyi belli bir aralığa, genelde [0, 1] arasına sıkıştırır. Formülü sezgisel: her değerden minimumu çıkarıp, aralığa (max - min) bölersin.
+
+x' = (x - x_min)/(x_max - x_min)
+
+En küçük değer 0, en büyük değer 1 olur, gerisi arada dağılır. Avantajı: her şey net bir aralıkta. Dezavantajı: aykırı değerlere (outlier) çok hassastır; tek bir uç değer (mesela 200.000'lik gelirler arasında bir 5.000.000) max'ı uçurur ve geri kalan tüm veriyi sıfıra yakın bir yere sıkıştırır, yani gerçek dağılımı bozar.
+
+**Standardization (Z-score scaling):** 
+
+veriyi ortalaması 0, standart sapması 1 olacak şekilde dönüştürür.
+
+x' = (x - mu) \ (sigma)
+
+Burada mu ortalama, sigma standart sapma. Bu, "bu değer ortalamadan kaç standart sapma uzakta?" sorusunu sorar. Belli bir aralığa sıkıştırmaz, ama veriyi ortak bir merkeze (0) ve ortak bir yayılıma (1) getirir. Avantajı: aykırı değerlere normalization'dan çok daha dayanıklıdır ve verinin yaklaşık normal dağıldığı durumlarda çok iyi çalışır. Çoğu algoritmada varsayılan tercih budur.
+
+Burada sana önemli bir uyarı: az önce "standardization" kelimesini yapısal hatalar konusunda "veriyi ortak biçime sokmak" anlamında görmüştük. İşte burada aynı kelime tamamen farklı, istatistiksel bir şey demek (z-score dönüşümü). Bu yüzden kelimeyi her gördüğünde bağlama bak; biçim standardizasyonu ayrı, istatistiksel standardization ayrı şeydir.
+
+Pratikte hayati bir kural daha: scaling'i her zaman önce eğitim verisi (train set) üzerinde "öğrenirsin" (yani min-max ya da ortalama-std değerlerini train'den hesaplarsın), sonra aynı değerlerle hem train'i hem test'i dönüştürürsün. Eğer scaling'i tüm veri üzerinde yaparsan, test setinin bilgisi eğitim sürecine sızar; buna data leakage (veri sızıntısı) denir ve modelin gerçekte olduğundan daha iyi görünmesine yol açan ciddi bir hatadır. scikit-learn'de bu yüzden `fit` sadece train'de, `transform` her ikisinde uygulanır.
+************************************************
+Bu kısmı tam olarakt anlamadım:
+
+Önce şu temel ilkeyi netleştirelim: test seti, modelin "gerçek dünyada hiç görmediği yeni veriyi" temsil eder. Modeli eğitirken test setinin var olmadığını, daha sonra ortaya çıkacağını hayal etmelisin. Bütün mesele şu cümlede gizli: test setine ait hiçbir bilgi, eğitim sürecine sızmamalı. Çünkü gerçek hayatta modelini kullanıma aldığında, gelecekteki veriyi önceden görüp ona göre ayar yapma şansın yok. Test seti işte o "gelecekteki veriyi" taklit ediyor, o yüzden ona dokunmadan saklı tutman gerekiyor.
+
+Şimdi scaling'in aslında ne yaptığını hatırla. Standardization yapıyorsan, formül :
+x' = (x - μ) \ (σ)
+
+Burada μ (ortalama) ve σ (standart sapma) gökten inmiyor; bunları veriden hesaplıyorsun. İşte kritik soru şu: bu ortalamayı ve standart sapmayı hangi veriden hesaplayacaksın? Cevap: sadece eğitim verisinden. Çünkü bu iki sayı, scaling'in "öğrendiği parametreler"dir ve öğrenme yalnızca train üzerinde olmalı.
+
+Sürecin doğru hâli şöyle işliyor. Önce eğitim verine bakıyorsun ve diyorsun ki "bu sütunun ortalaması 50, standart sapması 10". Bu iki sayıyı bir kenara not ediyorsun. Sonra eğitim verisini bu sayılarla dönüştürüyorsun (her değerden 50 çıkar, 10'a böl). Ardından test verisi geldiğinde, test'in kendi ortalamasını ve std'sini HESAPLAMIYORSUN; test'i de aynı 50 ve 10 ile dönüştürüyorsun. Yani test verisi, train'den öğrenilmiş kurala tabi tutuluyor, kendi kuralını dayatmıyor.
+
+Peki neden test'in kendi ortalamasını kullanmak hata? İki sebepten. Birincisi, eğer test'in ortalamasını hesaplıyorsan, bu demektir ki test setinin tamamına bakıp bir istatistik çıkardın; ama gerçek hayatta veriler tek tek, akış hâlinde gelir, sen "gelecekteki tüm verilerin ortalaması şu" diye önceden bilemezsin. Yani test setine topluca bakmak, gerçekçi olmayan bir önbilgi sağlar. İkincisi ve daha sinsisi: scaling'i train ve test'i birleştirip tüm veri üzerinde yaparsan, test setindeki değerler de o ortalama-std hesabına katkıda bulunur. Böylece eğitim verini ölçeklerken kullandığın μ ve σ, içinde test verisinin izini taşır. Model dolaylı yoldan test seti hakkında bir şeyler "öğrenmiş" olur. İşte buna data leakage (veri sızıntısı) denir: test setine ait bilginin, eğitim sürecine sızması.
+
+Sonucu şu olur: modelin test setinde olduğundan daha iyi bir skor alır, çünkü test verisini bir bakıma "önceden görmüş" gibi davranır. Sen "vay be modelim %95 başarılı" dersin, ama bu sahte bir başarıdır; gerçek, hiç görülmemiş veride model bu kadar iyi olmayacaktır. Bu yüzden data leakage tehlikelidir; seni yanıltır, modelini olduğundan iyi sanırsın ve canlıya aldığında hayal kırıklığı yaşarsın.
+scikit-learn'in fit / transform ayrımı tam da bunu temiz şekilde yönetmek için var. fit "parametreleri öğren" demek, yani ortalama ve std'yi hesapla. transform ise "öğrenilen parametrelerle veriyi dönüştür" demek. Doğru kullanım şöyle:
+
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+scaler.fit(X_train)          # ortalama ve std SADECE train'den öğrenilir
+X_train_scaled = scaler.transform(X_train)  # train dönüştürülür
+X_test_scaled  = scaler.transform(X_test)   # test, train'in parametreleriyle dönüştürülür
+
+Dikkat et: fit yalnızca X_train üzerinde çağrılıyor. X_test için asla fit (ya da fit_transform) çağırmıyorsun, sadece transform. Çünkü fit çağırsaydın, scaler test'in kendi ortalamasını öğrenir ve sızıntı olurdu. Pratikte ilk iki satırı scaler.fit_transform(X_train) diye tek satırda da yazabilirsin; o sadece fit ve transform'u arka arkaya yapan bir kısayoldur, mantık aynı.
+
+Tek paragrafta toparlayayım: Scaling parametreleri μ , σ ya da min-max) verinin kendisinden hesaplanır, ve bunları yalnızca eğitim verisinden hesaplaman gerekir çünkü test seti "gelecekteki görülmemiş veri"yi temsil eder ve ona ait hiçbir bilgi eğitime sızmamalıdır. Train'den öğrendiğin bu parametreleri sonra hem train'e hem test'e aynen uygularsın; test'in kendi istatistiklerini kullanırsan ya da scaling'i tüm veride yaparsan, test bilgisi eğitime sızar (data leakage) ve modelin sahte bir yüksek skor verir. scikit-learn'de bu ayrım fit (parametreyi sadece train'den öğren) ile transform (o parametreyle her iki seti dönüştür) arasındaki farkla sağlanır.
+
+"Ortalamayı 0, std'yi 1 yapacağız demiştik ama burada ortalamadan 50 çıkarıp 10'a bölmek bunu sağlıyor mu?" diye soruyorsun. Cevap: evet, tam olarak sağlıyor; sadece bu iki şey aynı sürecin iki ayrı tarafı.
+
+Peki neden std tam 1 oluyor? Çünkü ardından 10'a, yani standart sapmaya bölüyorsun. Standart sapma verinin yayılımının ölçüsüydü. Her şeyi kendi standart sapmasına bölersen, yeni yayılım birim haline gelir, yani std = 1 olur. Buna da scaling (ölçekleme) denir. İkisi birleşince (önce ortalamayı çıkar, sonra std'ye böl) sonuç tam olarak "ortalama 0, std 1" olur. Yani "50 çıkar 10'a böl" cümlesi, "ortalamayı 0 std'yi 1 yap" hedefinin uygulamadaki karşılığından başka bir şey değil.
+
+Şimdi senin asıl kafanı karıştıran kısma gelelim, çünkü haklı olduğun sinsi bir nokta var. Diyorsun ki: "madem amaç ortalamayı 0 std'yi 1 yapmak, o zaman test verisinin de ortalaması 0, std'si 1 olmalı değil mi? Ama biz test'e train'in 50 ve 10'unu uyguluyoruz, o zaman test'in ortalaması tam 0 çıkmayacak." Kesinlikle doğru, ve bu bir hata değil, bilinçli bir tercih. İşte kilit nokta burası.
+Test verisini train'in parametreleriyle dönüştürdüğünde, test'in ortalaması büyük ihtimalle tam 0 çıkmaz, biraz 0.2 ya da -0.3 gibi bir şey olur; std'si de tam 1 olmaz. Ve bu tam istediğimiz şeydir. Neden? Çünkü "ortalamayı 0 std'yi 1 yapmak" aslında nihai hedef değil; nihai hedef, test verisini train ile birebir aynı ölçeğe oturtmaktır.
+
+Eğer test'in kendi ortalamasını 0 yapsaydın, test'i train'den farklı bir kurala göre ölçeklemiş olurdun ve ikisi artık aynı "dilde" konuşmazdı. Modelin train üzerinde "ortalama 50 olan dünya"yı öğrendi; test'e de aynı dünyanın gözlüğünü takman lazım ki tutarlı olsun.
+Şöyle düşün: train'deki 60 değeri 1'e dönüştü. Eğer test'te de bir 60 değeri varsa, onun da 1'e dönüşmesini istersin, çünkü ikisi aynı gerçek değer. Ama test'in kendi ortalamasıyla ölçekleseydin, test'teki 60 belki 0.7'ye dönüşürdü ve aynı gerçek değer iki sette iki farklı sayıya giderdi; bu da modeli yanıltırdı. Train'in 50 ve 10'unu test'e dayatmanın sebebi tam bu: aynı gerçek değerin her iki sette aynı dönüşmüş değere gitmesini garantilemek.
+
+Tek paragrafta toparlayayım: "Ortalamadan 50 çıkar, 10'a böl" işlemi zaten "ortalamayı 0, std'yi 1 yap" demenin matematiksel uygulamasıdır, ikisi aynı şeydir; ortalamayı çıkarmak veriyi 0 merkezli yapar, std'ye bölmek yayılımı 1'e indirir. Ama bu "0 ve 1" hedefi yalnızca eğitim verisi için tam tutar; test verisine train'in parametrelerini uyguladığımız için test'in ortalaması tam 0 çıkmaz, ve bunu bilerek böyle yaparız çünkü asıl amaç test'i kendi içinde mükemmel ölçeklemek değil, train ile birebir aynı ölçeğe oturtup aynı gerçek değerin iki sette aynı sayıya dönüşmesini sağlamaktır.
+
+Soru:Peki ortalamayı 0, std sapmayı da 1 yapmamızın ne gibi artısı var ? 
+
+Birincisi ve en önemlisi: **özellikleri ortak bir ölçeğe getirmek, yani adaleti sağlamak.** Hatırla, en baştaki "yaş (25-60) ve gelir (30.000-200.000)" örneği. Bu ikisi ham hâlde kıyaslanamaz, çünkü gelir sayıca devasa. Ama her ikisini de ortalama 0, std 1 yaparsan, ikisi de aynı "dile" çevrilmiş olur: artık her özellik "ortalamadan kaç standart sapma uzaktayım" cinsinden konuşur. Gelirdeki +2 ile yaştaki +2 artık aynı anlama gelir (ikisi de "kendi ortalamasının 2 std üstünde"). Böylece büyük sayılı özellik küçüğü ezemez, model her özelliğe hak ettiği ağırlığı verir.
+
+İkincisi: **gradient descent çok daha hızlı ve düzgün yakınsar.** Bunu görselle düşün. Özellikler farklı ölçeklerdeyse, optimizasyonun "iniş yüzeyi" uzun ve dar bir vadi gibi olur, çukurun şekli bozuktur. Gradient descent bu çarpık vadide zikzak çizerek, sağa sola sekerek yavaşça ilerler. Ama her özelliği 0 merkezli ve birim ölçekli yaparsan, vadi düzgün, simetrik bir kâse şekline döner; iniş doğrudan, dümdüz merkeze gider. Sonuç: model çok daha az adımda, çok daha hızlı eğitilir ve daha kararlı (stable) davranır. Metindeki "training speed and stability" tam buydu.
+
+Üçüncüsü: **0 merkezli olmak optimizasyon ve bazı aktivasyonlar için matematiksel olarak avantajlı.** Veriler 0 etrafında simetrik dağıldığında, sinir ağlarındaki ağırlık güncellemeleri daha dengeli olur; hep aynı yöne itilme (sürekli pozitif ya da sürekli negatif girdiden kaynaklanan kayma) sorunu azalır. Ayrıca ağırlıkların başlangıç değerleri de genelde 0 etrafında ayarlandığı için, girdinin de 0 merkezli olması ikisinin uyumlu çalışmasını sağlar.
+
+Dördüncüsü: **regularizasyon adil çalışır.** Ridge/Lasso gibi yöntemler her katsayıya eşit ceza uygular. Özellikler farklı ölçekteyse, küçük ölçekli bir özelliğin katsayısı zorunlu olarak büyük olur (küçük sayıyı telafi etmek için), ve ceza onu haksız yere fazla cezalandırır. Hepsini aynı ölçeğe getirince ceza tüm özelliklere adil dağılır.
+
+Beşincisi, pratik bir fayda: **karşılaştırılabilirlik ve yorumlanabilirlik.** Tüm özellikler aynı ölçekteyse, modelin öğrendiği katsayıların büyüklüğüne bakıp "hangi özellik daha etkili" diye kabaca kıyaslayabilirsin. Ham ölçekte bu kıyas yanıltıcı olur çünkü katsayının büyüklüğü özelliğin önemini değil, ölçeğini yansıtır.
+
+Tek paragrafta toparlayayım: Ortalamayı 0, std'yi 1 yapmanın temel artısı, farklı ölçeklerdeki özellikleri ortak ve adil bir dile çevirmektir; böylece büyük sayılı özellikler küçükleri ezmez, gradient descent çarpık bir vadi yerine düzgün bir kâsede hızlı ve kararlı şekilde yakınsar, 0 merkezli veri sinir ağı optimizasyonunu dengeler, regularizasyon cezası tüm özelliklere adil dağılır ve katsayılar birbiriyle kıyaslanabilir hale gelir. Özetle bu dönüşüm, modelin hem daha hızlı eğitilmesini hem de her özelliği hakkıyla değerlendirmesini sağlar.
+
+************************************************
+
+Tek paragrafta toparlayayım: Feature scaling, farklı ölçeklerdeki özellikleri karşılaştırılabilir bir aralığa çekerek büyük sayılı özelliklerin küçükleri ezmesini engelleyen bir ön işleme adımıdır; mesafe tabanlı, gradient descent ve regularizasyon kullanan modeller için doğruluğu, eğitim hızını ve kararlılığı doğrudan etkilerken ağaç tabanlı modellerde genelde gereksizdir. İki ana yöntemden normalization veriyi [0,1] aralığına sıkıştırır (aykırı değerlere hassas), standardization ise ortalamayı 0 standart sapmayı 1 yapar (aykırı değerlere daha dayanıklı, en yaygın tercih). En kritik uygulama kuralı, ölçekleme parametrelerini yalnızca eğitim verisinden hesaplayıp test verisine de aynısını uygulamak, yani veri sızıntısından kaçınmaktır.
+
+What is Feature Scaling?
+Feature scaling is a data preprocessing technique used in machine learning to normalize or standardize the range of independent variables (features).
+
+Since features in a dataset may have very different units and scales (e.g., age in years vs. income in dollars), models that rely on distance or gradient calculations can be biased toward features with larger numeric ranges. Feature scaling ensures that all features contribute proportionally to the model.
+
+Why Feature Scaling Matters
+
+Improves model performance: Algorithms like gradient descent converge faster when features are normalized, since they don’t have to “zig-zag” across uneven scales
+
+Interpretability: Standardized features (mean 0, variance 1) make it easier to compare the relative importance of coefficients in linear models
+
+Better Accuracy: Distance-based models such as k-nearest neighbors (KNN), k-means, and support vector machines (SVMs) perform more reliably with scaled features
+
+Faster Convergence: Neural networks and gradient descent optimizers reach optimal solutions more quickly when features are scaled.
+
+1. Normalization
+Normalization is one of the simplest and most widely used feature scaling techniques. It rescales feature values to a fixed range, typically [0, 1], though it can be adjusted to any custom range [a, b].
+
+x' = (x - x_min)/(x_max - x_min)
+
+
+2. Standardization
+Standardization is a widely used scaling technique that transforms features so that they have a mean of 0 and a standard deviation of 1. Unlike min-max scaling, it does not bound values(değerleri sınırlamaz) within a fixed range; instead, it centers features and scales them to unit variance.
+
+x' = (x - mu) \ (sigma)
+
+3. Robust Scaling
+Robust Scaling is a feature scaling technique that uses the median and the interquartile range (IQR) instead of the mean and standard deviation. This makes it robust to outliers, as extreme values have less influence on the scaling process compared to min-max scaling or standardization.
+
+Robust scaling, aykırı değerlere (outlier) dayanıklı olacak şekilde tasarlanmış bir ölçekleme yöntemidir. "Robust" zaten "sağlam, dayanıklı" demek; ismi de buradan geliyor.
+Farkı şurada: Standardization ortalama ve standart sapma kullanıyordu, ama bu ikisi aykırı değerlerden çok etkilenir; tek bir uç değer ortalamayı ve std'yi şişirir. Robust scaling bunun yerine medyan ve IQR (çeyrekler arası açıklık, yani Q3 − Q1) kullanır. Formülü:
+
+x′=(x−medyan)​ / (Q3−Q1)
+
+Medyan ve IQR aykırı değerlere karşı dirençlidir, çünkü medyan ortadaki değerdir (uç değerler onu oynatmaz) ve IQR sadece ortadaki %50'lik dilime bakar, uçları görmezden gelir. Bu yüzden verinde aşırı uç değerler varsa, standardization'ın bozulduğu yerde robust scaling sağlam kalır.
+
+Tek cümlede: Robust scaling, ortalama/std yerine aykırı değerlerden etkilenmeyen medyan ve IQR kullanan, dolayısıyla outlier'lı verilerde standardization'dan daha güvenilir çalışan bir ölçekleme yöntemidir.
+
+Soru:Tek bir uç değer ortalamayı ve std'yi şişirir. Hocam hani std'yi 1'e sabitliyorduk ?
+
+Çok keskin bir yakalama, ama burada iki ayrı aşamayı birbirine karıştırıyorsun; ayırınca çelişki tamamen kalkıyor.
+x' = (x - μ) \ (σ)
+
+Şöyle düşün, iki ayrı an var. **Birinci an: parametreyi hesaplama.** Burada ham veriye bakıp o sütunun ortalamasını (μ) ve standart sapmasını (σ) ölçüyorsun. İşte "uç değer std'yi şişirir" dediğim yer tam burası; ham verinin std'sini hesaplarken, içindeki bir aykırı değer bu σ sayısını olduğundan büyük çıkarır. Yani şişen şey, ölçtüğün ham std, yani böleceğin sayı.
+
+**İkinci an: dönüştürme.** Sonra her değeri (x - μ) \ (σ)
+ile dönüştürüyorsun. İşte "std 1 olur" dediğimiz şey, bu dönüşümden SONRA çıkan yeni verinin std'sidir. Dönüştürülmüş verinin std'si tanım gereği 1 olur, çünkü veriyi kendi std'sine böldün.
+
+Yani aynı kelime ("std") iki farklı şeye işaret ediyor: biri dönüşümden önceki ham std (şişen, bölen olarak kullanılan), diğeri dönüşümden sonraki std (her zaman 1 olan). Çelişki yok; "std 1 olur" kuralı her zaman doğru, dönüşüm sonrası için.
+
+Peki o zaman outlier'ın zararı nerede, madem sonuçta std yine 1 oluyor? Zarar şurada: aykırı değer ham std'yi şişirdiği için, böldüğün sayı gereğinden büyük olur. Bu büyük sayıya bölünce, normal (aykırı olmayan) değerlerin hepsi 0'a çok yakın, sıkışık bir bölgeye ezilir. Yani veri teknik olarak "std 1" olur ama gerçek bilgi taşıyan normal değerler birbirine yapışır, ayırt edilemez hale gelir; tek bir uç değer ise uzakta yapayalnız durur. İşte robust scaling bu yüzden std yerine IQR kullanıyor: bölen olarak şişmeyen bir sayı seçip normal değerlerin ezilmesini engelliyor.
+
+4. Max-Abs Scaling 
+Max-Abs Scaling, her değeri o sütundaki en büyük mutlak değere bölerek veriyi [-1, 1] aralığına çeker. Formülü çok basit:
+
+x(scaled) = x/|x|_{max}
+
+Yani sütundaki mutlakça en büyük değeri bulursun (işareti önemsiz, büyüklüğü önemli) ve her şeyi ona bölersin. Eğer veri zaten hep pozitifse sonuç [0, 1] arasında, hem pozitif hem negatif varsa [-1, 1] arasında çıkar. Sezgisi şu: en uç değeri 1 (ya da -1) kabul edip diğerlerini ona göre oranlıyorsun.
+
+Bu yöntemin en önemli özelliği: **sıfırı korur ve veriyi merkezlemez.** Yani ortalamayı kaydırmaz, sadece ölçeği küçültür. Bu da onu seyrek verilerde (sparse data) çok değerli kılar. Seyrek veri, çoğu değeri 0 olan veridir; mesela metin işlemede TF-IDF ya da bag-of-words matrislerinde hücrelerin %99'u sıfırdır. Standardization bu sıfırları bozar (ortalamayı çıkarınca sıfırlar sıfır olmaktan çıkar, matris dolu hale gelir ve bellek patlar), ama Max-Abs sadece böldüğü için sıfırlar sıfır kalır, seyreklik korunur.
+
+Dezavantajı: tıpkı Min-Max gibi tek bir değere (buradaki en büyük mutlak değere) dayandığı için aykırı değerlere hassastır. Tek bir uç değer varsa, bölen büyür ve geri kalan her şey sıfıra yakın bir bölgeye sıkışır.
+
+Şimdi dört yöntemi karşılaştıralım. Hepsinin ortak amacı aynıydı (özellikleri ortak ölçeğe getirmek) ama farklı senaryolar için farklıları parlıyor.
+
+Standardization (Z-score) veriyi ortalaması 0, standart sapması 1 olacak şekilde dönüştürür. Aykırı değerlere hassastır, çünkü ortalama ve standart sapma uç değerlerden etkilenir. En uygun olduğu durum, verinin yaklaşık normal dağıldığı hâllerdir ve genel olarak varsayılan ilk tercih olarak düşünebilirsin.
+
+Min-Max (Normalization) veriyi belli bir aralığa, genelde [0, 1] arasına sıkıştırır. Aykırı değerlere çok hassastır, çünkü tek bir uç değer minimum-maksimum aralığını bozup geri kalan veriyi dar bir bölgeye sıkıştırır. En uygun olduğu durum, verinin belirli bir aralıkta olmasının gerektiği ve veride belirgin aykırı değerlerin bulunmadığı hâllerdir.
+
+Robust Scaling, ortalama ve standart sapma yerine medyan ve IQR (çeyrekler arası açıklık) kullanır. Bu sayede aykırı değerlere dayanıklıdır. En uygun olduğu durum, veride belirgin aykırı değerlerin bulunduğu hâllerdir; diğer yöntemlerin bozulduğu yerde sağlam kalır.
+
+Max-Abs Scaling, her değeri sütundaki en büyük mutlak değere bölerek veriyi [-1, 1] aralığına çeker. Aykırı değerlere hassastır, çünkü en büyük mutlak değere dayanır. En uygun olduğu durum, seyrek (sparse) verilerde ve sıfırın korunmasının önemli olduğu hâllerdir; çünkü veriyi merkezlemez, sıfırları sıfır olarak bırakır.
+
+Karar verirken kendine sırayla şu soruları sor. Önce: **verimde belirgin aykırı değerler var mı?** Varsa robust scaling'e yönel, çünkü diğer üçü outlier'dan zarar görür. İkincisi: **verim seyrek mi (çoğu değer sıfır mı)?** Öyleyse Max-Abs en mantıklısı, çünkü sıfırları ve seyrekliği korur. Üçüncüsü: **belirli bir aralığa (mesela [0,1]) sıkışması şart mı?** Mesela bazı sinir ağı girdilerinde ya da görüntü piksellerinde bu istenir; o zaman Min-Max. Bunların hiçbiri özel olarak geçerli değilse, yani veri makulse ve aşırı uç değer yoksa, varsayılan olarak **standardization** kullan; pratikte en sık tercih edilen ve çoğu algoritmayla en uyumlu olan budur.
+
+Bir de hatırlatma: ağaç tabanlı modellerde (Decision Tree, Random Forest, XGBoost) bunların hiçbirine genelde gerek yok, çünkü onlar eşik kararıyla çalışır, ölçekten etkilenmez. Scaling esas olarak mesafe tabanlı (KNN, SVM, K-Means) ve gradient descent ile eğitilen (regresyon, sinir ağları) modeller için kritik.
+
+Tek paragrafta toparlayayım: Max-Abs scaling veriyi en büyük mutlak değerine bölerek [-1,1] aralığına çeker, merkezlemediği ve sıfırı koruduğu için özellikle seyrek veride (TF-IDF gibi) idealdir ama aykırı değerlere hassastır. Dört yöntem arasında seçim yaparken sırayla şunu sor: aykırı değer varsa robust scaling, seyrek veri varsa max-abs, belirli bir aralık şartsa min-max, hiçbiri özel değilse varsayılan olarak standardization; ve ağaç tabanlı modellerde zaten çoğu zaman hiçbirine gerek yoktur.
+
+Limitations of Feature Scaling
+Not always necessary: Tree-based models are largely insensitive to feature scaling, so applying normalization or standardization in these cases adds computation without improving results
+Loss of interpretability: Scaling can make raw feature values harder to interpret, which can complicate communication with non-technical stakeholders
+Method-Dependent: Different scaling techniques can yield different results depending on the algorithm and dataset, and an ill-suited choice can degrade performance
+
+Conclusion
+Feature scaling is a critical preprocessing step that can improve the performance of machine learning models, but its effectiveness depends on the algorithm and the data. Models that rely on distances or gradient descent often require scaling, while tree-based methods usually do not benefit from it. Always fit your scaler on the training data only (or within each fold for cross-validation and time series) and apply it to validation and test sets to avoid data leakage. When applied carefully and tested across different approaches, feature scaling can lead to faster convergence, greater stability, and more reliable results.
+
+Normalizasyon, en genel anlamıyla, farklı ölçeklerdeki verileri ortak ve karşılaştırılabilir bir aralığa getirme işlemidir. Aslında bu konuyu feature scaling'i konuşurken zaten işledik; "normalization" çoğu zaman tam olarak o demek. Ama kelimenin bir tuzağı var, onu netleştireyim çünkü bağlama göre iki farklı şeyi kastediyor
+
+Other site:
+
+Well-designed Feature engineering is the process of creating, transforming or selecting important features from raw data to improve model performance. These features help the model capture useful patterns and relationships in the data.
+Dar ve en yaygın anlamıyla normalizasyon, Min-Max scaling demektir; yani veriyi [0, 1] aralığına sıkıştırma.
+
+x' = (x - x_min)/(x_max - x_min)
+
+Bu anlamda "normalize etmek" = veriyi 0 ile 1 arasına çekmek. Senin son birkaç gündür uğraştığın MinMaxScaler tam olarak bu normalizasyonu yapıyor.
+
+Ama geniş anlamıyla normalizasyon, herhangi bir ölçekleme yöntemini kapatan bir şemsiye terim olarak da kullanılır; bu durumda standardization (z-score), robust scaling, max-abs hepsi birer "normalizasyon türü" sayılır. Yani bazı kaynaklar "normalization" deyince sadece min-max'i, bazıları ise tüm ölçekleme ailesini kasteder. Bu yüzden bir metinde "normalization" görünce, hangisini kastettiğini bağlamdan çıkarman gerekir; eğer [0,1]'den bahsediyorsa dar anlam, genel olarak "ölçeği düzeltmek"ten bahsediyorsa geniş anlam.
+
+Temelde amaç hep aynı: daha önce konuştuğumuz gibi, büyük sayılı bir özelliğin (gelir gibi) küçük sayılı bir özelliği (yaş gibi) ezmesini engellemek, modelin her özelliğe adil davranmasını sağlamak. Normalizasyon bu adaleti kurmanın yoludur.
+Küçük bir uyarı daha: istatistik ve olasılıkta "normalizasyon" bambaşka bir anlama da gelebilir, mesela bir dağılımın toplamını 1 yapma ya da bir vektörü birim uzunluğa getirme gibi. Ama senin şu anki makine öğrenmesi/veri ön işleme bağlamında normalizasyon, neredeyse her zaman yukarıda anlattığım ölçekleme anlamındadır.
+
+Tek paragrafta: Normalizasyon, farklı ölçeklerdeki özellikleri ortak bir aralığa getirip karşılaştırılabilir kılma işlemidir; dar anlamıyla genellikle veriyi [0,1] aralığına çeken Min-Max scaling'i, geniş anlamıyla ise tüm ölçekleme yöntemlerini kapsayan bir şemsiye terimi ifade eder. Amacı, büyük değerli özelliklerin küçükleri ezmesini önleyip modelin her özelliği hakkıyla değerlendirmesini sağlamaktır.
+
+Vector normalization, bir vektörü alıp yönünü koruyarak uzunluğunu 1 yapmaktır (buna "birim vektör" denir). Yani vektörün gösterdiği yön aynı kalır, sadece boyu standartlaştırılır. Hatırla, feature vector konusunda her örneği uzayda bir nokta/vektör olarak düşünmüştük; vector normalization o vektörün uzunluğunu sabitler. Bu, az önce konuştuğumuz feature scaling'den farklı bir şey: feature scaling sütun bazında çalışır (her özelliği ayrı ayrı ölçekler), vector normalization ise satır bazında çalışır (her örneğin kendi vektörünü bir bütün olarak birim uzunluğa getirir).
+
+Şimdi asıl sorun: öğrenmeli misin? Şu anki ders ve veri ön işleme bağlamında öncelikli değil, MinMaxScaler/StandardScaler kadar sık kullanmayacaksın, o yüzden şimdi durup derinine inmene gerek yok. Ama senin yol haritanda lazım olacağı kesin bir yer var: NLP ve embedding'ler. Sentence-transformers, BERTurk gibi modellerle çalışırken metinler vektörlere (embedding) dönüşür ve bunların benzerliğini "cosine similarity" ile ölçersin. Cosine similarity'nin altında tam olarak vector normalization mantığı yatar; iki vektörün yönlerinin ne kadar benzeştiğine bakar, uzunluklarını önemsemez. TEKNOFEST'teki semantik benzerlik probleminde de büyük ihtimalle bununla karşılaşacaksın.
+
+Normalization scales each data sample so that its vector length (Euclidean norm) becomes 1. It focuses on the direction of data points rather than their magnitude, making it useful in tasks like text classification and clustering.
+
+X scaled= Xi / ∥X∥
+​
+Where:
+
+Xi is each individual value.
+∥X∥represents the Euclidean norm (or length) of the vector 
+Normalizes each sample to unit length.
+Useful for direction-based similarity metrics.
+
+
+It contributes to model building in the following ways:
+
+Well-designed features help the model to learn complex patterns more effectively.
+Removing noise and irrelevant information improves model prediction accuracy.
+Focusing on meaningful features helps the model to generalize better and reduces overfitting.
+Clear and informative features make the model easier to understand and interpret.
+
+Absolute Maximum Scaling
+Absolute Maximum Scaling is a feature scaling method where each value is divided by the maximum absolute value of that feature. This transformation rescales the data so that values fall within the range of −1 to 1.
+
+Sensitive to Outliers: Extreme values can affect the maximum value and reduce scaling quality.
+Best for Clean Data: Works better when the dataset does not contain strong outliers.
+
+Teknik özet:
+
+Feature scaling, farklı ölçeklerdeki özellikleri ortak ve karşılaştırılabilir bir aralığa getiren bir ön işleme adımıdır. Temel gerekçesi şu: bir veride yaş (25-60) ve gelir (30.000-200.000) gibi ölçekleri taban tabana zıt özellikler olduğunda, büyük sayılı özellik küçük olanı ezer ve model sayının büyüklüğünü önemle karıştırır. Scaling bu sahte baskınlığı ortadan kaldırıp her özelliğe adil davranılmasını sağlar.
+
+Bu işlem her model için kritik değildir. Mesafe tabanlı modeller (KNN, K-Means, SVM), gradient descent ile eğitilen modeller (lineer/lojistik regresyon, sinir ağları) ve regularizasyon kullanan modeller scaling'e duyarlıdır; ölçekleme bunlarda doğruluğu, eğitim hızını ve kararlılığı doğrudan etkiler. Buna karşılık ağaç tabanlı modeller (Decision Tree, Random Forest, XGBoost) eşik kararıyla çalıştığı için ölçeklemeye duyarsızdır ve genelde scaling gerektirmez.
+
+Dört ana yöntem var. Standardization (z-score) veriyi ortalaması 0, standart sapması 1 olacak şekilde dönüştürür ; aykırı değerlere hassastır, veri yaklaşık normal dağıldığında idealdir ve genel varsayılan tercihtir. Min-Max (normalization) veriyi [0,1] aralığına sıkıştırır ; aykırı değerlere çok hassastır, belirli bir aralık gerektiğinde ve outlier yokken kullanılır. Robust scaling ortalama/std yerine medyan ve IQR kullanır; aykırı değerlere dayanıklıdır, verinde belirgin outlier varsa tercih edilir. Max-Abs scaling her değeri en büyük mutlak değere bölerek [-1,1] aralığına çeker; merkezlemediği ve sıfırı koruduğu için seyrek (sparse) veride, mesela TF-IDF gibi, idealdir.
+
+En kritik uygulama kuralı, data leakage'den kaçınmaktır. Scaling parametreleri (ortalama-std ya da min-max) yalnızca eğitim verisinden öğrenilir, sonra hem train'e hem test'e aynı parametrelerle uygulanır. scikit-learn'de bu, `fit` (parametreleri sadece train'den öğren) ile `transform` (öğrenilen parametrelerle her iki seti dönüştür) ayrımıyla sağlanır; test setine asla `fit` uygulanmaz, yoksa test bilgisi eğitime sızar ve model sahte bir yüksek skor verir. Her scaler öğrendiklerini kendi özniteliklerinde saklar: StandardScaler `mean_` ve `scale_`, MinMaxScaler `data_min_` ve `data_max_` tutar.
+
+Son olarak iki pratik gerçeği unutma: dönüştürülmüş verinin ortalaması teknik olarak 0 yerine 6e-17 gibi sıfıra çok yakın bir değer çıkar, bu floating point yuvarlama artığıdır, hata değildir. Ve dönüşümde `nan` görürsen, o sütunda ya eksik (missing) değer vardır ya da standart sapması sıfırdır (tüm değerler aynı, sıfıra bölme oluşur); bu durumda kaynağı `isnull().sum()` ve `std()` ile bulup eksik değeri doldurmak/silmek ya da sabit sütunu atmak gerekir.
+
+model.fit():
+
+`model.fit()`, bir modelin eğitim verisinden öğrendiği, yani asıl "eğitim" aşamasıdır. Scaler'ın `fit`'ini zaten biliyorsun; orada sadece ortalama/std gibi sabit istatistikler hesaplanıyordu, bir optimizasyon yoktu. Model'in `fit`'i ise bambaşka ve çok daha derin bir iş yapıyor. Sezgiyle kuralım.
+
+`model.fit(X, y)` çağırdığında modele şunu dersin: "İşte girdiler (X) ve bunlara karşılık gelen doğru cevaplar (y); aradaki ilişkiyi öğren." Dikkat et, scaler'ın `fit`'i tek argüman (sadece X) alıyordu çünkü sadece veriyi ölçüyordu; model'in `fit`'i ise iki argüman (X ve y) alır, çünkü girdiyle çıktı arasındaki bağı kurması gerekir. İşte bu bağı kurma işine "öğrenme" diyoruz.
+
+Peki içeride ne oluyor? Lineer regresyonu örnek alalım, $y = w_1x_1 + w_2x_2 + ... + b$. Buradaki $w$ ağırlıkları ve $b$ bias, modelin parametreleridir ve `fit` başlamadan önce bunlar bilinmez (genelde rastgele ya da sıfır başlar). `fit` şu döngüyü çalıştırır: mevcut ağırlıklarla bir tahmin yapar, bu tahminin gerçek cevaptan (y) ne kadar saptığını bir hata fonksiyonuyla (loss) ölçer, sonra ağırlıkları bu hatayı azaltacak yönde azıcık günceller. Sonra tekrar tahmin, tekrar hata ölçümü, tekrar güncelleme... Bunu hata kabul edilebilir derecede küçülene kadar binlerce kez tekrarlar. İşte daha önce "parameter optimization" cümlesinde konuştuğumuz şey buydu; ağırlıkların deneme-iyileştirme döngüsüyle en iyiye ayarlanması.
+
+Bu döngünün motoru da feature scaling'de değindiğimiz gradient descent'tir. Gradient, hatanın hangi yöne doğru azaldığını gösteren eğimdir; model her adımda "hatayı en hızlı düşüren yön bu" der ve ağırlıkları o yöne çeker. Tam da bu yüzden feature scaling önemliydi: özellikler aynı ölçekteyse bu iniş düzgün ve hızlı olur, değilse zikzak çizip yavaşlar. Görüyorsun, konular birbirine bağlanıyor.
+
+Önemli bir nokta: `fit` her model türünde "öğrenir" ama ne öğrendiği modele göre değişir. Lineer/lojistik regresyon ve sinir ağları ağırlıkları optimize eder (yukarıdaki döngü). Karar ağacı (Decision Tree) ise ağırlık optimize etmez; bunun yerine veriyi en iyi bölen kuralları (hangi özellikten, hangi eşikten bölmeli) öğrenir. KNN ise neredeyse hiçbir şey "optimize etmez", sadece eğitim verisini hafızaya alır ve asıl işi tahmin anına bırakır. Yani `fit`'in ortak anlamı "eğitim verisinden öğren"dir ama her algoritma bunu kendi yöntemiyle yapar.
+
+`fit`'ten sonra model öğrendiklerini saklar, tıpkı scaler gibi. Mesela lineer regresyonda `model.coef_` öğrenilen ağırlıkları, `model.intercept_` ise bias'ı verir. Sondaki alt çizgi yine "bunlar fit sırasında veriden öğrenildi" demek; fit çağırmadan bunlara erişemezsin.
+
+Son olarak `fit`'in kardeşi `predict`'i de bil, çünkü ikisi birlikte çalışır. `fit(X, y)` modeli eğitir (öğrenme aşaması), `predict(X_new)` ise öğrendiği parametrelerle yeni veriye tahmin yapar (kullanım aşaması). Scaler'da bu ikili `fit`/`transform` idi; modelde `fit`/`predict` olur. Ve aynı altın kural burada da geçerli: `fit`'i sadece eğitim verisinde yaparsın, test verisine yalnızca `predict` dersin; yoksa model test cevaplarını görüp ezberler ve data leakage oluşur.
+
+Tek paragrafta toparlayayım: `model.fit(X, y)`, modelin girdilerle doğru cevaplar arasındaki ilişkiyi öğrendiği eğitim aşamasıdır; çoğu modelde bu, ağırlıkları (parametreleri) tahmin hatasını en aza indirecek şekilde gradient descent ile iteratif olarak optimize etmek demektir, ama karar ağacında bölme kuralları, KNN'de veriyi ezberleme gibi modele göre farklı biçimler alır. Scaler'ın `fit`'i sadece sabit istatistik hesaplarken (optimizasyon yok), model'in `fit`'i gerçek "öğrenme/optimizasyon" yapar; öğrendiklerini `coef_`, `intercept_` gibi özniteliklerde saklar ve bunları `predict` aşamasında yeni veriye uygular.
+
+Soru: Hocam peki modelde fit_transform() kullanabilir miyiz ?
+
+Hayır, kullanamazsın, ve bunu sorman çok yerinde çünkü `fit` her ikisinde de geçtiği için kafa karıştırıcı. Mantığını netleştireyim.
+
+`fit_transform()` sadece **transformer** denen nesnelerde vardır; yani scaler'lar (StandardScaler, MinMaxScaler), encoder'lar, PCA gibi veriyi dönüştüren araçlar. Bunların görevi veriyi başka bir biçime sokmaktır, o yüzden `transform` metotları vardır ve `fit_transform` da "önce öğren, sonra dönüştür" kısayoludur.
+
+**Model** (tahmin yapan nesneler: LinearRegression, RandomForest, KNN vb.) ise `transform` yapmaz; onun işi veriyi dönüştürmek değil, tahmin etmektir. Bu yüzden modelde `transform` metodu yoktur, dolayısıyla `fit_transform` da yoktur. Modelin ikilisi `fit` ve `predict`'tir. Yani:
+
+Transformer'da: `fit` (öğren) + `transform` (dönüştür) → kısayolu `fit_transform`
+Model'de: `fit` (öğren) + `predict` (tahmin et) → **kısayolu yoktur**
+
+Model için "fit_predict" diye bir şey arıyorsan, çoğu modelde yoktur; önce `model.fit(X_train, y_train)` ile eğitir, ayrı bir satırda `model.predict(X_test)` ile tahmin yaparsın. Bunları birleştiren bir kısayol bilinçli olarak yok, çünkü neredeyse her zaman farklı verilerle çalışırsın (train'de fit, test'te predict); birleştirmek data leakage'e davetiye olurdu.
+
+Küçük bir istisna notu: bazı kümeleme (clustering) algoritmalarında, mesela KMeans'te `fit_predict` vardır, çünkü orada etiketsiz veriyi hem öğrenip hem aynı veriye küme ataması yaparsın. Ama bu özel bir durum; standart denetimli öğrenmede (senin şu an çalıştığın yerde) modelde `fit_transform` ya da `fit_predict` kullanmazsın, `fit` ve `predict`'i ayrı kullanırsın.
+
+Soru:Hocam bana bir de hangisini nerede kullanmalıyım , bunu da açar mısın ? 
+
+Tabii, hepsini bir araya koyup ne zaman hangisini kullanacağını netleştireyim. Önce nesne tipine göre ayıralım, çünkü asıl ayrım orada.
+
+Transformer'larda (scaler, encoder, PCA gibi veriyi dönüştürenler) üç metot kullanırsın: `fit`, `transform`, `fit_transform`. Kuralı şu: eğitim verisine `fit_transform` uygularsın (hem parametreleri öğrenir hem dönüştürür), test verisine ise sadece `transform` (eğitimde öğrenilen parametrelerle dönüştürür, yeniden öğrenmez). `fit`'i tek başına nadiren kullanırsın; genelde fit ve transform'u ayrı yazmak istediğinde ya da öğrenilen parametreleri (`mean_`, `scale_`) dönüştürmeden önce incelemek istediğinde işine yarar.
+
+Model'lerde (tahmin yapanlar: regresyon, ağaç, KNN vb.) iki metot kullanırsın: `fit` ve `predict`. Eğitim verisine `fit(X_train, y_train)` uygularsın (modeli eğitir), test ya da yeni veriye `predict(X_test)` uygularsın (tahmin yapar). Modelde `transform` ya da `fit_transform` yoktur, bunu az önce konuştuk.
+
+Tipik bir akışta sıralama şöyle olur. Önce veriyi train ve test olarak ayırırsın. Sonra scaler'ı kurar, `scaler.fit_transform(X_train)` ile train'i ölçekler, `scaler.transform(X_test)` ile test'i aynı parametrelerle ölçekersin. Ardından modeli kurar, `model.fit(X_train_scaled, y_train)` ile eğitir, `model.predict(X_test_scaled)` ile tahmin yaparsın. Kodla:
+
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+# 1. Ayır
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# 2. Ölçekle (transformer: train'e fit_transform, test'e transform)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled  = scaler.transform(X_test)
+
+# 3. Modeli eğit ve tahmin et (model: fit + predict)
+model = LogisticRegression()
+model.fit(X_train_scaled, y_train)
+predictions = model.predict(X_test_scaled)
+```
+
+Buradaki altın kural, hepsini birbirine bağlayan tek mantık: öğrenme (fit) yalnızca train'de olur. İster scaler'ın parametre öğrenmesi olsun, ister modelin ağırlık öğrenmesi olsun, `fit` içeren her şey sadece eğitim verisini görür. Test verisi yalnızca uygulanır (`transform` ya da `predict`), asla `fit` edilmez. Bunu hatırlarsan hangisini nerede kullanacağını hiç şaşırmazsın, çünkü soru hep şuna iner: "bu adım bir şey öğreniyor mu (fit, sadece train), yoksa öğrenileni uyguluyor mu (transform/predict, her ikisi de)?"
+
+Tek paragrafta: Transformer'larda train'e `fit_transform`, test'e `transform` uygularsın; model'lerde train'e `fit`, test/yeni veriye `predict` uygularsın. Akış olarak önce scaler ile ölçekler (train fit_transform, test transform), sonra model ile eğitip tahmin edersin (train fit, test predict). Her şeyi yöneten kural, `fit`'in (yani öğrenmenin) sadece eğitim verisinde yapılması, test verisine asla fit uygulanmamasıdır; bu, data leakage'i önleyen temel disiplindir.
+
+
+Soru:Hangi ölçekleme yöntemini hangi durumda seçeceğiz ? 
+
+Ha, tamam, şimdi tam anladım: hangi ölçekleme yöntemini hangi durumda seçeceğini soruyorsun. Bunu daha önce tabloyla bir kez geçmiştik ama karar mantığına odaklanarak toparlayayım.
+
+Seçim yaparken kafanda şu sıralı soruları sor, ilk uyana göre karar ver.
+
+İlk soru: **verimde belirgin aykırı değerler (outlier) var mı?** Varsa robust scaling kullan. Çünkü standardization (ortalama-std) ve min-max (min-max) outlier'dan ciddi zarar görür; tek bir uç değer ortalamayı, std'yi ya da min-max aralığını bozar ve normal değerleri dar bir bölgeye sıkıştırır. Robust scaling medyan ve IQR kullandığı için uç değerlerden etkilenmez, bu yüzden outlier'lı veride en güvenlisidir.
+
+İkinci soru: **verim seyrek mi, yani çoğu değeri sıfır mı?** (TF-IDF, bag-of-words gibi metin matrisleri böyledir.) Öyleyse max-abs scaling kullan. Çünkü o veriyi merkezlemez, sıfırları sıfır olarak korur ve seyrekliği bozmaz. Standardization burada sıfırları bozup matrisi şişirir, o yüzden uygun değil.
+
+Üçüncü soru: **verinin belirli bir aralıkta, mesela [0,1] arasında olması şart mı?** Bazı sinir ağı girdilerinde ya da görüntü piksellerinde bu istenir. Öyleyse min-max (normalization) kullan; veriyi tam [0,1] aralığına çeker. Ama bunu yalnızca verinde belirgin outlier yoksa tercih et, çünkü min-max outlier'a çok hassastır.
+
+Bu üçünün hiçbiri özel olarak geçerli değilse, yani veri makulse, aşırı uç değer yoksa ve özel bir aralık şartı da yoksa, **varsayılan olarak standardization (z-score) kullan.** Pratikte en sık tercih edilen, çoğu algoritmayla en uyumlu ve verinin yaklaşık normal dağıldığı durumlarda en iyi çalışan yöntem budur. Emin değilsen ya da nereden başlayacağını bilemiyorsan, standardization ile başla.
+
+Tek paragrafta: Önce outlier var mı diye bak, varsa robust scaling; sonra veri seyrek mi diye bak, öyleyse max-abs; sonra belirli bir aralık şart mı diye bak, öyleyse min-max; bunların hiçbiri değilse varsayılan ve en yaygın tercih olan standardization'ı kullan. Kısacası standardization senin "ne yapacağımı bilmiyorum" durumundaki güvenli başlangıcın, diğer üçü ise belirli koşullar (outlier, seyreklik, aralık şartı) ortaya çıktığında devreye giren özel çözümlerdir.
+
+Eğer çok daha derinlemesine öğremek istersen bknz:
+
+https://www.datacamp.com/tutorial/normalization-vs-standardization
+
+Data Transformation (Veri Dönüştürme), az önce DataCamp sayfasında gördüğümüz gibi, çok daha geniş bir şemsiye kavramdır — verinin herhangi bir şekilde biçim/yapı değiştirmesini kapsar. Bunun altında birkaç farklı teknik yer alır:
+
+Feature Scaling (sayısal verileri belirli bir aralığa/dağılıma çekmek)
+Encoding (kategorik verileri sayısala çevirmek)
+Feature Engineering (yeni özellikler türetmek)
+
+Yani Feature Scaling, Data Transformation'ın alt kümelerinden biridir, tüm transformation'ı kapsamaz, sadece sayısal sütunların ölçeğiyle ilgilenen kısmıdır.
+
+
