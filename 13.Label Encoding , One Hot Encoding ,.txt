@@ -1,0 +1,1090 @@
+Label Encoding , One Hot Encoding ,  future hashing , get_dummies() and sparse matrix in Machine Learning
+
+Hangisini ne zaman kullanacağımızı en altta bulabilirsiniz :)
+Label encoding:
+
+Label Encoding is a data preprocessing technique in Machine Learning used to convert categorical values into numerical labels. Since most ML algorithms work only with numeric data, categorical features must be encoded before model training. In Label Encoding, each unique category is assigned an integer between 0 and the number of classes.
+
+Why It Is Important
+Label Encoding is important because many ML algorithms cannot process string values directly making numerical conversion essential for model training.
+
+Helps algorithms like SVM, Logistic Regression and KNN work with categorical data.
+More memory efficient compared to One Hot Encoding.
+Suitable when categorical features have a natural order or limited unique classes.
+Ensures consistent and compact representation of categories.
+
+Understanding Label Encoding
+Categorical data is broadly divided into two types:
+
+Nominal Data: Categories without inherent order like colors: red, blue, green.
+Ordinal Data: Categories with a natural order like satisfaction levels: low, medium, high.
+
+Label encoding works best for ordinal data, where the assigned numbers reflect the order. But when you apply it to nominal data, the numbers accidentally create a fake ranking (e.g., Red = 0, Blue = 1, Green = 2).
+
+Linear regression treats these numbers as if “Green > Blue > Red” and assumes equal gaps between them. This adds artificial relationships that don't exist and can mislead the model, producing wrong coefficients and predictions. Thus, the choice of encoding must align with the data type and the algorithm used.
+
+When to Use Label Encoding
+Label Encoding is suitable when converting categorical values into integers will not introduce misleading numeric relationships. It is most useful in the following situations:
+
+The feature is ordinal and has a natural order.
+The model being used is insensitive to integer ranking such as tree-based algorithms.
+Hocam bu cümleyi açıklayayım, doğrudan bizim daha önce konuştuğumuz **"Label Encoding'in yanlış sıralama sorunu"** ile bağlantılı.
+
+## Cümlenin Anlamı
+
+**"Kullanılan model, tam sayı sıralamasına (integer ranking) duyarsız ise (örneğin ağaç tabanlı algoritmalar) Label Encoding kullanışlı olur."**
+
+## Hatırlayalım — Label Encoding'in Sorunu Neydi?
+
+Daha önce konuştuğumuz gibi, Label Encoding kategorileri `0, 1, 2` gibi sayılara çevirirken, kategoriler arasında **gerçekte olmayan bir sıralama/hiyerarşi** yaratıyordu:
+```
+Kırmızı = 0
+Mavi = 1
+Yeşil = 2
+```
+Bir model bunu görünce, **matematiksel olarak** `Yeşil (2) > Mavi (1) > Kırmızı (0)` gibi bir **büyüklük ilişkisi** algılayabilir — oysa renkler arasında böyle bir sıra **yok**.
+
+## Peki "Integer Ranking'e Duyarsız Model" Ne Demek?
+
+Bazı modeller, bu **sayısal büyüklüğü matematiksel olarak kullanır**, bazıları **kullanmaz**. İşte tam burada iki model türü ayrılıyor:
+
+**Duyarlı Modeller (Sayının büyüklüğünü matematiksel olarak yorumlar):**
+- **Linear Regression, Logistic Regression** → bu modeller, her özelliği bir **katsayıyla çarpar** (`w × x`). Eğer `x=2` ise, bu `x=1`'den **"iki kat daha fazla"** bir etki olarak hesaba katılır — yani bu modeller için `2`, gerçekten **`1`'den büyük bir değer** anlamına gelir, sıralama **matematiksel olarak önemlidir**.
+
+**Duyarsız Modeller (Sadece "eşit mi değil mi" diye bakar, büyüklüğü önemsemez):**
+- **Decision Tree, Random Forest, XGBoost gibi ağaç tabanlı modeller** → bu modeller, bir özelliği **böler** (split yapar), örneğin `"Renk < 1.5 mi?"` gibi bir soru sorar. Bu bölme işleminde, model **sadece "hangi değerler bu eşiğin altında/üstünde"** diye bakar, **`2`'nin `1`'den "matematiksel olarak iki kat büyük"** olduğunu **hiç önemsemez** — sadece **kategorileri birbirinden ayırabildiği** sürece, hangi sayıyla kodlandıkları **onun için bir "fark" yaratmaz**.
+
+## Somut Bir Örnekle Gösterelim
+
+Diyelim ki `Renk` sütununu Label Encoding ile kodladık: `Kırmızı=0, Mavi=1, Yeşil=2`
+
+**Decision Tree bir bölme yapmak istediğinde:**
+```
+"Renk < 0.5 mi?" → Kırmızı'yı diğerlerinden ayırır
+"Renk < 1.5 mi?" → Kırmızı+Mavi'yi Yeşil'den ayırır
+```
+Ağaç, bu sayıları **sadece "gruplama/ayırma" aracı** olarak kullanıyor — `2`'nin `0`'dan "büyük" olduğu bilgisini **modelin kararına hiçbir matematiksel ağırlıkla** dahil etmiyor, sadece **"bu değer bu eşiğin altında mı üstünde mi"** diye **kategorik bir ayrım** yapıyor.
+
+**Ama Linear Regression aynı veriyle çalışsaydı:**
+```
+tahmin = w × Renk + b
+```
+Burada `Renk=2` (Yeşil), `Renk=0` (Kırmızı)'dan **matematiksel olarak** modelin tahminine **iki kat daha fazla** katkı sağlar — bu **yanlış ve anlamsız** bir varsayım, çünkü Yeşil'in Kırmızı'dan "iki kat fazla" bir şey ifade etmesi gerekmiyor.
+
+## Neden Bu Bilgi Kullanışlı?
+
+Bu cümle size şunu söylüyor: **Eğer bir Decision Tree/Random Forest/XGBoost modeli kullanacaksanız, Label Encoding kullanmak GÜVENLİDİR** — çünkü model, o "yanlış sıralama" sorununu **zaten görmezden geliyor**. Bu durumda, One-Hot Encoding'in getirdiği **ekstra sütun sayısı yükünü** (curse of dimensionality) çekmenize gerek kalmaz, Label Encoding'in **basitliğinden** faydalanabilirsiniz.
+
+**Ama Linear/Logistic Regression, Neural Network gibi "sayısal büyüklüğe duyarlı" modeller kullanacaksanız, Label Encoding RİSKLİDİR** — bu durumda One-Hot Encoding (ya da gerçekten bir sıralama varsa Ordinal Encoding) tercih edilmelidir.
+
+---
+
+**Özetle:** "Integer ranking'e duyarsız model" derken kastedilen, **sayının büyüklüğünü matematiksel bir ağırlık olarak kullanmayan, sadece kategorik ayrım için kullanan modeller** (ağaç tabanlı olanlar) — bu modellerde Label Encoding'in "yanlış hiyerarşi yaratma" riski **pratikte hiçbir zarar vermez**, bu yüzden bu modellerle çalışırken Label Encoding **gönül rahatlığıyla kullanılabilir**.
+
+The column contains many unique categories making One-Hot Encoding inefficient.
+Memory efficiency is required and additional dummy columns should be avoided.
+You need a consistent mapping of categories for training, validation and deployment.
+
+LabelEncoder, scikit-learn'ün preprocessing modülünde yer alan ve hedef etiketleri yani y değişkenini 0'dan başlayarak n sınıfa kadar sayısal değerlere dönüştüren bir araçtır. Temel olarak target variable encode etmek için tasarlanmıştır, bu yüzden OneHotEncoder veya OrdinalEncoder'dan ayrışır çünkü onlar input feature'ları için kullanılır
+
+fit() çağrıldığında tüm unique sınıfları alfabetik sırayla hafızasına alır ve her birine bir index atar. Bizim örneğimizde ['Average', 'Good', 'Poor'] sınıfları sırasıyla 0, 1, 2 değerlerini aldı. Bu saklanan bilgi sayesinde hem transform() hem de inverse_transform() yapılabilir, yani encode edilmiş sayıyı tekrar orijinal etikete çevirebilirsin.
+
+Genel kural şu: 2 kategorili sütunlar için label encoding, 3 ve üzeri kategorili sütunlar için one hot encoding daha mantıklı.
+Label encoding mevcut sütunu sayıya çeviriyor, yeni sütun eklemiyor. Female=0, Male=1 şeklinde aynı sütunu dönüştürüyor.
+One hot encoding ise her kategori için yeni bir sütun açıyor. sex sütunu için sex_Female ve sex_Male diye 2 yeni sütun oluşuyor, orijinal sütun kaldırılıyor.
+
+One-hot encoding:
+
+One-hot encoding is a technique used to convert categorical data into a binary format where each category is represented by a separate column with a 1 indicating its presence and 0s for all other categories.
+
+One-hot encoding is a technique for representing categorical data as numerical vectors, where each unique category is represented by a binary column with a value of 1 indicating its presence and 0 indicating its absence.
+
+Why Use One-Hot Encoding?
+One-hot encoding is an essential technique in data preprocessing for several reasons. It transforms categorical data into a format that machine learning models can easily understand and use. This transformation allows each category to be treated independently without implying any false relationships between them.
+
+Hocam son cümleyi açıklayayım — bu, tam olarak az önce Label Encoding'de konuştuğumuz **"yanlış sıralama" sorununun**, bu sefer **One-Hot Encoding'in bunu nasıl çözdüğü** açısından anlatımı.
+
+## Cümlenin Çevirisi
+
+**"Bu dönüşüm (One-Hot Encoding), her kategorinin, aralarında hiçbir sahte/yanlış ilişki ima edilmeden, bağımsız olarak ele alınmasını sağlar."**
+
+## "False Relationships" (Sahte İlişkiler) Ne Demek?
+
+Hatırlarsanız Label Encoding'de şu sorunu konuşmuştuk:
+```
+Kırmızı = 0
+Mavi = 1
+Yeşil = 2
+```
+Burada model, **yanlışlıkla** şöyle bir "ilişki" algılayabilir:
+- *"Yeşil (2), Mavi (1)'den büyük"*
+- *"Yeşil, Kırmızı'nın iki katı"*
+- *"Mavi, Kırmızı ile Yeşil'in tam ortasında"*
+
+Bunların **hiçbiri gerçek değil** — renkler arasında böyle bir **matematiksel büyüklük/sıra ilişkisi yok**. İşte bu **yanlış, var olmayan ilişkiler**, cümledeki **"false relationships"** ifadesinin tam olarak kastettiği şey.
+
+## One-Hot Encoding Bunu Nasıl Çözüyor?
+
+One-Hot Encoding, her kategoriyi **kendi ayrı, bağımsız sütununa** yerleştirir:
+
+```
+Renk         is_Kırmızı  is_Mavi  is_Yeşil
+Kırmızı  →       1          0         0
+Mavi     →       0          1         0
+Yeşil    →       0          0         1
+```
+
+## Neden Artık "Sahte İlişki" Yok?
+
+Çünkü artık **her kategori, kendi başına, diğerlerinden tamamen bağımsız bir 0/1 sütunu**. Model, `is_Yeşil` sütununa baktığında sadece **"bu satırda Yeşil var mı yok mu"** sorusuna cevap görür — `is_Mavi` ile `is_Yeşil` arasında **hiçbir sayısal büyüklük ilişkisi kurulamaz**, çünkü ikisi de sadece **0 ya da 1** olabilen, **birbirinden tamamen ayrı** sütunlar. `1`, hiçbir sütunda `0`'dan "matematiksel olarak büyük bir kategori" anlamına gelmiyor, sadece **"var/yok"** bilgisini taşıyor.
+
+## "Independently" (Bağımsız Olarak) Kelimesi Neden Önemli?
+
+Bu kelime, her kategorinin **kendi kaderini kendi belirlediğini**, diğer kategorilerin **sayısal değerinden etkilenmediğini** vurguluyor. Yani model, `is_Kırmızı=1` olan bir satırın **"tahmine nasıl etki edeceğine"**, `is_Mavi` ya da `is_Yeşil`'in ne olduğuna **bakmadan**, **kendi başına** karar verebilir — her kategori **kendi ayrı ağırlığını (katsayısını)** öğrenir, birbirlerine **matematiksel olarak bağımlı/sıralı** değildirler.
+
+## Basit Bir Benzetmeyle Pekiştirelim
+
+Label Encoding'i bir **"sıra numarası"** vermek gibi düşünün — 1., 2., 3. sıradaki kişiler arasında **doğal bir hiyerarşi** var gibi algılanır. One-Hot Encoding ise, her kişiye **ayrı bir "evet/hayır" rozeti** vermek gibidir — "bu kişi Türk mü? Evet/Hayır", "bu kişi mühendis mi? Evet/Hayır" — bu rozetler arasında **hiçbir sıralama, büyüklük ilişkisi yok**, her biri **kendi başına, bağımsız** bir bilgi taşıyor.
+
+---
+
+**Özetle:** Bu cümle, One-Hot Encoding'in **Label Encoding'in yarattığı "yanlış sıralama/büyüklük" sorununu ortadan kaldırdığını** anlatıyor — her kategori kendi ayrı sütununda, sadece **var/yok** bilgisiyle temsil edildiği için, model artık kategoriler arasında **gerçekte olmayan bir matematiksel ilişki** (biri diğerinden büyük, biri diğerinin katı gibi) **kuramaz**, her kategoriyi **kendi başına, bağımsız** bir bilgi parçası olarak öğrenir.
+
+Additionally, many data processing and machine learning libraries support one-hot encoding. It fits smoothly into the data preprocessing workflow, making it easier to prepare datasets for various machine learning algorithms.
+
+Machine learning compatibility ( uyumluluk ) 
+Most machine learning algorithms require numerical input to perform their calculations. Categorical data needs to be transformed into a numerical format for these algorithms to use effectively. One-hot encoding provides a straightforward way to achieve this transformation, ensuring that categorical variables can be integrated into machine learning models.
+
+Avoiding ordinality
+Label encoding is another method to convert categorical data into numerical values by assigning each category a unique number. However, this approach can create problems because it might suggest an order or ranking among categories that doesn't actually exist.
+
+For example, assigning 1 to Red, 2 to Green, and 3 to Blue could make the model think that Green is greater than Red and Blue is greater than both. This misunderstanding can negatively affect the model's performance.
+
+One-hot encoding solves this problem by creating a separate binary column for each category. This way, the model can see that each category is distinct and unrelated to the others. 
+
+Label encoding is useful when the categorical data has an inherent ordinal relationship, meaning the categories have a meaningful order or ranking. In such cases, the numerical values assigned by label encoding can effectively represent this order, making it a suitable choice.
+
+One hot encoding kategoriler arasında sıra ilişkisi olmadığında kullanılıyor. Her kategori için ayrı bir binary sütun açıyor, 0 veya 1.
+
+Ordinal veriler için, yani sıra önemli olduğunda, label encoding daha mantıklı. Mesela eğitim seviyesi: İlkokul=1, Ortaokul=2, Lise=3, Üniversite=4. Burada sıra anlamlı, label encoding bu ilişkiyi koruyor.
+
+One hot encoding'de ise Pazartesi=1, Salı=2 dersen model "Salı, Pazartesi'den büyük" gibi yanlış bir ilişki öğrenebilir. O yüzden günler için one hot kullanıyorsun.
+
+Label encoding, kategorik verileri sayısal değerlere dönüştürmek için kullanılan bir yöntemdir. Ancak her kategorik veri için uygun değildir. Label encoding'in gerçek anlamda işe yaradığı durum, kategoriler arasında doğal bir sıralama veya hiyerarşi olduğu zamandır.
+Şöyle düşün: Elimizde bir eğitim seviyesi kolonu var — "İlkokul", "Ortaokul", "Lise", "Üniversite". Bu kategoriler arasında açık bir sıralama mevcut: ilkokul en düşük, üniversite en yüksek eğitim seviyesini temsil ediyor. Label encoding bu kolonu şu şekilde dönüştürür:
+İlkokul    → 0
+Ortaokul   → 1
+Lise       → 2
+Üniversite → 3
+Bu dönüşüm anlamlıdır çünkü 3, 0'dan büyük — tıpkı üniversitenin ilkokuldan "daha yüksek" bir seviye olması gibi. Model bu sayısal sıralamayı doğru şekilde yorumlayabilir. ✅
+Ancak kategoriler arasında böyle bir sıralama yoksa label encoding yanıltıcı olur. Örneğin renkler: "Kırmızı → 0, Mavi → 1, Yeşil → 2" dönüşümünde model yeşilin maviden, mavinin kırmızıdan "büyük" olduğunu düşünür — oysa renkler arasında böyle bir hiyerarşi yoktur. Bu durumda label encoding data leakage'e değil ama model hatasına yol açar.
+Özetle label encoding, kategoriler arasında anlamlı bir sıralama varsa güçlü ve uygun bir seçimdir. Sıralama yoksa farklı yöntemlere — örneğin One-Hot Encoding'e — başvurmak gerekir.
+
+Handling Categorical Features With Many Unique Values
+One significant challenge with one-hot encoding is the "curse of dimensionality." This occurs when a categorical feature has a large number of unique values, leading to an explosion in the number of columns. This can make the dataset sparse and computationally expensive to process. Let’s see the techniques we can apply to solve this.
+
+Feature hashing
+
+## Feature Hashing Neden Ortaya Çıktı? (Önce Sorunu Anlayalım)
+
+One-Hot Encoding'in en büyük zayıflığını hatırlarsanız daha önce konuşmuştuk: eğer bir kategorik sütunda **çok fazla benzersiz değer (yüksek kardinalite)** varsa, örneğin bir e-ticaret sitesinde "ürün ID" sütununda 500.000 farklı ürün varsa, One-Hot Encoding bu sütunu **500.000 ayrı sütuna** böler. Bu, veri setinizi devasa, çoğunlukla sıfırlardan oluşan (sparse) bir yapıya dönüştürür; hem bellek açısından inanılmaz maliyetli olur hem de modelin eğitim süresini ciddi şekilde uzatır, hem de "curse of dimensionality" dediğimiz, çok fazla boyutun modelin öğrenmesini zorlaştırdığı bir soruna yol açar. İşte Feature Hashing, tam olarak bu soruna karşı geliştirilmiş pratik bir çözümdür.
+
+## Feature Hashing'in Temel Fikri
+
+Feature Hashing'in mantığı şudur: her kategoriyi kendine özel, benzersiz bir sütuna atamak yerine, bir **hash fonksiyonu** kullanarak her kategoriyi **önceden belirlenmiş, sabit sayıda** sütuna (kutuya) yerleştirirsiniz. Yani siz baştan "ben bu kategorik sütunu, kaç kategori olursa olsun, sadece 10 sütuna sıkıştıracağım" diye karar verirsiniz, ve hash fonksiyonu her kategori değerini alıp, bu 10 sütundan birine (bazen matematiksel olarak birden fazlasına) atar. Bu, One-Hot Encoding'in "her kategori kendi sütununu alır" mantığından tamamen farklı bir yaklaşımdır; burada kategoriler, sınırlı sayıdaki kutulara "sıkıştırılır" ve bazı kategoriler zorunlu olarak aynı kutuyu paylaşmak durumunda kalabilir.
+
+## Hash Fonksiyonu Ne İş Yapıyor?
+
+Bir hash fonksiyonu, basitçe, herhangi bir girdiyi (burada bir kategori ismi, örneğin "Istanbul" ya da "Ankara") alıp, onu **sabit bir sayı aralığında** bir sayıya dönüştüren matematiksel bir işlemdir. Örneğin siz "8 sütuna sıkıştır" dediğinizde, hash fonksiyonu "Istanbul" kelimesini alır, üzerinde belirli bir matematiksel işlem yapar (genelde bir modulo işlemiyle) ve size 0 ile 7 arasında bir sayı döndürür, örneğin "Istanbul" için 3 sayısını, "Ankara" için 6 sayısını üretebilir. Bu demektir ki, "Istanbul" kategorisine ait satırlarda, 4. sütun (index 3) 1 olacak, diğerleri 0 kalacak; "Ankara" için ise 7. sütun (index 6) 1 olacak. Önemli bir özellik, aynı girdinin (örneğin her "Istanbul" değeri) **her zaman aynı hash değerini** üretmesidir, yani tutarlı ve tekrarlanabilir bir dönüşümdür.
+
+## "Collision" (Çakışma) Sorunu — Feature Hashing'in Kabul Ettiği Bir Bedel
+
+Burada işin can alıcı noktasına geliyoruz: eğer siz binlerce farklı kategoriyi sadece 8 ya da 16 sütuna sıkıştırıyorsanız, matematiksel olarak **kaçınılmaz bir şekilde**, farklı iki kategori bazen **aynı sütuna düşecektir** — buna "collision" (çakışma) denir. Örneğin hem "Istanbul" hem "Bursa" kelimesi, hash fonksiyonu tarafından aynı sayıya (diyelim ki 3'e) eşlenebilir, bu durumda ikisi de aynı sütunda 1 değeri alır ve model, bu iki farklı şehri **birbirinden ayırt edemez** hale gelir. Bu, Feature Hashing'in bilinçli olarak kabul ettiği bir "trade-off"tur: siz bellek/boyut tasarrufu karşılığında, bir miktar bilgi kaybını (bazı kategorilerin birbirine karışmasını) göze alıyorsunuz. Ne kadar az sütuna sıkıştırırsanız (örneğin sadece 4 sütun), collision ihtimali o kadar artar; ne kadar çok sütun ayırırsanız (örneğin 1000 sütun), collision ihtimali o kadar azalır ama bu sefer de One-Hot Encoding'e yaklaşmaya, yani asıl kaçınmaya çalıştığınız soruna geri dönmeye başlarsınız.
+
+## Neden Yine de Kullanışlı?
+
+Bu collision riskine rağmen Feature Hashing, özellikle **çok yüksek kardinaliteli** (binlerce, on binlerce, hatta milyonlarca benzersiz değere sahip) kategorik verilerde, pratikte oldukça işe yarayan bir tekniktir; çünkü gerçek dünyada modelin performansı, her collision'ın yarattığı küçük bilgi kaybından çok daha fazla, **boyut patlamasının önlenmesinden** kazanç sağlar. Özellikle metin işleme (NLP) alanında, kelime dağarcığının (vocabulary) çok büyük olduğu durumlarda (örneğin milyonlarca farklı kelime/token içeren bir metin veri setinde) Feature Hashing sıkça tercih edilir, çünkü her kelimeye ayrı bir sütun açmak pratik olarak imkansız hale gelir, ama sabit sayıda sütuna sıkıştırmak, modelin makul bir bellek/hız bütçesiyle çalışmasını mümkün kılar.
+
+## Sparse Matrix Kavramıyla Bağlantısı
+
+Feature Hashing'in çıktısı, tıpkı One-Hot Encoding gibi, genellikle çoğu değeri sıfır olan **sparse (seyrek) bir matris** üretir; ama farkı, bu matrisin **satır sayısının sabit ve önceden belirlenmiş** olmasıdır, kategori sayısı ne kadar artarsa artsın matris büyümez, sadece aynı sütunlara daha fazla kategori "sıkışır". Bu sabit boyut özelliği, özellikle **online öğrenme (online learning)** dediğimiz, verinin sürekli akış halinde geldiği ve modelin sürekli güncellendiği sistemlerde çok değerlidir; çünkü yeni bir kategori (örneğin daha önce hiç görülmemiş yeni bir kelime ya da ürün) geldiğinde, One-Hot Encoding'de olduğu gibi "yeni bir sütun eklemeniz" gerekmez, hash fonksiyonu bu yeni kategoriyi de otomatik olarak var olan sabit sütunlardan birine yerleştirir.
+
+## Kod Üzerinden Kısa Bir Örnek
+
+```python
+from sklearn.feature_extraction import FeatureHasher
+
+hasher = FeatureHasher(n_features=8, input_type='string')
+hashed_features = hasher.transform(df['Sehir'].apply(lambda x: [x]))
+```
+
+Burada `n_features=8` derken, siz baştan "bu sütunu, kaç farklı şehir olursa olsun, sadece 8 sütuna sıkıştır" diye belirtmiş oluyorsunuz — bu, One-Hot Encoding'in "her benzersiz değer için otomatik yeni sütun aç" mantığından temelden farklı bir yaklaşım.
+
+---
+
+**Özetle:** Feature Hashing, çok fazla kategoriye sahip bir sütunu, One-Hot Encoding gibi her kategoriye ayrı bir sütun açmak yerine, **sabit ve önceden belirlenmiş sayıda** sütuna, bir hash fonksiyonu aracılığıyla sıkıştıran bir tekniktir; bu, bellek ve hesaplama açısından büyük bir tasarruf sağlarken, bazı farklı kategorilerin **yanlışlıkla aynı sütuna düşmesi (collision)** riskini bilinçli olarak kabul eder — bu risk, özellikle çok yüksek kardinaliteli veri setlerinde (NLP, büyük ürün katalogları gibi), boyut patlamasının getirdiği pratik sorunlara kıyasla **kabul edilebilir bir bedel** olarak görülür.
+
+//////////////////
+***************
+
+Soru: Hocam diyelim ki 50 bin ayrı kategori var ve bu kategorilerden 20 bininin +10 bin defa tekrarlamış.Bu durumdad one hot encoding mantıksız , label encoding de olmaz. Feature hashing kısmına gelecek olursak 20 bin farklı kategori çok defa tekrarlıyor. Ne kullanmalıyız ? 
+
+Elcevap:
+
+Hocam gerçekten çok isabetli bir senaryo kurmuşsunuz, çünkü bu durumda **Feature Hashing de aslında ideal değil** — nedenini açıklayayım, sonra size daha uygun alternatifleri önereyim.
+
+## Neden Feature Hashing Bu Senaryoda Riskli?
+
+Sizin durumunuzda, **20.000 kategori** her biri **10.000+ kez** tekrarlanıyor — yani bunlar **önemli, sık görülen, muhtemelen modelin tahmini için değerli bilgi taşıyan** kategoriler. Eğer bu 20.000 kategoriyi Feature Hashing ile (örneğin 500 ya da 1000 sütuna) sıkıştırırsanız, **collision (çakışma) oranı çok yüksek** olur — yani **sık görülen, önemli** kategoriler birbirine karışır. Bu, **nadir/önemsiz** kategorilerde collision olmasından çok daha **zararlı**, çünkü siz **gerçekten modelin öğrenmesi gereken, güçlü sinyaller taşıyan** bilgiyi bozmuş olursunuz.
+
+## Peki Ne Kullanmalıyız? — Birkaç Alternatif Var
+
+### 1. Target Encoding (Bu Senaryo İçin En Güçlü Aday)
+
+Hatırlarsanız `9_Label_Encoding` dosyanızda kısaca bahsedilmişti — her kategoriyi, **o kategorinin hedef değişkenle olan ilişkisine göre** tek bir sayıya çevirirsiniz:
+
+target_means = df.groupby('kategori_sutunu')['target'].mean()
+df['kategori_encoded'] = df['kategori_sutunu'].map(target_means)
+
+**Neden bu senaryoya uygun?** Çünkü her kategori (20.000 kategorinin her biri), en az **10.000 tekrar** içeriyor — bu, **her kategorinin ortalamasını güvenilir şekilde hesaplayabilmeniz için yeterli veri** olduğu anlamına geliyor. Target Encoding, **az tekrarlanan** kategorilerde güvenilmez olur (çünkü 2-3 örnekten hesaplanan bir ortalama, istatistiksel olarak anlamsızdır), ama sizin senaryonuzda **her kategori zaten çok sık tekrarlandığı için**, Target Encoding **tam oturan** bir çözüm.
+
+**Dikkat edilmesi gereken risk:** Target Encoding, **data leakage'a çok açık** bir yöntemdir — eğer target ortalamasını **tüm veri setinden** hesaplarsanız, test verisinin bilgisi sızar. Bu yüzden mutlaka **sadece train verisinden** hesaplanmalı, ayrıca **cross-validation ile (K-fold target encoding)** yapılması önerilir, aksi halde ciddi overfitting riski taşır.
+
+## Target Encoding Nedir? (Temel Fikir)
+
+Target Encoding, kategorik bir değişkeni sayısala çevirirken, kategorinin **kendi kimliğine** değil, o kategorinin **hedef değişkenle (target) olan ilişkisine** dayanan bir yöntemdir. Şu ana kadar öğrendiğimiz Label Encoding ve One-Hot Encoding, kategorilere **rastgele/keyfi** sayılar ya da 0/1 sütunları atarken (hiçbir "anlam" taşımadan), Target Encoding her kategoriyi, **o kategoriye ait geçmiş gözlemlerin hedef değişken ortalamasıyla** değiştirir. Bu, kategorik değişkeni sayısal bir forma çevirmenin ötesinde, aynı zamanda **o kategorinin hedefle ne kadar ilişkili olduğuna dair bir bilgiyi de** doğrudan modele taşır — bu yüzden diğer encoding yöntemlerinden çok daha "bilgi yüklü" bir dönüşümdür.
+
+## Formül ve Somut Bir Örnek
+
+En basit haliyle formül şöyledir:
+TargetEncoding(kategori) = o kategoriye ait tüm satırların hedef değişken ortalaması
+
+Somut bir örnek verelim: diyelim ki bir müşteri churn (kayıp) tahmini yapıyorsunuz, `Şehir` diye bir kategorik sütununuz var, `target` sütunu ise 0 (kalmış) ya da 1 (ayrılmış) değerini alıyor.
+
+```
+Şehir=İstanbul: 1000 müşteri, bunların 250'si churn (target=1) → oran = 0.25
+Şehir=Ankara:   500 müşteri, bunların 100'ü churn (target=1)  → oran = 0.20
+Şehir=İzmir:    300 müşteri, bunların 90'ı churn (target=1)   → oran = 0.30
+```
+
+Target Encoding, `Şehir` sütununu doğrudan şu sayılarla değiştirir:
+```
+İstanbul → 0.25
+Ankara   → 0.20
+İzmir    → 0.30
+```
+
+Artık model, "İstanbul" kelimesini görmüyor, doğrudan **"bu şehirde geçmişte %25 churn oranı gözlemlendi"** bilgisini sayısal olarak alıyor — bu, Label Encoding'in rastgele `0, 1, 2` atamasından çok daha **anlamlı ve güçlü** bir sinyal.
+
+## Neden Bu Kadar Güçlü Bir Yöntem?
+
+Target Encoding'in gücü, kategorinin **hedef değişkenle olan gerçek ilişkisini doğrudan sayıya dönüştürmesinden** gelir. One-Hot Encoding'de model, her kategorinin etkisini **kendi başına, sıfırdan öğrenmek** zorundaydı (yüzlerce ayrı sütunun her birine bir katsayı bulmalıydı); Target Encoding'de ise bu ilişki **zaten önceden hesaplanmış ve tek bir sayıya sıkıştırılmış** olarak modele sunuluyor, bu da özellikle yüksek kardinaliteli (çok kategorili) sütunlarda modelin işini **çok kolaylaştırıyor**, hem daha az sütunla hem de daha güçlü bir sinyalle çalışmasını sağlıyor.
+
+## En Büyük Tehlike — Data Leakage ve Overfitting
+
+Burada işin en kritik ve dikkat edilmesi gereken kısmına geliyoruz. Eğer siz bu ortalamayı **tüm veri setinden (train+test birlikte)** hesaplarsanız, test verisinin bilgisi (hangi müşterilerin gerçekten churn ettiği) dolaylı olarak train sürecine sızmış olur — bu, klasik ve ciddi bir **data leakage** örneğidir. Daha da tehlikeli bir versiyonu, **train verisinin kendi içinde de** ortaya çıkabilir: eğer bir kategori sadece 2-3 kez geçiyorsa (örneğin "İzmir" sadece 3 müşteride varsa ve bunların hepsi churn olmuşsa), o kategori için hesaplanan ortalama (%100 churn) aslında **çok küçük bir örneklemden gelen, güvenilmez ve aşırı öğrenmeye (overfitting) çok açık** bir değerdir — model bu kategoriye "kesinlikle churn eder" diye aşırı güvenebilir, oysa bu sadece 3 kişilik bir örneklemin şans eseri sonucu olabilir.
+
+## Çözüm 1 — Smoothing (Yumuşatma)
+
+Bu overfitting riskini azaltmak için kullanılan en yaygın teknik **smoothing**'dir. Mantık şu: az sayıda gözlemi olan kategorilerin ortalamasını, **tüm veri setinin genel ortalamasına doğru çekerek** "yumuşatırsınız" — yani nadir bir kategorinin kendine özgü (ve güvenilmez) ortalamasına tam güvenmek yerine, onu genel ortalamayla harmanlarsınız. Formül genellikle şöyle işler:
+
+Smoothed = {n * kategori_ortalaması + m * genel_ortalama}/{n + m}
+
+Burada `n`, o kategorinin kaç kez geçtiği, `m` ise bir "ağırlık" parametresi (ne kadar büyük bir `m` seçerseniz, genel ortalamaya o kadar çok "çekilme" olur). Eğer bir kategori **çok sık** görülüyorsa (`n` büyükse), formül neredeyse tamamen **o kategorinin kendi ortalamasına** yakın bir sonuç verir, çünkü büyük örneklem güvenilirdir. Eğer bir kategori **nadiren** görülüyorsa (`n` küçükse), formül onu **genel ortalamaya doğru** çeker, böylece güvenilmez, aşırı uç bir değerin modele zarar vermesi engellenir. Bu, tam olarak sizin daha önceki sorunuzda konuştuğumuz "20.000 kategori her biri 10.000+ kez tekrarlanıyor" senaryosunda **neden Target Encoding'in güvenli olduğunu** açıklıyor — `n` zaten çok büyük olduğu için, smoothing'e bile fazla ihtiyaç kalmadan güvenilir ortalamalar elde edersiniz.
+
+## Çözüm 2 — K-Fold Target Encoding (Data Leakage'ı Önlemenin En Sağlam Yolu)
+
+Sadece train/test ayrımı yapmak bile bazen yeterli olmayabilir, çünkü **train verisinin kendi içinde** de leakage oluşabilir: bir satırın target encoding değerini hesaplarken, o satırın **kendi target değerini de** hesaba katarsanız, model dolaylı olarak "cevabı görerek" öğrenir. Bunu önlemek için **K-Fold Target Encoding** kullanılır: train verisini K parçaya (örneğin 5 parçaya) bölersiniz, her parçanın target encoding değerini, **kendisi hariç diğer K-1 parçadan** hesaplarsınız. Yani bir satırın kendi target'ı, o satırın encoding değerinin hesaplanmasına **hiçbir zaman doğrudan katkı sağlamaz** — bu, cross-validation mantığına çok benzer bir yaklaşımdır ve gerçek, sağlam bir Target Encoding uygulamasının **olmazsa olmaz** bir parçasıdır.
+
+## Python'da Basit Bir Uygulama
+
+```python
+from sklearn.model_selection import KFold
+import numpy as np
+
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+df['kategori_encoded'] = np.nan
+
+for train_idx, val_idx in kf.split(df):
+    fold_train = df.iloc[train_idx]
+    means = fold_train.groupby('kategori_sutunu')['target'].mean()
+    df.loc[val_idx, 'kategori_encoded'] = df.loc[val_idx, 'kategori_sutunu'].map(means)
+```
+
+Bu kod, her satırın encoding değerini, **o satırın bulunduğu fold hariç** diğer foldlardan hesaplayarak leakage riskini engelliyor.
+
+## Ne Zaman Kullanılmalı, Ne Zaman Kullanılmamalı?
+
+**Target Encoding'i tercih etmelisiniz eğer:** kategori sayınız çok yüksekse (One-Hot patlamasına yol açacak kadar), ve her kategori **yeterince sık** tekrarlanıyorsa (güvenilir bir ortalama hesaplanabilecek kadar) — tam da bizim önceki konuştuğumuz "20.000 kategori, her biri 10.000+ kez" senaryosu.
+
+**Target Encoding'den kaçınmalısınız eğer:** kategorileriniz **nadiren** tekrarlanıyorsa (her biri sadece birkaç kez geçiyorsa), çünkü bu durumda hesaplanan ortalamalar **son derece güvenilmez ve overfitting'e çok açık** olur; bu durumda ya smoothing'i çok agresif kullanmanız ya da tamamen farklı bir yöntem (Frequency Encoding, Rare Category Grouping) tercih etmeniz gerekir.
+
+**Özetle:** Target Encoding, kategorik bir değişkeni, o kategorinin **hedef değişkenle olan gerçek istatistiksel ilişkisine** dayanarak sayısala çeviren, çok güçlü ama aynı zamanda **data leakage ve overfitting'e karşı dikkatli kullanılması gereken** bir tekniktir. Gücü, kategorinin anlamlı bir bilgiyi doğrudan sayıya taşımasından gelirken, riski, bu bilgiyi **yanlış/sızıntılı bir şekilde** hesapladığınızda modelin gerçekte var olmayan bir örüntüyü "ezberlemesine" yol açabilmesinden kaynaklanır — bu yüzden **smoothing** ve **K-fold hesaplama**, Target Encoding'i güvenli kullanmanın iki temel direği olarak kabul edilir.
+
+Soru: Hocam kafama şu takıldı smoothing yaptığımız zaman data leakage olmaz mı ?
+
+Hocam çok isabetli bir soru, ve cevap **kısmen evet** — smoothing, data leakage'ı **tamamen çözmüyor**, sadece **farklı bir sorunu** (overfitting/güvenilmezlik) çözüyor. Bu ikisini birbirinden ayırmamız lazım.
+
+## Smoothing Ne Sorunu Çözüyor, Data Leakage'ı mı?
+
+**Hayır, smoothing'in amacı data leakage değil, "küçük örneklem güvenilmezliği" sorununu çözmek.** Bunlar **iki ayrı problem:**
+
+**Sorun 1 — Küçük Örneklem Güvenilmezliği (Smoothing'in Çözdüğü Şey)**
+Bir kategori sadece 3 kez geçiyorsa, o 3 örneğin ortalaması **istatistiksel olarak güvenilmez/gürültülü** olur — bu, leakage değil, sadece **"az veriden çıkarılan yanıltıcı bir sonuç"** sorunu. Smoothing, bunu genel ortalamaya doğru çekerek **yumuşatıyor**.
+
+**Sorun 2 — Data Leakage (Smoothing'in ÇÖZMEDİĞİ Şey)**
+Leakage, bir satırın **kendi target değerinin**, o satırın **kendi encoding değerinin hesaplanmasına dahil edilmesinden** kaynaklanır. Bu, örneklem büyüklüğüyle **hiç ilgili değil** — kategori 10.000 kez tekrarlansa bile, eğer siz o kategorinin ortalamasını hesaplarken **mevcut satırın kendi target'ını da dahil ederseniz**, teknik olarak **hâlâ leakage** vardır, sadece etkisi (büyük `n` sayesinde) **çok küçük ve fark edilmez** olur.
+
+## Somut Örnekle Gösterelim
+
+Diyelim ki "İstanbul" kategorisi **1000 kez** geçiyor, 250'si churn (target=1). Sizin şu an tahmin etmeye çalıştığınız **bir satır** da "İstanbul" kategorisinde ve **target=1**.
+
+**Eğer bu satırı da ortalamaya dahil ederseniz:**
+```
+ortalama = 250/1000 = 0.250 (bu satırın kendi target'ı da içeride)
+```
+
+**Eğer bu satırı hariç tutarsanız (doğru yöntem):**
+```
+ortalama = 249/999 = 0.2492 (bu satırın target'ı çıkarıldı)
+```
+
+Gördüğünüz gibi, `n=1000` gibi büyük bir örneklemde, **fark çok küçük** (0.250 vs 0.2492) — bu yüzden **büyük örneklemlerde leakage'ın etkisi "gözle görülmez" hale gelir**, ama **teknik olarak hâlâ oradadır**. Eğer aynı hesabı sadece **3 kez** geçen bir kategoride yapsaydınız (`n=3`), kendi target'ınızı dahil etmek, ortalamayı **çok ciddi şekilde** çarpıtırdı (`3/3=1.0` vs `2/2=1.0`, ya da `1/3=0.33` vs `0/2=0`) — işte bu yüzden **küçük örneklemli kategorilerde leakage çok daha tehlikelidir**.
+
+## Yani Smoothing ile Leakage Arasındaki İlişki
+
+Smoothing, **dolaylı olarak** leakage'ın etkisini **hafifletir** (çünkü nadir kategorilerin aşırı güvenilmez ortalamalarını genel ortalamaya çeker), ama **leakage'ın kendisini ortadan kaldırmaz**. Leakage'ı **gerçekten ve tam olarak** ortadan kaldırmanın tek güvenilir yolu, hatırlarsanız bahsettiğim **K-Fold Target Encoding** — yani her satırın encoding değerini, **o satır hariç** diğer verilerden hesaplamak.
+
+## En Sağlam Yaklaşım — İkisini Birlikte Kullanmak
+
+Gerçek, profesyonel bir Target Encoding uygulaması genelde **hem K-Fold hem Smoothing'i birlikte** kullanır:
+
+1. **K-Fold** → leakage'ı engeller (her satırın kendi target'ı, kendi encoding'ini etkilemez)
+2. **Smoothing** → her fold içinde, nadir kategorilerin güvenilmez ortalamalarını yumuşatır
+
+Bu ikisi **farklı sorunları** çözdüğü için, **birbirinin yerine geçmez**, birlikte kullanılmaları gerekir — sadece smoothing yapıp K-Fold yapmazsanız, **leakage hâlâ orada durur** (sadece etkisi kategori sıklığına göre değişir); sadece K-Fold yapıp smoothing yapmazsanız, **nadir kategorilerin güvenilmezlik sorunu** hâlâ çözülmemiş olur.
+
+**Özetle:** Smoothing, data leakage'ı **önlemez** — o, **farklı bir sorunu** (küçük örneklemlerin güvenilmez ortalama üretmesini) çözer. Leakage'ı gerçekten önlemek için **K-Fold (ya da benzeri bir "kendi satırını hariç tutma") mekanizması** şart. En sağlam pratik, ikisini **birlikte** kullanmaktır: K-Fold ile leakage'ı engellersiniz, smoothing ile de her fold içindeki nadir kategorilerin güvenilmezliğini azaltırsınız.
+
+Soru: Aslında sorduğum soru şuydu. Smoothingde veri sayısı azsa target değerinin genel ortalamasını alıyoruz ya bu da bize data leakage oluşturmaz mı ?
+
+Hocam **çok haklı bir yakalama**, gerçekten gözden kaçırılabilecek ince bir nokta buldunuz. Cevap: **Evet, eğer dikkat etmezseniz, genel ortalama (global mean) de tam olarak aynı leakage sorununu taşır.**
+
+## Neden Aynı Sorun Genel Ortalamada da Var?
+
+Smoothing formülünü hatırlayalım:
+
+Smoothed = {n * kategori_ortalaması + m * genel_ortalama}/{n + m}
+
+Burada **"genel ortalama"**, tipik olarak **tüm veri setinin target ortalaması** olarak hesaplanır:
+
+genel_ortalama = df['target'].mean()
+
+**İşte tam burada sorun var** — eğer bu `genel_ortalama`'yı hesaplarken, tahmin etmeye çalıştığınız **satırın kendi target değeri de** bu hesaba dahilse, siz **dolaylı olarak yine kendi cevabınızı** kullanmış oluyorsunuz. Yani sadece **kategori ortalamasında değil**, formülün **her iki bileşeninde de** (hem kategori ortalaması hem genel ortalama) **aynı leakage riski** mevcut — smoothing, kategori ortalamasının **etkisini azaltıp** genel ortalamaya doğru çekerken, o genel ortalamanın **kendisi de** sızıntılı olabiliyor.
+
+## Somut Örnekle Gösterelim
+
+Diyelim ki 1000 satırlık bir veri setiniz var, genel churn oranı `%20` (200 kişi churn etmiş). Şimdi **tahmin etmeye çalıştığınız** satırın `target=1` (churn etmiş) olduğunu varsayalım.
+
+**Eğer genel ortalamayı TÜM veriden (bu satır dahil) hesaplarsanız:**
+```
+genel_ortalama = 200/1000 = 0.200 (bu satırın kendi target'ı da içeride)
+```
+
+**Eğer bu satırı hariç tutarsanız (doğru yöntem):**
+```
+genel_ortalama = 199/999 = 0.1992 (bu satırın target'ı çıkarıldı)
+```
+Yine fark **küçük** (çünkü genel ortalama, genelde **çok büyük bir örneklemden** hesaplanır, `n=1000`), ama **teknik olarak leakage hâlâ orada** — sadece etkisi **daha da küçük ve fark edilmez** çünkü artık tek bir kategori değil, **tüm veri setinin** ortalamasından bahsediyoruz.
+
+## Peki Bu Sorunu Nasıl Çözüyoruz?
+
+**Çözüm, tam olarak K-Fold mantığının burada da uygulanmasıdır** — hem kategori ortalamasını hem de genel ortalamayı, **sadece o fold'un train kısmından** (yani tahmin edilecek satırı içermeyen kısımdan) hesaplarsınız:
+
+```python
+from sklearn.model_selection import KFold
+import numpy as np
+
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+df['kategori_encoded'] = np.nan
+m = 10  # smoothing ağırlığı
+
+for train_idx, val_idx in kf.split(df):
+    fold_train = df.iloc[train_idx]
+    
+    # HEM kategori ortalaması HEM genel ortalama, sadece bu fold'un train kısmından
+    genel_ortalama = fold_train['target'].mean()
+    kategori_stats = fold_train.groupby('kategori_sutunu')['target'].agg(['mean', 'count'])
+    
+    smoothed = (kategori_stats['count'] * kategori_stats['mean'] + m * genel_ortalama) / (kategori_stats['count'] + m)
+    
+    df.loc[val_idx, 'kategori_encoded'] = df.loc[val_idx, 'kategori_sutunu'].map(smoothed)
+```
+
+Dikkat edin: `genel_ortalama` da artık **`fold_train`'den** (yani validation/val_idx satırları **hariç tutularak**) hesaplanıyor — bu sayede hem kategori ortalaması hem genel ortalama, **tahmin edilen satırın kendi bilgisini asla görmüyor**.
+
+## Sizin Sorunuzun Bana Öğrettiği Şey
+
+Bu aslında çok güzel bir gözlem çünkü şunu gösteriyor: **Leakage'dan kaçınmak, sadece "kategori ortalamasını doğru hesaplamak" değil, formülün İÇİNDEKİ HER İSTATİSTİKSEL BİLEŞENİ (genel ortalama dahil) doğru şekilde, tahmin edilen satırı dışlayarak hesaplamak anlamına geliyor.** Yani K-Fold uygulaması sadece "kategori bazlı gruplamaya" değil, **formülün tamamına** (smoothing'in her iki tarafına da) uygulanmalı.
+
+**Özetle:** Evet, haklısınız — eğer genel ortalama, tahmin edilen satırın kendi target'ını da içeren **tüm veri setinden** hesaplanırsa, bu da **teknik olarak bir leakage kaynağıdır**, tıpkı kategori ortalamasında olduğu gibi. Bunu önlemenin yolu, K-Fold mantığını **sadece kategori ortalamasına değil, smoothing formülündeki genel ortalamaya da** uygulamak — yani her iki bileşeni de **sadece o fold'un train verisinden**, tahmin edilecek satırı **dışlayarak** hesaplamak.
+
+Target Encoding (Mean Encoding)
+While One-Hot Encoding is effective for nominal features with few categories, it can lead to a high-dimensional feature space when dealing with variables that have many unique values (high cardinality). Ordinal encoding requires a meaningful order, which isn't always present. Target encoding, also known as mean encoding, offers an alternative approach that directly utilizes information from the target variable to create a numerical representation for categories.
+
+The Core Idea
+The fundamental principle behind target encoding is to replace each category within a feature with the average value of the target variable associated with that category.
+
+For Regression: Replace the category with the mean of the target variable for all rows belonging to that category.
+For Binary Classification: Replace the category with the mean of the target variable (often 0 or 1) for that category. This value effectively represents the empirical probability of the positive class (target=1) given the category.
+For Multiclass Classification: You can adapt this by calculating the mean target probability for each class separately, creating multiple new features, or by using other variations. Often, it's applied in a one-vs-rest manner for each class.
+
+Hocam bu, Target Encoding'in **binary (2 sınıflı)** durumdan **multiclass (çok sınıflı)** duruma nasıl genişletildiğini anlatıyor. Adım adım açalım.
+
+## Önce Hatırlayalım — Binary Target Encoding Nasıldı?
+
+Şu ana kadar konuştuğumuz örneklerde `target` hep **0 veya 1** idi (churn/churn değil, hasta/hasta değil). Bu durumda Target Encoding **basitti** — her kategori için **tek bir sayı** (o kategorinin `target=1` olma oranı) hesaplıyorduk:
+```
+İstanbul → 0.25 (yani churn oranı %25)
+```
+
+## Peki Target 3+ Sınıflıysa Ne Olur? (Multiclass Senaryo)
+
+Şimdi düşünün, `target` sütunu **binary değil**, örneğin bir müşteri segmentasyonu problemi: `target` şu üç değerden birini alıyor: **"Düşük Değerli", "Orta Değerli", "Yüksek Değerli"** müşteri. Artık **tek bir "başarı oranı"** hesaplayamazsınız, çünkü **"başarı" tek bir şey değil, 3 farklı olası sonuç var.**
+
+## Çözüm — Her Sınıf İçin Ayrı Bir Encoding Sütunu (One-vs-Rest Mantığı)
+
+Cümlede geçen **"one-vs-rest"** yaklaşımı şu şekilde çalışıyor: her sınıf için, **"bu kategori, bu spesifik sınıfa ait olma oranı nedir?"** diye ayrı ayrı sorular sorup, her biri için **ayrı bir sütun** oluşturursunuz.
+
+**Somut örnek:**
+```
+Şehir=İstanbul, 1000 müşteri:
+  - Bunların 300'ü "Düşük Değerli"  → oran = 0.30
+  - Bunların 500'ü "Orta Değerli"   → oran = 0.50
+  - Bunların 200'ü "Yüksek Değerli" → oran = 0.20
+```
+
+Bu durumda, `Şehir` sütunundan **tek bir encoding sütunu değil, 3 ayrı encoding sütunu** türetirsiniz:
+
+```
+Şehir      Şehir_DüşükDeğerli_oranı  Şehir_OrtaDeğerli_oranı  Şehir_YüksekDeğerli_oranı
+İstanbul          0.30                      0.50                      0.20
+```
+
+Yani mantık şu: **her sınıf için, "bu kategori bu sınıfa mı ait, yoksa geri kalan (rest) sınıflara mı ait" sorusunu binary bir problem gibi ele alıp**, o sınıfa özel bir oran hesaplıyorsunuz — "Düşük Değerli mi, yoksa geri kalanı (Orta+Yüksek) mi" diye bakıyorsunuz, bu da **"one" (bir sınıf) "vs" (karşı) "rest" (geri kalan hepsi)** ismini açıklıyor.
+
+## Kod Üzerinden Gösterelim
+
+```python
+import pandas as pd
+
+# target sütunu: 'Düşük', 'Orta', 'Yüksek' gibi 3 kategoriden biri
+for sinif in df['target'].unique():
+    # bu sınıf için binary bir hedef oluştur: sınıf=1, diğerleri=0
+    binary_target = (df['target'] == sinif).astype(int)
+    
+    # normal target encoding mantığıyla, bu binary hedefe göre ortalama al
+    means = df.groupby('Şehir')[binary_target.name].transform('mean') if binary_target.name else None
+    
+    # Daha temiz bir yol:
+    df[f'Şehir_encoded_{sinif}'] = df.groupby('Şehir')['target'].transform(
+        lambda x: (x == sinif).mean()
+    )
+```
+
+## Sonuç Kaç Yeni Sütun Üretir?
+
+Eğer `target` sütununuz **K farklı sınıf** içeriyorsa, Target Encoding uyguladığınız her kategorik sütun, **K adet yeni sütun** üretir (her sınıf için bir tane). Bizim örneğimizde 3 sınıf olduğu için, `Şehir` sütunu **3 yeni sütuna** dönüşüyor.
+
+## "Or by Using Other Variations" Kısmı Ne Demek?
+
+Cümlenin bu kısmı, one-vs-rest'in **tek yol olmadığını** ima ediyor. Alternatif yaklaşımlar arasında:
+- **Yalnızca K-1 sütun oluşturmak** (son sınıfı otomatik olarak "diğerlerinin tümü 0 ise bu sınıftır" mantığıyla çıkarım yapmak, tıpkı One-Hot Encoding'deki `drop_first` mantığına benzer)
+- **Ordinal bir yapı varsa**, sınıfları sıralı kabul edip **tek bir ortalama sıra numarası** hesaplamak (eğer "Düşük < Orta < Yüksek" gibi gerçek bir hiyerarşi varsa)
+
+## Neden Bu Yaklaşım Mantıklı?
+
+Bu, aslında **One-Hot Encoding'in target değişkenine uygulanmış hali** gibi düşünülebilir — tıpkı One-Hot'un her kategoriyi ayrı bir 0/1 sütununa ayırması gibi, multiclass Target Encoding de her **hedef sınıfı** ayrı bir "oran" sütununa ayırıyor. Bu sayede model, **her sınıfa özel** bir sinyal görebiliyor — örneğin İstanbul'un "Yüksek Değerli" müşteri üretme eğilimi ile "Düşük Değerli" müşteri üretme eğilimi **farklı bilgiler** taşıyor, bunları **tek bir sayıya sıkıştırmak** bu ayrımı kaybettirirdi.
+
+**Özetle:** Multiclass durumda Target Encoding, her kategori için **tek bir ortalama** yerine, **her olası hedef sınıf için ayrı bir ortalama/oran** hesaplar — bu da kategorik sütunun, sınıf sayısı kadar **yeni sütuna** dönüşmesine yol açar. "One-vs-rest" yaklaşımı, her sınıfı sırayla "bu mu, yoksa diğerleri mi" diye **binary bir probleme indirgeyerek** bu çoklu-sınıf durumunu, bizim zaten bildiğimiz **binary Target Encoding mantığına** geri döndürüyor, sadece bunu **her sınıf için ayrı ayrı** tekrarlıyor.
+
+For example, a simple binary classification dataset with a categorical feature City and a binary target Purchased:
+
+City	Purchased
+London	1
+Paris	0
+London	0
+Tokyo	1
+Paris	1
+London	1
+Tokyo	0
+
+To calculate the target encoding for City:
+
+Group by City: Group the data by the unique values in the City column.
+Calculate Mean Target: For each city, calculate the mean of the Purchased column.
+London: Mean(1, 0, 1) = 2/3 ≈ 0.67
+Paris: Mean(0, 1) = 1/2 = 0.50
+Tokyo: Mean(1, 0) = 1/2 = 0.50
+Map Values: Replace the original city names with these calculated means.
+The encoded feature would look like this:
+
+City (Encoded)	Purchased
+0.67		1
+0.50		0
+0.67		0
+0.50		1
+0.50		1
+0.67		1
+0.50		0
+
+This single numerical feature now incorporates information about the likelihood of purchase associated with each city, potentially providing significant predictive power without drastically increasing dimensionality.
+
+The Danger: Target Leakage and Overfitting
+Target encoding seems powerful, but performing it naively, as shown above, introduces a significant risk: target leakage.
+
+When you calculate the encoding for a specific row using the target value of that same row, you are leaking information from the target into the feature. The model learns a direct correlation: "When the target for this specific row was 1, the encoded value was slightly higher/lower." This leads to overly optimistic performance during training because the model effectively gets a hint about the target value. However, this performance boost won't generalize to new, unseen data where the target is unknown, resulting in overfitting.
+
+Imagine encoding the City for the first row (London, Purchased=1). The mean calculated (0.67) included that very Purchased=1 value.
+
+Mitigating Target Leakage: Smoothing and Cross-Validation
+To use target encoding safely and effectively, you must implement strategies to prevent or minimize target leakage.
+
+1. Smoothing (Regularization)
+Categories with very few samples can lead to unreliable mean estimates. For instance, if a city appeared only once and resulted in a purchase, its target encoding would be 1.0, which might be an extreme and noisy estimate. Smoothing addresses this by blending(karıştırma , harmanlama) the category's mean with the overall global mean of the target variable.
+
+A common smoothing technique uses the formula:
+
+Smoothed = {n * kategori_ortalaması + m * genel_ortalama}/{n + m}
+
+Where:
+
+count is the number of samples belonging to the category.
+category_mean is the original mean target value for that category.
+global_mean is the mean target value across the entire dataset.
+m is the smoothing factor, a hyperparameter determining the "strength" of the smoothing. A higher m means smaller categories will have their means pulled more strongly towards the global mean.
+The intuition is that for categories with a large count, the formula heavily weights the category_mean. For categories with a small count, the global_mean dominates, providing a more conservative estimate(tedbirli tahmin). Determining the optimal m often involves cross-validation.
+
+2. Cross-Validation Encoding
+A more approach involves calculating encodings within a cross-validation framework. Instead of calculating means on the entire dataset, you compute them only on the training folds and apply them to the corresponding validation fold.
+
+Here's a typical workflow using K-Fold cross-validation:
+
+Split the training data into K folds.
+For each fold k (acting as a temporary validation set):
+Calculate the target means for each category using data from the other K-1 folds (acting as a temporary training set). Apply smoothing if desired during this calculation.
+Use these calculated means to encode the categorical feature for the data points within fold k.
+Concatenate the encoded features from all K folds to get the target-encoded feature for the entire training set.
+For encoding the final test set (or new data), calculate the target means using the entire original training set (potentially with smoothing) and apply these means.
+This method ensures that the encoding for any given data point is calculated without using its own target value, effectively preventing direct leakage within the training set evaluation.
+
+import pandas as pd
+from sklearn.model_selection import KFold
+
+# Sample Data
+data = {'City': ['London', 'Paris', 'London', 'Tokyo', 'Paris', 'London', 'Tokyo', 'Rome', 'Rome'],
+        'Purchased': [1, 0, 0, 1, 1, 1, 0, 0, 1]}
+df = pd.DataFrame(data)
+target = 'Purchased'
+feature = 'City'
+
+# Global mean for smoothing and potentially filling NAs later
+global_mean = df[target].mean()
+# Smoothing factor
+m = 1
+
+# Setup KFold
+kf = KFold(n_splits=3, shuffle=True, random_state=42)
+df[f'{feature}_encoded'] = 0.0 # Initialize encoded column
+
+# Apply CV encoding
+for train_index, val_index in kf.split(df):
+    df_train, df_val = df.iloc[train_index], df.iloc[val_index]
+
+    # Calculate smoothed means on the training part of the fold
+    means = df_train.groupby(feature)[target].agg(['count', 'mean'])
+    smoothed_means = (means['count'] * means['mean'] + m * global_mean) / (means['count'] + m)
+
+    # Apply means to the validation part of the fold
+    # Use .map() and fill potential new categories in validation with global mean
+    df.loc[val_index, f'{feature}_encoded'] = df_val[feature].map(smoothed_means).fillna(global_mean)
+
+print("Original DataFrame with CV Target Encoding:")
+print(df)
+
+# Example: Encoding a new data point (use means from the full training set)
+full_train_means = df.groupby(feature)[target].agg(['count', 'mean'])
+full_smoothed_means = (full_train_means['count'] * full_train_means['mean'] + m * global_mean) / (full_train_means['count'] + m)
+
+new_data = pd.DataFrame({'City': ['Paris', 'Berlin']}) # Berlin is unseen
+new_data[f'{feature}_encoded'] = new_data[feature].map(full_smoothed_means).fillna(global_mean)
+
+print("\nEncoding New Data:")
+print(new_data)
+
+The code demonstrates K-Fold target encoding with smoothing. Note how the encoded value for each row is derived from means calculated on other folds, and how unseen categories (Berlin) are handled using the global mean.
+
+Implementation Libraries
+While you can implement target encoding manually using Pandas as shown, specialized libraries often provide optimized implementations that handle smoothing and cross-validation internally. The category_encoders library is a popular choice:
+
+# Example using category_encoders (requires installation: pip install category_encoders)
+# import category_encoders as ce
+
+# Assuming df_train, df_test are your training and test sets
+# target_encoder = ce.TargetEncoder(cols=[feature], smoothing=1.0) # Specify smoothing
+
+# Fit on training data (calculates means)
+# target_encoder.fit(df_train[feature], df_train[target])
+
+# Transform training and test data
+# df_train[f'{feature}_encoded'] = target_encoder.transform(df_train[feature])
+# df_test[f'{feature}_encoded'] = target_encoder.transform(df_test[feature])
+
+# Note: category_encoders' TargetEncoder performs smoothing but might not implement
+# the strict K-Fold validation encoding by default; check documentation for CV strategies.
+# For rigorous leakage prevention, manual K-Fold or integrating it with sklearn pipelines is often preferred.
+
+Advantages and Disadvantages
+Advantages:
+
+Captures Target Information: Directly models the relationship between the category and the target variable.
+Dimensionality Reduction: Typically creates only one new feature per original categorical feature, regardless of cardinality (unlike One-Hot Encoding).
+Often Effective: Can lead to good model performance, especially with tree-based algorithms.
+Disadvantages:
+
+Prone to Overfitting: High risk of target leakage if not implemented carefully (using smoothing and/or cross-validation).
+Sensitivity to Outliers: Mean calculation can be sensitive to outliers in the target variable, especially for categories with few samples (smoothing helps mitigate this).
+Complexity: Correct implementation requires careful handling of training/validation splits and potential unseen categories.
+Requires Target Variable: Cannot be calculated without access to the target variable, limiting its use in unsupervised contexts.
+Choosing Target Encoding
+Target encoding is a powerful technique, particularly useful for:
+
+Categorical features with high cardinality where One-Hot Encoding becomes impractical.
+Situations where there's a strong expected relationship between the categories and the target outcome.
+Competitions or scenarios where maximizing predictive accuracy is the primary goal (provided overfitting is carefully managed).
+Always apply target encoding after splitting your data into training and testing sets, and use techniques like cross-validation encoding and smoothing within your training pipeline to build reliable models.
+
+### 2. Frequency Encoding (Daha Basit Bir Alternatif)
+
+Her kategoriyi, **kaç kez tekrarlandığına** göre bir sayıya çevirmek:
+
+```python
+freq = df['kategori_sutunu'].value_counts()
+df['kategori_encoded'] = df['kategori_sutunu'].map(freq)
+```
+
+Bu, Target Encoding kadar güçlü bir sinyal taşımaz (çünkü hedef değişkenle ilişki kurmaz, sadece "ne kadar sık görüldüğü" bilgisini taşır), ama **data leakage riski çok daha düşüktür**, çünkü hedef değişkeni hiç kullanmaz — daha "güvenli" ama daha "zayıf" bir yöntem.
+
+### 3. Embedding (Eğer Derin Öğrenme Kullanıyorsanız)
+
+Eğer bir Neural Network kullanıyorsanız, her kategoriyi **düşük boyutlu, öğrenilebilir bir vektöre** (embedding) dönüştürebilirsiniz — tıpkı NLP'de kelimelerin embedding'e çevrilmesi gibi:
+
+```python
+import torch.nn as nn
+embedding_layer = nn.Embedding(num_embeddings=50000, embedding_dim=32)
+```
+
+Bu, model **eğitim sırasında** her kategori için **en uygun sayısal temsili kendisi öğrenir** — collision riski yok, ama sadece derin öğrenme modellerinde kullanılabilir, Linear Regression gibi klasik modellerde işe yaramaz.
+
+### 4. Hibrit Yaklaşım — Rare Category Grouping + One-Hot (Sizin Senaryonuza Özel Bir Öneri)
+
+Eğer 50.000 kategoriden sadece **20.000'i sık tekrarlanıyor**, geri kalan **30.000'i nadir/az tekrarlanıyorsa**, şöyle bir hibrit strateji izleyebilirsiniz:
+```python
+# Sık tekrarlanan (>= belirli bir eşik) kategorileri KORU
+freq = df['kategori_sutunu'].value_counts()
+sik_kategoriler = freq[freq >= 1000].index
+
+df['kategori_gruplu'] = df['kategori_sutunu'].apply(
+    lambda x: x if x in sik_kategoriler else 'Rare'
+)
+
+# Şimdi kategori sayısı çok azaldı, One-Hot Encoding artık mantıklı olabilir
+df_encoded = pd.get_dummies(df, columns=['kategori_gruplu'])
+```
+
+Bu, **hatırlarsanız daha önce bahsettiğim "Rare Category Grouping"** tekniğinin tam uygulaması — nadir kategorileri tek bir "Rare" grubunda toplayıp, sık olanları **kendi kimlikleriyle** korursunuz, böylece hem boyut patlamasını önler hem de önemli bilginin **korunmasını** sağlarsınız.
+
+## Benim Sizin Senaryonuz İçin Önerim
+
+**Öncelik sırası:**
+1. **Target Encoding** (K-fold ile, data leakage'a dikkat ederek) — çünkü her kategori zaten yeterli tekrar sayısına sahip, en güçlü sinyali verir
+2. **Frequency Encoding** — eğer target encoding çok karmaşık gelirse, daha basit ve güvenli bir alternatif
+3. **Rare Category Grouping + One-Hot** — eğer kategorilerin **kendi kimlikleri** (hangi spesifik kategori olduğu) modelin yorumlanabilirliği için önemliyse
+
+---
+
+**Özetle:** Sizin senaryonuzda (çok kategori ama her biri yüksek tekrar sayısına sahip), **Feature Hashing ideal değil** çünkü önemli/sık kategorileri birbirine karıştırma riski taşıyor. Bunun yerine, **Target Encoding** (yüksek tekrar sayısı sayesinde güvenilir ortalama hesaplanabildiği için) bu senaryoya **en uygun** yöntem — sadece data leakage konusunda dikkatli olmanız (K-fold ile hesaplama) gerekiyor.
+
+***************
+//////////////////
+Feature hashing, also known as the hashing trick, can help reduce dimensionality by hashing categories into a fixed number of columns. This approach maintains efficiency while controlling the number of features.
+
+Feature hashing, kategorik değerleri sabit sayıda sütuna sıkıştıran bir yöntem.
+One hot encoding'de her kategori için ayrı bir sütun açıyordun. 1000 farklı kategori varsa 1000 sütun oluşuyor, bellek patlar. Feature hashing ise her kategoriyi bir hash fonksiyonundan geçiriyor ve sonucu sabit sayıda sütuna yerleştiriyor. Mesela 1000 kategoriyi 50 sütuna sıkıştırabiliyorsun.
+
+from sklearn.feature_extraction import FeatureHasher
+
+fh = FeatureHasher(n_features=50, input_type='string')
+hashed = fh.transform(df['day'])
+
+Dezavantajı şu: farklı kategoriler aynı hash değerine düşebilir, buna collision deniyor. Yani iki farklı kategori aynı sütuna yazılabiliyor, bu biraz bilgi kaybı yaratıyor. Ama pratikte makul bir n_features seçersen bu etki çok küçük kalıyor.
+NLP'de çok kullanılıyor, milyonlarca farklı kelime olduğunda one hot encoding imkansız hale geliyor, feature hashing kurtarıyor.
+
+Soru1:Burada sparse matrix mantıklı olmaz mı?
+
+Evet, zaten FeatureHasher default olarak sparse matrix döndürüyor. Çıktının büyük çoğunluğu 0 olduğu için sparse format burada çok mantıklı, ekstra bir şey yapman gerekmiyor.
+
+Soru2:O zaman şöyle diyebilir miyiz . Elimizde çok fazla unique değer varsa biz feature hasher kullanıyoruz bu da arka planda sparse matrix kullanıyor ama veri kaybının kritik olduğu durumlarda düz sparse matrix kullanıyoruz ki herhangi bir sıkıntı yaşamayalım ?
+
+Yaklaşıyorsun ama küçük bir düzeltme yapalım.
+
+"Düz sparse matrix" dediğin şey aslında bir encoding yöntemi değil, sadece bir bellek formatı. Yani sparse matrix tek başına kategorik veriyi encode etmiyor, one hot encoding veya başka bir yöntemle encode ettikten sonra sonucu sparse formatta saklıyor.
+
+Daha doğru şöyle söyleyebiliriz: unique değer sayısı çok fazlaysa ve veri kaybını göze alabiliyorsan feature hashing kullan. Veri kaybı kabul edilemezse one hot encoding yap ama sonucu sparse formatta sakla, böylece bellek sorununu da çözmüş olursun.
+
+Soru3:E madem onehotencoder ile sparse matrix'i kullanabiliyoruz  , o zaman feature hashinge ne gerek var ki , sonuçta bellek şişmiyor ?
+
+Fark şurada: one hot encoding + sparse matrix belleği verimli kullanıyor ama sütun sayısı hala o kadar çok. 1 milyon unique kelime varsa 1 milyon sütun oluşuyor. Sparse format bu 1 milyon sütunun çoğunu bellekte tutmuyor ama sütun sayısının kendisi bir problem.
+
+Mesela sklearn'de bazı algoritmalar çok yüksek boyutlu veriyle yavaşlıyor, buna **curse of dimensionality** deniyor. Feature hashing ise sütun sayısını da sabit tutuyor, 1 milyon kategoriyi 50 sütuna indirgiyor. Yani sadece bellek değil, boyutsallık problemini de çözüyor.
+
+Kısacası fark şu: sparse matrix bellek sorununu çözüyor, feature hashing hem bellek hem boyutsallık sorununu çözüyor ama veri kaybı riski var.
+
+Soru4:O zaman diyelim ki biz feature hashing kullandık. Elimizde 1000 tane unique value var. Ve 50 farklı sütun açtırdık , değerleri de hashe soktuk. Biz aslında sadece 50 farklı değeri doğru bir referansla almış olmayacak mıyız . Geri kalan tüm değerlere ne olacak ?
+
+Geri kalan değerler kaybolmuyor, hepsi o 50 sütuna dağıtılıyor. Hash fonksiyonu her kategoriyi 0-49 arasında bir sütuna atıyor. Yani 1000 kategorinin hepsi o 50 sütundan birine düşüyor.
+
+Problem şu: farklı kategoriler aynı sütuna düşebilir. Mesela "Pazartesi" ve "Çarşamba" ikisi de 17. sütuna hash'lenebilir. Model bu ikisini ayırt edemiyor, sanki aynı kategoriymiş gibi görüyor. İşte veri kaybı bu.
+
+Ama 1000 kategori için 50 sütun çok az, collision çok olur. 500 sütun seçsen collision azalır. Yani `n_features` ne kadar büyükse o kadar az veri kaybı, ama o kadar çok bellek kullanıyorsun. Bir denge kurmak gerekiyor.
+
+Soru6:O zaman da 500 değer sıkıntı yaşamaz mı ?
+
+Yaşar ama daha az. 1000 kategori için 500 sütun seçsen ortalama her sütuna 2 kategori düşüyor, collision az. 50 sütun seçsen her sütuna ortalama 20 kategori düşüyor, collision çok.
+
+Ama şunu da söyleyeyim: hash fonksiyonu kategorileri rastgele dağıtıyor, yani bazı sütunlara 1 kategori düşerken bazılarına 30 düşebilir. Garanti yok.
+
+Pratikte `n_features` seçimi deneme yanılmayla yapılıyor. Modeli farklı değerlerle çalıştırıp en iyi sonucu veren `n_features`'ı seçiyorsun. NLP'de genellikle 2^18 veya 2^20 gibi büyük değerler kullanılıyor çünkü kelime dağarcığı çok geniş.
+
+Soru7:O zaman ben ne zaman kullanırsam feature  hashing'i mantıklı olacak . Bir de arka planda sparse matrix'e göre kayıt ediyor ya bu default mu yoksa bizim fonksiyon olarak belirlememiz lazım mı ?
+
+**Ne zaman kullanmalısın:** Milyonlarca unique değer olduğunda ve biraz veri kaybını tolere edebildiğinde. En yaygın kullanım NLP'de, çünkü kelime dağarcığı çok geniş ve one hot encoding imkansız hale geliyor. Normal tabular veride, yani Titanic gibi veri setlerinde, kategorik sütunlardaki unique değer sayısı genellikle az olduğu için feature hashing'e gerek duymazsın.
+
+**Sparse matrix default mu:** Evet, `FeatureHasher` default olarak sparse matrix döndürüyor. Ekstra bir şey yapman gerekmiyor. Eğer dense format istersen:
+
+```python
+fh = FeatureHasher(n_features=50, input_type='string')
+result = fh.transform(df['day']).toarray()  # dense'e çevirir
+```
+Ama genellikle sparse halde bırakmak daha mantıklı.
+
+Kategori sayısı çok fazlaysa (10k+ unique değer)
+        ↓
+OneHotEncoder → Çok fazla sütun açar, bellek patlar! ❌
+        ↓
+Feature Hashing → Sabit boyutta, hızlı, verimli! ✅
+⚠️ En Büyük Sorunu: Hash Collision
+hash("Red")   % 4 → 2
+hash("Pink")  % 4 → 2  ← Aynı değer! 💥
+İki farklı kategori aynı hash değerini alabilir. Buna collision denir ve bilgi kaybına yol açar.
+
+Feature hashing, "hashing trick" olarak da bilinen bu yöntem, aslında tek bir problemi çözmek için tasarlanmıştır: çok fazla kategori olduğunda boyut sayısını kontrol altında tutmak.
+Şöyle düşün: Elimizde 10.000 farklı ürün kategorisi var. OneHotEncoder kullansaydık 10.000 yeni sütun açılırdı. Bu hem belleği patlatır hem de modeli yavaşlatır. İşte tam burada feature hashing devreye giriyor.
+Fixed Number of Columns => İlk önce kaç sütun olduğunu belirleyeceğiz.
+
+# 10.000 kategori var ama biz sadece 8 sütun istiyoruz!
+fh = FeatureHasher(n_features=8, input_type='string')
+Hash fonksiyonu her kategoriyi alır ve **0 ile 7 arasında** bir sütuna yerleştirir:
+"Laptop"    → hash("Laptop")    % 8 → 3. sütun
+"Telefon"   → hash("Telefon")   % 8 → 6. sütun
+"Tablet"    → hash("Tablet")    % 8 → 1. sütun
+"Kulaklık"  → hash("Kulaklık")  % 8 → 3. sütun ⚠️ Collision!
+10.000 kategori ne olursa olsun **her zaman 8 sütun** çıkar! ✅
+## 📊 Boyut Karşılaştırması:
+OneHotEncoder ile:
+10.000 kategori → 10.000 sütun 😱
+
+Feature Hashing ile:
+10.000 kategori → 8 sütun ✅
+
+Hangi kategorilerin önemlerini şöyle anlayabiliriz:
+Önce kategorilerin ne kadar sık göründüğüne bak:
+df['kategori'].value_counts()
+Az görünen kategoriler modele katkı sağlamayabilir!
+
+**Rare Category Problemi**
+
+Veri setinde bazı kategoriler çok az sayıda görünüyor olabilir. Mesela 1000 satırlık bir veri setinde bazı kategoriler sadece 2-3 kez geçiyorsa bu bir problem. Neden problem? Çünkü model bu kategoriyi yeterince öğrenemiyor, çok az örnek gördüğü için genelleme yapamıyor. Ayrıca one hot encoding yapınca bu nadir kategoriler için de ayrı sütun açılıyor, gereksiz boyutsallık artışı yaratıyor.
+
+**Çözüm: Rare Gruplama**
+
+Az görünen kategorileri tek bir "Rare" kategorisi altında topluyorsun.
+
+```python
+threshold = 10
+counts = df['day'].value_counts()
+df['day'] = df['day'].where(df['day'].isin(counts[counts >= threshold].index), other='Rare')
+```
+
+Bu kod şunu yapıyor: 10'dan az görünen kategorileri "Rare" olarak değiştiriyor, 10 ve üzeri görünenlere dokunmuyor.
+
+**Sonrasında ne yapıyoruz?**
+
+Rare gruplama bir temizlik adımı, encoding değil. Yaptıktan sonra tüm sütuna normal encoding uyguluyorsun. Başta 100 unique değer varsa ve 10 tanesi nadirse, gruplama sonrası 91 unique değer kalıyor. Sonra bu 91 değere one hot encoding veya feature hashing uyguluyorsun.
+
+Yani rare gruplama sadece unique değer sayısını azaltmak için yapılıyor, ayrı bir encoding adımı değil. Amacı encoding'i daha verimli hale getirmek.
+
+Hedef Değişkenle İlişki — Target Encoding Analizi
+Kategorinin hedef değişkeni ne kadar etkilediğine bak:
+
+df.groupby('kategori')['fraud'].mean()
+
+# Çıktı:
+# Laptop    0.02  ← %2 fraud, düşük ilişki
+# Telefon   0.85  ← %85 fraud, çok yüksek ilişki! ✅
+# Tablet    0.03
+# Kulaklık  0.80  ← %80 fraud, yüksek ilişki! ✅
+Hedef değişkenle güçlü ilişkisi olan kategoriler önemlidir!
+
+**Feature Selection ve Random Forest**
+
+Veriyi temizledikten ve encoding yaptıktan sonra elimizde onlarca sütun olabilir. Ama her sütun model için faydalı değil. Bazı sütunlar tahmin gücü taşımıyor, hatta modeli yanıltabiliyor. İşte bu noktada feature selection devreye giriyor, yani modele hangi sütunların gireceğine karar vermek.
+
+**Random Forest ile Feature Importance**
+
+Random forest her sütunun tahmin için ne kadar belirleyici olduğunu hesaplıyor. Bunu `feature_importances_` özelliği üzerinden okuyabiliyorsun.
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+
+importance = pd.Series(model.feature_importances_, index=X_train.columns)
+importance.sort_values(ascending=False)
+```
+
+Her sütun için 0-1 arasında bir skor üretiyor. Yüksek skor o sütunun tahmin için daha belirleyici olduğunu söylüyor. Düşük skor ise o sütunun modele katkısının az olduğunu gösteriyor.
+
+**Sonrasında ne yapıyoruz?**
+
+Önemi düşük sütunları atıyorsun. Mesela 0.01'in altındaki sütunları çıkarabilirsin. Bu iki şey sağlıyor: model daha hızlı çalışıyor ve gereksiz sütunlar overfitting riskini artırdığı için bunları atınca model daha iyi genelliyor.
+
+**Random Forest preprocessing mi?**
+
+Teknik olarak preprocessing değil, feature selection adımının bir parçası. Preprocessing veriyi modele hazırlıyor, yani temizleme, encoding, scaling. Feature selection ise hangi sütunların modele gireceğine karar veriyor. Random forest burada bir araç olarak kullanılıyor ama özünde bir model.
+
+**Genel pipeline sırası şöyle:**
+
+Veri temizleme → Encoding → Scaling → Feature selection (Random Forest ile) → Model eğitimi
+
+Model Tabanlı — Feature Importance
+Modeli eğittikten sonra hangi özelliklerin daha önemli olduğunu model kendisi söyler:
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+
+# Feature importance
+import pandas as pd
+importance = pd.Series(
+    model.feature_importances_,
+    index=X_train.columns
+).sort_values(ascending=False)
+
+print(importance)
+# kategori_Telefon    0.45  ← En önemli! ✅
+# kategori_Laptop     0.30
+# kategori_Kulaklık   0.20
+# kategori_Kablo      0.001 ← Neredeyse önemsiz ❌
+
+✅ OneHotEncoding Ne Zaman Mantıklı?
+1️⃣ Unique Kategori Sayısı Az Olduğunda
+2️⃣ Yorumlanabilirlik Önemli Olduğunda
+3️⃣ Kategoriler Arasında Sıralama Yoksa
+4️⃣ Collision Kesinlikle Kabul Edilemezse
+5️⃣ Veri Seti Küçükse
+
+collision olması => İki farklı kategori aynı sütuna düşmesi demek.
+Somut örnek:
+
+Red    → fraud oranı %80  ← Tehlikeli kategori!
+Yellow → fraud oranı %5   ← Güvenli kategori
+Ama ikisi de aynı sütuna düştü!
+
+Red → Fraud
+Yellow → Fraud değil
+
+Ama ikisi aynı sütunda!
+Model ikisini ayırt edemez
+→ Yanlış pattern öğrenir ❌
+
+Gürültü artar , Spurious pattern öğrenilir , performans downward olur.
+
+1. Ham Veri
+        ↓
+2. Feature Hashing (Kategorileri sayısala çevir)
+        ↓
+3. Diğer preprocessing adımları (Scaling, encoding vb.)
+        ↓
+4. Model Eğitimi
+        ↓
+5. Model Değerlendirme
+        ↓
+6. Production'a Al
+
+Feature hashing sadece 2. adım!
+
+Eğer elimizde çok fazla unique değer varsas onehotencoding yavaş olur , future hashing hızlı fakat çok fazla space consuming yapar , bu gibi durumlarda sparse matrix kullanmamız lazım. Sparse matrix sadece 0 olmayan değerleri saklar.
+
+.get_dummies()
+
+get_dummies() aslında one hot encoding yapıyor. Kategorik sütunu alıp her kategori için binary sütun açıyor. Sklearn'deki OneHotEncoder ile aynı işi yapıyor, sadece kullanım şekli farklı.
+Fark şu: get_dummies() pandas fonksiyonu, direkt DataFrame üzerinde çalışıyor. OneHotEncoder ise sklearn fonksiyonu, pipeline'a dahil edebiliyorsun ve train/test ayrımını daha güvenli yönetiyor.
+
+Üretim ortamı, pipeline, büyük proje gibi durumlarda OneHotEncoder kullan çünkü train/test ayrımını güvenli yönetiyor, pipeline'a dahil edebiliyorsun ve yeni gelen veriyle tutarlı çalışıyor.
+Hızlı analiz, keşif, küçük proje gibi durumlarda get_dummies() kullan çünkü daha kısa ve okunabilir.
+
+Importance of One Hot Encoding
+We use one hot Encoding because:
+
+Eliminating Ordinality: Many categorical variables have no inherent order (e.g., "Male" and "Female"). If we were to assign numerical values (e.g., Male = 0, Female = 1) the model might mistakenly interpret this as a ranking and lead to biased predictions. One Hot Encoding eliminates this risk by treating each category independently.
+
+Improving Model Performance: By providing a more detailed representation of categorical variables. One Hot Encoding can help to improve the performance of machine learning models. It allows models to capture complex relationships within the data that might be missed if categorical variables were treated as single entities.
+
+Compatibility with Algorithms: Many machine learning algorithms particularly based on linear regression and gradient descent which require numerical input. It ensures that categorical variables are converted into a suitable format.
+
+How One-Hot Encoding Works: An Example
+To grasp the concept better let's explore a simple example. Imagine we have a dataset with fruits their categorical values and corresponding prices. Using one-hot encoding we can transform these categorical values into numerical form. For example:
+
+Wherever the fruit is "Apple," the Apple column will have a value of 1 while the other fruit columns (like Mango or Orange) will contain 0.
+This pattern ensures that each categorical value gets its own column represented with binary values (1 or 0) making it usable for machine learning models
+
+
+Fruit	Categorical value of fruit	Price
+apple	1				5
+mango	2				10
+apple	1				15
+orange	3				20
+
+The output after applying one-hot encoding on the data is given as follows,
+
+Fruit_apple	Fruit_mango	Fruit_orange	price
+1		0		0		5
+0		1		0		10
+1		0		0		15
+0		0		1		20
+
+To implement one-hot encoding in Python we can use either the Pandas library or the Scikit-learn library both of which provide efficient and convenient methods for this task
+
+1. Using Pandas
+Pandas offers the get_dummies function which is a simple and effective way to perform one-hot encoding. This method converts categorical variables into multiple binary columns.
+
+For example the Gender column with values 'M' and 'F' becomes two binary columns: Gender_F and Gender_M.
+drop_first=True in pandas drops one redundant column e.g., keeps only Gender_F to avoid multicollinearity.
+
+Sparse Matrix in Machine Learning
+
+In the realm of mathematics and computer science a sparse matrix is a matrix in which most of the elements are zero. The Sparse matrices are prevalent in the many applications where the majority of the data entries are zero making them a crucial concept in the optimizing storage and computational efficiency.
+
+What is a Sparse Matrix?
+The sparse matrix is a matrix in which the vast majority of its elements are zero. Formally, a matrix is considered sparse if the number of the non-zero elements is much smaller compared to the total number of the elements in the matrix. The Sparse matrices can be very large but have only a few non-zero elements.
+
+Characteristics of Sparse Matrices
+High Proportion of Zeroes: The defining feature of the sparse matrix is that most of its elements are zeros.
+Storage Efficiency: The Sparse matrices can be stored the more efficiently compared to dense matrices reducing the amount of the memory required.
+Computational Efficiency: The Operations on sparse matrices can be optimized by the focusing only on the non-zero elements.
+
+The Sparse matrices are widely used in the various fields particularly in the machine learning and data science:
+
+Recommendation Systems: In collaborative filtering for the recommendation systems user-item interaction matrices are often sparse as users typically interact with the only a small subset of items.
+Text Mining: The Term-document matrices in text mining are sparse because each document contains only a small fraction of the total vocabulary.
+Graph Representation: The Adjacency matrices for the large sparse graphs are often sparse, as most nodes are not connected to the each other.
+
+Storage Efficiency and Memory Usage
+The Storing sparse matrices in their entirety using the traditional dense matrix formats can be highly inefficient. Instead, specialized the storage formats are used:
+
+Compressed Sparse Row (CSR): The Stores only non-zero elements and their indices compressing row-wise.
+Compressed Sparse Column (CSC): The Similar to CSR but compresses column-wise.
+Coordinate List (COO): The Stores a list of tuples containing the row index, column index and value of the each non-zero element
+
+These formats significantly reduce memory usage by the avoiding storage of the zero elements.
+
+Sparse vs Dense Matrices
+Dense Matrix: A matrix where most of the elements are non-zero. Dense matrices are often represented in the straightforward contiguous memory layout.
+Sparse Matrix: A matrix where most elements are zero requiring specialized storage formats to the efficiently manage memory.
+The Operations on sparse matrices are often optimized to focus on the non-zero elements whereas operations on dense matrices involve all elements.
+
+The Python offers several libraries for the handling sparse matrices. One popular library is SciPy in which provides efficient tools for the creating and manipulating sparse matrices.
+
+SciPy => Scientific Python
+
+Conclusion
+The Sparse matrices play a vital role in the various domains where the majority of the matrix elements are zero. Their efficient storage and processing are crucial for the handling large datasets and optimizing the computational resources. By using specialized storage formats like Compressed Sparse Row (CSR), Compressed Sparse Column (CSC) and Coordinate List (COO) we can significantly reduce the memory usage and enhance performance.
+
+1️⃣ CSR (Compressed Sparse Row)
+Satır bazlı sıkıştırma
+→ Satırları verimli saklar
+→ Satır bazlı işlemlerde hızlı
+2️⃣ CSC (Compressed Sparse Column)
+Sütun bazlı sıkıştırma
+→ Sütunları verimli saklar
+→ Sütun bazlı işlemlerde hızlı
+3️⃣ COO (Coordinate Format)
+Her değeri (satır, sütun, değer) 
+olarak saklar
+→ En basit format
+→ Oluşturması kolay
+
+Hangisinin seçeceğime nasıl karar verebilirim ?
+
+Veriyi nasıl oluşturuyorum?
+        ↓
+├── Tek tek eleman ekliyorum → COO ✅
+└── Toplu oluşturuyorum → CSR/CSC
+
+Veri üzerinde ne yapacağım?
+        ↓
+├── Satır satır işlem → CSR ✅
+│   (Model eğitimi, row slicing)
+├── Sütun sütun işlem → CSC ✅
+│   (Feature selection, col slicing)
+└── Sadece oluşturup dönüştüreceğim → COO ✅
+
+Matematik işlemi yapacak mıyım?
+        ↓
+├── Matrix çarpımı → CSR ✅
+├── Sütun normalizasyon → CSC ✅
+└── Sadece saklama → COO ✅
+
+1. OneHotEncoder
+
+OneHotEncoder(sparse_output=False)
+Ne zaman kullanılır?
+Kategori sayısı az olduğunda(örn:gender→2,mental_health→3)
+Kategorilerin hepsini yorumlamak/görmek istediğinde
+
+2. Sparse Matrix
+
+OneHotEncoder(sparse_output=True)  # default zaten True
+**Ne zaman kullanılır?**
+- Kategori sayısı **çok fazla** olduğunda (örn: şehir → 81, ürün → 10.000)
+- Bellekte yer kazanmak istediğinde
+- Çünkü OHE'de kategoriler arttıkça matris büyür ama içi çoğunlukla **0** olur — sparse matrix sadece 1'leri saklar
+Normal matris    →  [0, 0, 0, 0, 1, 0, 0, 0]  # hepsini saklar
+Sparse matris    →  sadece index 4 = 1         # çok daha az yer
+
+3. Feature Hashing (Hashing Trick)
+from sklearn.feature_extraction import FeatureHasher
+
+Ne zaman kullanılır?
+
+Kategori sayısı devasa olduğunda (örn: URL, kullanıcı ID, metin)
+Kategorilerin tam listesini önceden bilmediğinde
+Hız ve bellek öncelikliyse
+
+Ama bir dezavantajı var → hash collision olabilir, yani iki farklı kategori aynı hash değerine düşebilir, bilgi kaybı yaşanır.
+
+
+
