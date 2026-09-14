@@ -1,0 +1,140 @@
+Covariance
+
+Covariance (kovaryans), iki değişkenin birlikte nasıl hareket ettiğini ölçen bir sayıdır. Yani "biri artarken diğeri de artıyor mu, yoksa biri artarken diğeri azalıyor mu, ya da aralarında bir ilişki yok mu?" sorusunu yanıtlar. Standart sapma tek bir değişkenin kendi yayılımını ölçüyordu; kovaryans ise iki değişkenin ilişkisini ölçer.
+
+Önce sezgi. İki değişken düşün: bir kişinin boyu ve kilosu. Genelde boy arttıkça kilo da artar, değil mi? İşte bu "birlikte artma" eğilimine pozitif kovaryans denir. Tersine, bir arabanın yaşı ile satış fiyatını düşün: yaş arttıkça fiyat düşer. Bu "biri artarken diğeri azalma" eğilimine negatif kovaryans denir. Bir de alakasız iki şey düşün: bir kişinin ayakkabı numarası ile zekâsı. Biri artarken diğeri ne sistematik artar ne azalır; kovaryansları sıfıra yakındır. Yani kovaryansın işareti ilişkinin yönünü söyler: pozitifse aynı yönde, negatifse ters yönde, sıfıra yakınsa ilişki yok.
+
+Şimdi nasıl hesaplandığına bakalım, çünkü mantığı sezgiyi pekiştiriyor. Hatırla, standart sapmada her değerin kendi ortalamasından farkını alıyorduk. Kovaryansta ise iki değişken var, o yüzden her gözlem için **iki** fark alırsın: X'in ortalamasından farkı ve Y'nin ortalamasından farkı. Sonra bu iki farkı birbiriyle çarparsın ve
+ tüm gözlemler için bu çarpımların ortalamasını alırsın. Formülü:
+
+$$Cov(X,Y) = {1}/{N}\[sum_{i=1}'den {N}'e kadar(x_i - μ_X)(y_i - μY)]
+[X ve Y burada ilişkisine baktığın iki değişken (iki sütun). Mesela X = boy, Y = kilo. $x_i$ ve $y_i$ ise tek bir gözlemin (bir satırın) bu iki değişkendeki değerleridir; mesela bir kişinin boyu ($x_i$) ve o kişinin kilosu ($y_i$). Kovaryans da bu iki sütunun birlikte nasıl hareket ettiğini ölçer.]
+
+Bu çarpımın neden ilişkiyi yakaladığını görmek çok öğretici. Bir gözlemde hem X hem Y kendi ortalamasının üstündeyse, iki fark da pozitiftir, çarpımları pozitif çıkar. Hem X hem Y ortalamanın altındaysa, iki fark da negatiftir, ama negatif çarpı negatif yine pozitif çıkar. Yani ikisi "aynı yönde" hareket ettiğinde (ikisi birlikte yüksek ya da ikisi birlikte düşük) çarpım hep pozitif olur. Tersine, biri ortalamanın üstünde diğeri altındaysa, biri pozitif biri negatif fark verir, çarpımları negatif çıkar; yani "ters yönde" hareket. Tüm bu çarpımları topladığında, eğer ilişki ağırlıkla aynı yöndeyse toplam pozitif, ters yöndeyse negatif, karışıksa birbirini götürüp sıfıra yakın olur. İşte kovaryansın sihri bu çarpımda gizli.
+
+Şimdi kovaryansın büyük bir zayıflığını söyleyeyim, çünkü bu seni doğrudan correlation'a götürecek. Kovaryansın sayısal değeri ölçeğe bağlıdır ve bu yüzden tek başına yorumlanması zordur. Mesela boyu santimetre yerine metre cinsinden ölçersen kovaryans tamamen farklı bir sayı çıkar, ama ilişki aynıdır. Ya da farklı birimlerdeki iki ilişkinin kovaryanslarını kıyaslayamazsın; "5 olan kovaryans mı güçlü, 5000 olan mı?" diyemezsin çünkü ölçekleri farklı. Kovaryans sana sadece ilişkinin **yönünü** (işaretini) güvenle söyler, ama **gücünü** net söyleyemez. İşte bu yüzden correlation (korelasyon) icat edilmiştir: korelasyon, kovaryansı iki değişkenin standart sapmalarına bölerek -1 ile +1 arasına normalize eder, böylece hem yönü hem gücü ölçekten bağımsız olarak verir. Yani korelasyon, kovaryansın "standartlaştırılmış, yorumlanabilir" halidir.
+
+Senin son işlediğin konularla bağlayayım. Hatırla standardization, CV gibi yerlerde hep "ölçeğe bağlılık" sorunu çıkıyordu ve onu normalize ederek çözüyorduk; kovaryans-korelasyon ilişkisi de tam aynı hikâye. Bir de ileride çok karşılaşacağın bir yer: makine öğrenmesinde "covariance matrix" (kovaryans matrisi) diye bir şey var; çok sayıda değişkenin tüm ikili kovaryanslarını bir tabloda toplar ve PCA gibi boyut indirgeme yöntemlerinin temelini oluşturur. 
+
+Tek paragrafta toparlayayım: Kovaryans, iki değişkenin birlikte nasıl hareket ettiğini ölçer; her gözlemde iki değişkenin kendi ortalamalarından farklarının çarpımının ortalaması olarak hesaplanır ve işareti ilişkinin yönünü verir (pozitifse birlikte artarlar, negatifse biri artarken diğeri azalır, sıfıra yakınsa ilişki yoktur). En büyük zayıflığı ölçeğe bağlı olması, yani sayısal değerinin ilişkinin gücünü net göstermemesidir; bu yüzden kovaryansı standart sapmalara bölüp -1 ile +1 arasına normalize eden korelasyon, ilişkinin hem yönünü hem gücünü ölçekten bağımsız olarak veren daha kullanışlı bir ölçüdür.
+
+Ölçeğe Bağlılık:
+
+Ölçeğe bağlılık, bir sayının değerinin, kullandığın birime/ölçeğe göre değişmesi demektir. Yani aynı gerçek durumu farklı birimle ölçtüğünde sonuç sayısı değişiyorsa, o ölçü "ölçeğe bağlı"dır. Örnekle çok netleşir.
+
+Bir kişinin boyunu düşün. Aynı boyu santimetreyle ölçersen 180, metreyle ölçersen 1.80 çıkar. Gerçek durum (kişinin boyu) hiç değişmedi ama sayı tamamen farklı. İşte bu ölçeğe bağlılık: sayı, seçtiğin birime göre oynuyor.
+
+Kovaryansta bu neden sorundu? Çünkü kovaryansın değeri de tıpkı böyle birime göre değişir. Boy-kilo kovaryansını santimetre-kilogramla hesaplarsan bir sayı, metre-gramla hesaplarsan bambaşka bir sayı çıkar; ama boy ile kilo arasındaki gerçek ilişki ikisinde de aynı. Dolayısıyla kovaryansın sayısal büyüklüğüne bakıp "ilişki ne kadar güçlü" diyemezsin, çünkü o büyüklük ilişkinin gücünü değil, kısmen seçtiğin birimi yansıtıyor. Aynı sebeple iki farklı ilişkinin kovaryanslarını da kıyaslayamazsın; biri büyük çıkmış olabilir sırf birimi büyük olduğu için, daha güçlü ilişki olduğu için değil.
+
+Çözüm normalize etmekti, yani ölçekten kurtarmak. Korelasyon, kovaryansı standart sapmalara bölerek -1 ile +1 arasına çeker; bu işlem birimleri sadeleştirip yok eder, sonuç birimsiz hale gelir. Artık santimetre de kullansan metre de, korelasyon aynı sayıyı verir, çünkü ölçeğe bağlılık ortadan kalkmıştır. İşte bu yüzden korelasyon kovaryanstan daha kullanışlı.
+
+Bu kavramı aslında daha önce de görmüştün: feature scaling'de büyük ölçekli özelliğin küçüğü ezmesi, CV'nin (değişim katsayısı) farklı ölçekli veri setlerini kıyaslayabilmesi, hep aynı "ölçeğe bağlılık" problemiyle ilgiliydi. Ortak çözüm de hep aynı: bir şekilde normalize edip ölçekten bağımsız hale getirmek.
+
+Covariance plays a key role in statistics by revealing how two variables change in relation to each other. It’s central to ideas like correlation and principal component analysis and regression. 
+
+Covariance is a fundamental statistical function that measures how two variables, x and y, change together. If the variables tend to increase or decrease simultaneously, covariance is positive. If one increases while the other decreases, covariance is negative. 
+
+Why Covariance Matters
+Understanding covariance helps you analyze the relationship between two variables. In finance, covariance is used to assess how two stocks move together. In data science, covariance is needed for techniques like PCA, which reduces the dimensionality of datasets. It also sits under regression analysis, where understanding how variables co-vary is important for modeling their linear relationships.
+
+Covariance provides insight into 1) the direction of the linear relationship between variables, 2) the strength of the relationship (though not standardized), and 3) the foundation for calculating the correlation coefficient.
+
+Soru: 2. önerge hatalı mı ? 
+
+Çok keskin bir yakalama, ve haklısın; o önerme en azından yanıltıcı, dikkatli ifade edilmemiş. Açıklayayım.
+
+Senin itirazın doğru: az önce uzun uzun konuştuk, kovaryans ölçeğe bağlı olduğu için ilişkinin gücünü güvenilir şekilde söyleyemez. 5000 olan bir kovaryans, 5 olandan daha güçlü bir ilişki demek değildir; sadece birimi büyük olabilir. Dolayısıyla "kovaryans ilişkinin gücünü verir" demek, tek başına okununca yanlıştır. Gücü standartlaştırılmış şekilde veren şey korelasyondur, kovaryans değil.
+
+Ama cümleyi tam öldürmeden önce şu nüansı görelim: parantez içinde "though not standardized" (standartlaştırılmamış olsa da) demiş. İşte bu parantez, cümleyi kurtarmaya çalışıyor. Yani yazar şunu demek istiyor: kovaryansın büyüklüğü güce dair bir şeyler içerir ama ham/standartlaştırılmamış haldedir, o yüzden doğrudan yorumlanamaz. Teknik olarak bakarsan, aynı iki değişken için kovaryansın mutlak değeri büyüdükçe ilişki gerçekten güçlenir; sorun sadece farklı ölçekler/farklı değişkenler arası kıyas yapamaman.
+
+Yani önerme tam yanlış değil ama kötü ifade edilmiş ve kafa karıştırıcı. Daha doğru hali şöyle olurdu: "Kovaryans ilişkinin gücüne dair ham bir gösterge içerir, ancak ölçeğe bağlı olduğu için bu güç standartlaştırılmamıştır ve farklı veri setleri arasında karşılaştırılamaz; gücü güvenilir ve karşılaştırılabilir biçimde ölçen şey korelasyondur." Senin "bu önerme hatalı" sezgin yerinde; cümle ancak o parantezdeki "not standardized" uyarısı sayesinde teknik olarak savunulabilir kalıyor, ama tek başına "kovaryans gücü verir" iddiası yanıltıcıdır.
+
+Bu arada üçüncü önerme çok doğru ve önemli: kovaryans, korelasyon katsayısının hesaplanmasının temelidir. Hatırla, korelasyon = kovaryans bölü standart sapmalar; yani korelasyonu hesaplamak için önce kovaryansa ihtiyacın var. Kovaryansın asıl değeri de zaten büyük ölçüde burada: yönü doğru verir (1. önerme) ve korelasyonun yapı taşıdır (3. önerme), ama gücü tek başına güvenilir vermez (2. önermenin sıkıntısı).
+
+Soru: Cov(x,x) bu nasıl hesaplanabilir ki algılayamadım ?
+
+Çok normal, çünkü "bir şeyin kendisiyle kovaryansı" ilk bakışta tuhaf geliyor. Ama aslında formüle koyunca kendiliğinden varyans çıkıyor; göstereyim.
+Hatırla varyans, "ortalamadan farkların karelerinin ortalaması"ydı. Yani Cov(X,X), formül gereği otomatik olarak varyansa eşit çıkıyor.
+
+"X ile Y birlikte nasıl hareket eder" diye soruyordu. Cov(X,X) ise "X kendisiyle birlikte nasıl hareket eder" demek, ki bir şey her zaman kendisiyle birebir aynı hareket eder. Bu "kendiyle ne kadar birlikte değişiyor" ölçüsü de aslında onun kendi yayılımından, yani varyansından başka bir şey değil.
+
+Formülde yerine koyulduğu zaman ortaya çıkıyor.
+
+Çıktıdaki sayıyla doğrulayalım, x = [2, 4, 6]. Ortalaması 4. Farklar: 2−4=−2, 4−4=0, 6−4=2. Kareleri: 4, 0, 4. Toplam: 8. ddof=1 olduğu için n−1=2'ye böl: 8/2 = 4. İşte matrisin sol üst köşesindeki 4, yani Cov(x,x) = x'in varyansı.
+
+Kısaca: Cov(X,X) hesaplarken formüldeki iki çarpan aynı olur, çarpım kareye döner ve bu da doğrudan varyans formülünü verir; o yüzden kovaryans matrisinin köşegeninde varyanslar oturur.
+
+Soru: Hocam buradaki resimde covariance matrix vermiş. Bunu açar mısın matrix nasıl olabiliyor ?
+
+Çok güzel bir soru, çünkü kovaryans matrisi ilk görüşte kafa karıştırır ama mantığı oturunca çok temiz. Hatırla, kovaryans iki değişkenin ilişkisini ölçüyordu; matris ise birden fazla değişkenin tüm ikili ilişkilerini tek bir tabloda toplama yoludur. Adım adım gidelim.
+
+Önce neden matris olduğunu anlayalım. Elinde iki değişken var: x ve y. Bunlar arasında aslında dört tane "kovaryans" ilişkisi tanımlanabilir: x'in x ile, x'in y ile, y'nin x ile, y'nin y ile. İşte 2x2'lik matris tam bu dördünü gösteriyor:
+
+Cov(x,x) & Cov(x,y) 
+Cov(y,x) & Cov(y,y)
+
+Şimdi çıktıdaki sayılarla eşleştirelim. Çıktı `[[4, 8], [8, 16]]` idi. Bunu yerine koyarsak: sol üst (4) = Cov(x,x), sağ üst (8) = Cov(x,y), sol alt (8) = Cov(y,x), sağ alt (16) = Cov(y,y).
+
+Buradan iki güzel şey çıkıyor. Birincisi, köşegendeki değerler (sol üst 4 ve sağ alt 16) aslında her değişkenin **kendisiyle** kovaryansı, ki bu da o değişkenin **varyansıdır.** Çünkü bir değişkenin kendisiyle nasıl hareket ettiği, zaten onun kendi yayılımı demektir. Yani 4, x'in varyansı; 16, y'nin varyansı. Hatırla varyans = standart sapmanın karesi; doğrulayalım: x = [2,4,6], ortalaması 4, farklar -2,0,2, kareleri 4,0,4, toplam 8, ddof=1 olduğu için (n-1=2'ye böl) 8/2 = 4. Tam çıktıdaki gibi.
+
+İkincisi, köşegen dışındaki değerler (sağ üst ve sol alt, ikisi de 8) x ile y arasındaki kovaryans. Dikkat et, ikisi de aynı: Cov(x,y) = Cov(y,x). Bu mantıklı, çünkü "x'in y ile ilişkisi" ile "y'nin x ile ilişkisi" aynı şey; sıralama önemli değil. İşte bu yüzden kovaryans matrisi her zaman **simetriktir**, yani köşegene göre ayna görüntüsüdür. Sağ üst neyse sol alt da odur.
+
+Pozitif 8 değeri de şunu söylüyor: x arttıkça y de artıyor (pozitif ilişki). Zaten verilere bakınca görülüyor; x büyüdükçe (2→4→6) y de büyüyor (5→9→13).
+
+Bir de `ddof=1` parametresine değineyim, çünkü oradaki bölme bununla ilgili. Bu, örneklem (sample) hesabı yapmasını sağlar, yani n yerine n-1'e böler. Tüm popülasyonun değil de ondan alınmış bir örneğin kovaryansını hesaplarken n-1 kullanılır (buna Bessel düzeltmesi denir); istatistikte örneklemden tahmin yaparken standart yaklaşım budur. ddof=0 deseydin n'e bölerdi ve sayılar biraz farklı çıkardı.
+
+Bu matrisin neden önemli olduğunu da söyleyeyim: değişken sayısı arttıkça (mesela 10 özellik) matris 10x10 olur ve tüm özelliklerin birbiriyle ilişkisini tek bir yapıda tutar. PCA gibi boyut indirgeme yöntemleri tam olarak bu kovaryans matrisini kullanarak hangi yönlerde en çok değişkenlik olduğunu bulur. Yani ileride NLP/embedding ya da boyut indirgeme konularına geldiğinde bu matris tekrar karşına çıkacak.
+
+Tek paragrafta: Kovaryans matrisi, birden fazla değişkenin tüm ikili kovaryanslarını tek bir kare tabloda toplar; köşegeninde her değişkenin kendi varyansı (kendisiyle kovaryansı) bulunur, köşegen dışında ise değişkenler arası kovaryanslar yer alır ve Cov(x,y)=Cov(y,x) olduğu için matris her zaman simetriktir. Buradaki `[[4,8],[8,16]]` çıktısında 4 ve 16 sırasıyla x ve y'nin varyansları, 8 ise ikisi arasındaki (pozitif, yani birlikte artan) kovaryanstır; ddof=1 ise örneklem hesabı için n-1'e bölündüğünü gösterir.
+
+While covariance measures the direction of the relationship between two variables, it does not standardize the result. Correlation standardizes covariance to a value between −1 and 1, making it easier to interpret the strength of the relationship.
+
+Additional Things to Know
+When working with covariance, be aware of these common issues:
+
+	Covariance is sensitive to the scale of the variables. Large values can inflate the result.
+	Covariance does not indicate the strength of the relationship in a standardized way.
+	Outliers can significantly affect the covariance calculation.
+
+Always consider standardizing your data or using correlation for clearer interpretation.
+
+Covariance is a must-know statistical tool for understanding how variables move together. You need to know covariance to really understand your data relationships. 
+
+Correlation standardizes covariance to a range from minus one to plus one. Pearson correlation measures linear relationships
+
+Kodlamasına bknz:
+
+https://www.geeksforgeeks.org/python/python-numpy-cov-function/
+
+Bu şema(sunumdaki şema), kovaryans ile korelasyon arasındaki ilişkiyi anlatıyor ve aslında son birkaç mesajdır konuştuğumuz her şeyi güzel bir hikâyeye bağlıyor. Şemanın akışını mantıklı bir sıraya koyup açayalım.
+
+Hikâye kovaryansla başlıyor. Kovaryans = "bunlar birlikte hareket ediyor, işte bir sayı." Yani kovaryans sana iki değişkenin birlikte hareket edip etmediğini bir sayıyla söyler. Ama hatırla, bu sayının büyük sorunu vardı: ölçeğe bağlı olduğu için tek başına yorumlanamıyordu. Şemada bunu örnekle veriyor; Stock A ve Stock B birlikte iniyor çıkıyorsa, kovaryansları mesela +85 çıkabilir. Ama bu +85 sana ne söyler? Pek bir şey. İlişki çok mu güçlü, orta mı? Anlayamazsın, çünkü 85 ölçeğe bağlı bir sayı.
+
+İşte burada korelasyon devreye giriyor ve şemanın dediği gibi "bu sorunları çözüyor" (özellikle Pearson korelasyonu). Korelasyon temelde standartlaştırılmış kovaryanstır; kovaryansı iki değişkenin standart sapmalarına böler. Hatırla, ölçeğe bağlılık konusunu konuşmuştuk; bölme işlemi birimleri yok edip sonucu ölçekten bağımsız hale getiriyor. Sonuç olarak korelasyon her zaman -1 ile +1 arasında çıkar, ki bu da onu yorumlanabilir kılan asıl şey.
+
+Şema bu -1 ile +1 skalasını da açıyor: +1 mükemmel pozitif ilişki (biri artarken diğeri tam orantılı artar), -1 mükemmel negatif ilişki (biri artarken diğeri tam orantılı azalır), 0 ise doğrusal ilişki yok demek. Yani artık sayıya bakıp gücü anında anlarsın. Stock örneğine dönersek: kovaryans +85 sana bir şey söylemezken, korelasyon +0.92 çıkarsa "çok sıkı bağlılar" dersin, +0.45 çıkarsa "orta derecede bağlılar" dersin. Aynı +85 kovaryans, iki farklı güç anlamına gelebilir; işte korelasyon bu belirsizliği ortadan kaldırıyor.
+
+Korelasyonun bir başka büyük avantajı da şemada vurgulanıyor: güç artık farklı veri setleri arasında karşılaştırılabilir. Çünkü -1 ile +1 evrensel bir skala; boy-kilo ilişkisinin korelasyonu ile maaş-yaş ilişkisinin korelasyonunu doğrudan kıyaslayabilirsin, ölçekleri farklı olsa bile. Kovaryansla bunu yapamazdın.
+
+Şemanın pratik özeti de çok yerinde: insanlar "bu iki şey ilişkili mi?" diye sorduğunda neredeyse her zaman korelasyonu kastederler, kovaryansı değil. Yani günlük analizde, veriyi anlamaya çalışırken kullanacağın şey korelasyondur. Kovaryans ise daha çok matematiğin ara basamağıdır; korelasyonu hesaplamak için ona ihtiyaç var (hatırla, korelasyon = kovaryans bölü standart sapmalar) ve PCA gibi ileri yöntemlerin temelinde duruyor. Şemanın son kutusu bunu özetliyor: kovaryans çoğunlukla korelasyona giden yolda bir ara adım.
+
+Tek paragrafta toparlayayım: Kovaryans iki değişkenin birlikte hareket ettiğini bir sayıyla söyler ama ölçeğe bağlı olduğu için bu sayı tek başına yorumlanamaz (+85 ne kadar güçlü, belli değil); korelasyon ise kovaryansı standart sapmalara bölerek -1 ile +1 arasına normalize eder, böylece hem yönü hem gücü ölçekten bağımsız ve yorumlanabilir biçimde verir (+1 tam pozitif, -1 tam negatif, 0 ilişki yok). Bu yüzden günlük veri analizinde "bunlar ilişkili mi" sorusunun cevabı hep korelasyondur; kovaryans ise daha çok korelasyona ve PCA gibi yöntemlere giden matematiksel bir ara basamaktır.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
