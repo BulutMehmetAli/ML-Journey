@@ -1,0 +1,497 @@
+.corr()
+
+Pandas dataframe.corr() is used to find the pairwise correlation of all columns in the Pandas Dataframe in Python. Any NaN values are automatically excluded. To ignore any non-numeric values, use the parameter numeric_only = True.
+
+Syntax: DataFrame.corr(self, method='pearson', min_periods=1, numeric_only = False) 
+
+Parameters: 
+
+method: 
+pearson: standard correlation coefficient 
+kendall: Kendall Tau correlation coefficient 
+spearman: Spearman rank correlation
+min_periods: Minimum number of observations required per pair of columns to have a valid result. Currently only available for pearson and spearman correlation
+numeric_only: Whether only the numeric values are to be operated upon or not. It is set to False by default.
+
+The min_periods parameter in the corr() method allows you to specify the minimum number of observations required to calculate a valid correlation. This is particularly useful when dealing with incomplete data. For example, you might want to ensure that at least three valid data points are available before calculating the correlation:
+
+correlation_matrix = df.corr(min_periods=3)
+
+By setting min_periods, you can control the robustness of your correlation calculations and ensure that the results are based on sufuficient data.
+
+Understanding these practical examples of using the Pandas correlation method helps you make more informed decisions when analysing your data, especially when dealing with real-world datasets that may include missing values or require specific analysis conditions.
+
+Understanding the results from the corr() method in Pandas is crucial for extracting meaningful insights from your data. The correlation matrix provides a detailed view of how variables relate to one another, which can guide your Data Analysis and decision-making process.
+
+A good correlation depends on the use, but it is safe to say you have at least 0.6 (or -0.6) to call it a good correlation
+
+Correlation refers to the degree to which a pair of variables are linearly related.Correlation is a measure of a statistical relationship between two sets of data. 
+
+Variables of X and Y are positively correlated if:
+
+high values of X go with high values of Y
+low values of X go with low values of Y
+Variables X and Y are negatively correlated if:
+
+high values of X go with low values of Y
+low values of X go with high values of Y
+
+Note: It’s important to note that correlation does not imply causation. In other words, just because you see that two things are correlated to each other, it doesn’t necessarily mean that one causes the other
+
+To measure correlation, we usually use the Pearson correlation coefficient, it gives an estimate of the correlation between two variables.
+
+Pearson’s correlation coefficient is good to measure linear correlation. 
+
+Linear correlation: The correlation is linear if the ratio of change is constant.If we double X, Y will be doubled as well.
+Nonlinear correlation: If the ratio of change is not constant, we are facing nonlinear correlation.To measure nonlinear correlation, we use the Spearman’s correlation coefficient
+
+So back to linear correlation and Pearson’s coefficient. The coefficient always has a value between −1 and 1. 
+
+-1 means perfect negative linear correlation
++1 means perfect positive linear correlation
+0 means no linear dependency between variables.
+
+Correlation vs Causation
+It is important to understand that if two values are correlated it doesn’t mean that one causes the other. 
+
+Correlation does not imply causation – as they say.
+
+It only means that X and Y move together. But this correlation can be due to:
+
+Causation
+Third variable
+Coincidence
+
+What is causation
+Causation means that there is a cause-and-effect link between X and Y. The result of this link is that if a change in X occurs, a change in Y will occur as well.
+
+A really simple example:
+(Generally) when someone exercises more, they will gain more muscle.
+But when we think about causation we need to be careful, because some problems can emerge.
+
+Third variable problem
+For example, we usually see a positive correlation between shark attacks and ice cream sales. Can we conclude that there is a causation between these variables? Of course not. The sales of ice cream won’t cause shark attacks and vice versa.
+Instead, a third variable enters the conversation: temperature. 
+When it’s warmer out, more people buy ice cream and more people swim in the ocean.
+
+This is a typical example for the third variable problem. The third variable problem means that X and Y are correlated, but a third variable Z causes the changes both in X and Y.
+
+Directionality Problem
+Another thing we need to consider is the direction of the relationship.
+Aggressive people watch lots of violence on TV. 
+But does violence on TV make them aggressive? Or they are aggressive, hence they watch violence on TV?
+We cannot tell for sure.
+Directionality Problem means that we know that X and Y are correlated and we assume that there is a link between them, but we don’t know if X causes Y or Y causes X.
+
+DataFrame.corr() method in Pandas is used to calculate the correlation between numeric columns in a DataFrame. Correlation shows how strongly two columns are related. The result is returned as a new DataFrame called a correlation matrix, where each value ranges from -1 to 1.
+
+1: perfect positive correlation
+-1: perfect negative correlation
+0: no correlation
+Non-numeric columns are ignored automatically.
+
+Syntax
+DataFrame.corr(method='pearson', min_periods=1, numeric_only=False)
+
+Parameters:
+
+method: Correlation method (pearson, spearman, kendall), we get pearson correlation by default.
+min_periods: Minimum required matching values
+numeric_only: Includes only numeric columns if True
+
+Correlation is 0.97, which is close to +1 meaning x and y increase together and and have a strong positive relationship, but not perfectly proportional.
+
+Pearson correlation uses covariance of actual values and since most Height and Weight values increase together, covariance is high positive, giving a value close to +1.
+
+pearson, spearman, kendall
+
+
+Covariance:
+Covariance is a statistical measurement of the relationship between two variables; in finance, covariance usually measures the relationship between the returns of two assets.
+
+***********************
+
+Exploratory Data Analysis (EDA), Machine Learning projects, Economical/Financial analysis, scientific research, even single articles on different topics in newspapers involve examining correlation between variables.
+
+“Correlation refers to the degree to which a pair of variables are linearly related.”
+
+In plain English: correlation is a measure of a statistical relationship between two sets of data. 
+Let’s call those two datasets X and Y now for a little example:.
+
+Variables of X and Y are positively correlated if:
+high values of X go with high values of Y
+low values of X go with low values of Y
+
+Variables X and Y are negatively correlated if:
+high values of X go with low values of Y
+low values of X go with high values of Y
+
+Note: It’s important to note that correlation does not imply causation. In other words, just because you see that two things are correlated to each other, it doesn’t necessarily mean that one causes the other. More on this later.
+
+How can we measure correlation?
+To measure correlation, we usually use the Pearson correlation coefficient, it gives an estimate of the correlation between two variables.
+
+Pearson’s correlation coefficient is good to measure linear correlation. 
+
+Linear correlation: The correlation is linear if the ratio of change is constant.If we double X, Y will be doubled as well.
+Nonlinear correlation: If the ratio of change is not constant, we are facing nonlinear correlation.To measure nonlinear correlation, we use the Spearman’s correlation coefficient. 
+
+So back to linear correlation and Pearson’s coefficient. The coefficient always has a value between −1 and 1. 
+
+-1 means perfect negative linear correlation
++1 means perfect positive linear correlation
+0 means no linear dependency between variables.
+
+What does Pearson’s correlation coefficient tells us?
+
+the “noisiness” of the relationship,
+the direction of the relationship
+
+Correlation vs Causation
+It is important to understand that if two values are correlated it doesn’t mean that one causes the other. 
+
+Correlation does not imply causation – as they say.
+It only means that X and Y move together. But this correlation can be due to:
+Causation
+Third variable
+Coincidence
+
+What is causation
+Causation means that there is a cause-and-effect link between X and Y. The result of this link is that if a change in X occurs, a change in Y will occur as well.
+A really simple example:
+(Generally) when someone exercises more, they will gain more muscle.
+But when we think about causation we need to be careful, because some problems can emerge.
+
+Third variable problem
+
+For example, we usually see a positive correlation between shark attacks and ice cream sales. Can we conclude that there is a causation between these variables? Of course not. The sales of ice cream won’t cause shark attacks and vice versa.
+Instead, a third variable enters the conversation: temperature. 
+When it’s warmer out, more people buy ice cream and more people swim in the ocean.
+This is a typical example for the third variable problem. The third variable problem means that X and Y are correlated, but a third variable Z causes the changes both in X and Y.
+
+Directionality Problem
+Another thing we need to consider is the direction of the relationship. 
+Aggressive people watch lots of violence on TV. 
+But does violence on TV make them aggressive? Or they are aggressive, hence they watch violence on TV?
+We cannot tell for sure.
+Directionality Problem means that we know that X and Y are correlated and we assume that there is a link between them, but we don’t know if X causes Y or Y causes X.
+
+Note: .corr() by default will use Pearson’s coefficient; we can change that by defining the method inside the parantheses. Use method= 'spearman' to check Spearman’s coefficient and nonlinear correlation.
+
+Since the matrix contains many numbers, it is hard to read. For better understanding, we can add some coloring. 
+In this example I used a gradient background called coolwarm, by adding .style.background_gradient(cmap='coolwarm') to the end of the code defined earlier.
+
+Bu şekilde sunulan tablodan, negatif ve pozitif korelasyonları hemen bulabilirsiniz.
+Bu renkleri kullanarak, korelasyon matrisinin her değeri iki kez içerdiğini de kolayca görebilirsiniz. Matris, köşegen üzerinde yansıtılmıştır.
+Tabloyu daha da netleştirmek için seaborn ve maskeler kullanacağız.
+
+We can visualize a pair of variables and check if they are correlated or not on scatter plots as well.
+In Pandas we just need to use .plot.scatter() and define our X and Y variables.
+
+How correlation can help your business?
+
+Correlation is widely used in real-life decision making. You will find correlation in Marketing, Finance, Sales, basically we could mention domains endlessly. 
+
+A few benefits:
+
+Pattern recognition. In the big data world looking at millions of rows of raw data will not tell you anything about the business. Using existing information for better decision making will be crucial in the future. It can reveal new business opportunities, give insights about existing processes, and help to communicate clearly. Recognizing patterns is one of the main goals of data science and correlation analysis can help with that.
+
+Financial decision making – investment decisions. Diversifying is essential. Investing in negatively correlated sectors can help you mitigate risk. 
+For example: if the airline industry is negatively correlated with the social media industry, the investor may choose to invest in a social media stock. If a negative event affects one of those industries, the other sector will be a safer place for the Money.
+
+Projections. If a company finds a positive correlation between two variables and has some predictions on the one variable involved in the correlation then they can try to make predictions on the second variable as well.
+For example: Company X finds a positive correlation between the number of tourists in city Y and its sales. A 10% rise in visitors for the coming year is predicted in city Y. Company X can anticipate an increase in sales as well. Of course, when it gets to predictions, one should always consider the above mentioned correlation-causation issue.
+All of the above-mentioned activities will enhance decision-making, reduce risk, reveal new opportunities through correlation.
+
+Pearson Correlation in Data Science
+
+Correlation measures the strength and direction of the relationship between two numerical variables. Pearson Correlation is a statistical measure that quantifies the strength and direction of a linear relationship between two continuous numeric variables.
+
+Used to select features with strong linear relationships for predictive modeling.
+Helps identify which variables increase or decrease together.
+Detects redundancy between highly correlated variables to avoid multicollinearity.
+Bu ifade, veri setindeki değişkenler arasında yüksek korelasyon (high correlation) olup olmadığını tespit ederek gereksiz tekrarları (redundancy) belirleme sürecini anlatır. Eğer iki veya daha fazla bağımsız değişken birbirine çok benzer bilgi taşıyorsa, bu durum modele yeni bir bilgi katmaz; aksine multicollinearity problemine yol açar. Multicollinearity oluştuğunda regresyon katsayıları kararsız hale gelir, standart hatalar artar ve modelin yorumlanabilirliği düşer. Bu nedenle yüksek korelasyona sahip değişkenler tespit edilerek ya biri çıkarılır ya da dönüştürülür (örneğin PCA gibi boyut indirgeme yöntemleriyle). Amaç, modelin daha stabil, daha anlamlı ve daha genellenebilir olmasını sağlamaktır.
+Sensitive to outliers which can significantly affect the correlation value
+
+How Pearson Correlation Works
+Pearson correlation is a number that tells us how strongly two values are linearly related. It gives a result between -1 and +1:
+
++1: Perfect positive relationship (both increase together)
+-1: Perfect negative relationship (one increases the other decreases)
+0: No linear relationship
+
+Types of Correlation Methods
+There are two main types of correlation methods:
+
+1. Parametric Correlation
+Measures linear relationships between continuous variables
+Assumes normal distribution and is sensitive to outliers.
+Parametrik korelasyon analizleri, değişkenlerin normal distribution (normal dağılım) gösterdiğini varsayar. Yani verilerin yaklaşık çan eğrisi şeklinde dağılması beklenir. Eğer veri normal dağılmıyorsa, hesaplanan korelasyon katsayısı gerçeği doğru yansıtmayabilir.
+Ayrıca bu yöntemler outliers (aykırı değerler)’a karşı hassastır. Çünkü Pearson korelasyonu ortalama ve standart sapma temelli hesaplanır. Veri setindeki birkaç uç değer, korelasyon katsayısını ciddi şekilde artırabilir ya da azaltabilir. Bu da ilişkinin olduğundan güçlü ya da zayıf görünmesine neden olabilir.
+Özetle bu ifade şunu anlatır:
+Parametrik korelasyon yöntemleri normal dağılım varsayar ve uç değerlere karşı dayanıklı değildir; bu yüzden veri yapısı uygun değilse yanıltıcı sonuçlar üretebilir.
+Pearson Correlation is the most commonly used method
+
+What is Ordinal Data?
+Ordinal data is a form of categorical data that has a meaningful order among its categories. But, it lacks any numerical value or a fixed interval that can separate them from each other. In simpler terms, ordinal data represents variables that can be ranked or ordered, but the precise difference between the ranks is not known. This form of data is frequently used with surveys and questionnaires to collect responses that involve subjective judgments or preferences.
+
+Örnek: Bunu daha ayrıntılı olarak anlamak için bir örnek verelim, diyelim ki bir müşteri memnuniyeti anketimiz var. Ankete göre, katılımcılar bir ürüne olan memnuniyetlerini "Memnun değilim", "Biraz memnun değilim", "Nötr", "Biraz memnunum" ve "Memnunum" değerlerini içeren bir ölçekte derecelendirmelidir. Burada, sınıfların sırası açıktır ve memnuniyetin kümülatif düzeyini temsil eder. Ancak, ölçekte sabit bir sayısal aralık bulunmadığından, her kategori arasındaki memnuniyet düzeylerindeki kesin farkı belirleyemeyiz.
+
+Ordinal data (sıralı veri), kategoriler arasında doğal bir sıralama bulunan ancak bu kategoriler arasındaki farkın nicel olarak ölçülemediği veri türüdür. Yani değerler arasında büyüklük ilişkisi vardır; biri diğerinden daha yüksek ya da daha düşüktür. Ancak bu farkın ne kadar olduğu matematiksel olarak ifade edilemez ve aralıkların eşit olduğu varsayılamaz. Örneğin memnuniyet düzeyleri “çok kötü, kötü, orta, iyi, çok iyi” şeklinde sıralanabilir; burada açık bir düzen vardır fakat “iyi” ile “orta” arasındaki farkın büyüklüğü sayısal olarak belirlenemez. Bu nedenle ordinal veri üzerinde ortalama gibi işlemler her zaman anlamlı değildir ve analizlerde genellikle Spearman’s Rho veya Kendall’s Tau gibi sıralamaya dayalı yöntemler tercih edilir.
+
+Monotonic ilişki, iki değişken arasındaki ilişkinin tek yönlü ve tutarlı olması durumudur. Yani bir değişken arttıkça diğer değişken ya sürekli artar ya da sürekli azalır. Ancak bu artış veya azalışın sabit hızda (lineer) olması gerekmez. Önemli olan yönün değişmemesidir.
+
+Örneğin, çalışma süresi arttıkça başarı puanı genel olarak artıyorsa bu pozitif monotonic ilişkidir. Artış doğrusal olmak zorunda değildir; başta hızlı artıp sonra yavaşlayabilir. Benzer şekilde, fiyat arttıkça talep sürekli azalıyorsa bu negatif monotonic ilişkidir.
+
+Monotonic ilişki ile lineer ilişki aynı şey değildir. Lineer ilişkide değişim sabit bir oranda gerçekleşir ve grafik düz bir doğruya benzer. Monotonic ilişkide ise eğri olabilir, ancak yön değişmez. Bu nedenle Spearman’s Rho ve Kendall’s Tau gibi non-parametric korelasyon yöntemleri monotonic ilişkileri ölçebilirken, Pearson korelasyonu özellikle lineer ilişkiyi ölçmek için uygundur.
+
+Non-normal data, dağılımı normal distribution (normal dağılım) göstermeyen veriyi ifade eder. Normal dağılım, simetrik ve çan eğrisi (bell-shaped curve) şeklinde olan, ortalama etrafında dengeli şekilde yayılan veri yapısıdır. Eğer veri bu yapıya uymuyorsa — örneğin sağa veya sola çarpıksa (skewed), birden fazla tepe noktası varsa (multimodal), ya da uç değerler dağılımı bozuyorsa — bu veri non-normal kabul edilir.
+
+Örneğin gelir dağılımı genellikle sağa çarpıktır; az sayıda çok yüksek gelirli kişi ortalamayı yukarı çeker. Bu durumda veri simetrik değildir ve normal dağılım varsayımı sağlanmaz. Benzer şekilde küçük örneklem büyüklüklerinde veya aşırı aykırı değer (outlier) içeren veri setlerinde de dağılım normalden sapabilir.
+
+Non-normal veri önemlidir çünkü birçok parametrik istatistiksel yöntem (örneğin t-test, ANOVA, Pearson correlation) normal dağılım varsayımına dayanır. Eğer veri normal değilse, sonuçlar yanıltıcı olabilir ve bunun yerine non-parametric yöntemler tercih edilmelidir.
+
+2. Non-Parametric Correlation
+Used for non-normal or ordinal data and non-linear (monotonic) relationships
+Based on ranked data, making it more robust to outliers
+Common methods include Spearman’s Rho and Kendall’s Tau
+
+Non-Parametric Correlation, verinin normal dağılım göstermediği, ordinal (sıralı) olduğu veya doğrusal (linear) değil fakat monotonic bir ilişki içerdiği durumlarda kullanılan korelasyon yöntemlerini ifade eder. Bu yöntemler ham değerler yerine verilerin rank (sıra) değerleri üzerinden hesaplama yaptığı için dağılım varsayımına ihtiyaç duymaz ve outliers (aykırı değerler)’a karşı daha dayanıklıdır.
+
+Parametrik yöntemlerde (örneğin Pearson) ilişki hem lineer olmak zorundadır hem de normal dağılım varsayımı vardır. Ancak non-parametric yöntemlerde yalnızca ilişkinin yönünün tutarlı olması yeterlidir (artıyorsa sürekli artmalı, azalıyorsa sürekli azalmalı). Bu nedenle özellikle sosyal bilimler, anket verileri ve ordinal ölçekli ölçümlerde tercih edilir.
+En yaygın yöntemler:
+Spearman’s Rho (Spearman rank correlation): Değişkenlerin sıralarını kullanarak monotonic ilişkiyi ölçer.
+Kendall’s Tau: Sıralı çiftlerin uyumlu (concordant) ve uyumsuz (discordant) olmasına dayanır; küçük örneklemlerde daha kararlı sonuç verebilir.
+Özetle, non-parametric correlation yöntemleri normal dağılım şartı aramaz, sıralı verilerle çalışır ve uç değerlere karşı daha robust bir yapı sunar.
+
+Understanding Correlation Using Anscombe Quartet
+Anscombe Quartet shows that correlation numbers can be misleading. The four small datasets have almost the same Pearson correlation but display very different patterns when plotted the same correlation, different patterns emphasizing the importance of visualizing data.
+We can clearly see that the visual representation of them is very different this shows why it's important to look at your data visually, not just rely on correlation values.
+
+What is Anscombe's Quartet?
+Anscombe's quartet comprises a set of four datasets, having identical descriptive statistical properties in terms of means, variance, R-squared, correlations, and linear regression lines but having different representations when we scatter plots on a graph.
+
+The datasets were created by the statistician Francis Anscombe in 1973 to demonstrate the importance of visualizing data and to show that summary statistics alone can be misleading.
+
+The four datasets that make up Anscombe's quartet each include 11 x-y pairs of data. When plotted, each dataset seems to have a unique connection between x and y, with unique variability patterns and distinctive correlation strengths. Despite these variations, each dataset has the same summary statistics, such as the same x and y mean and variance, x and y correlation coefficient, and linear regression line.
+
+Anscombe's quartet is used to illustrate the importance of exploratory data analysis and the drawbacks of depending only on summary statistics.  It also emphasizes the importance of using data visualization to spot trends, outliers, and other crucial details that might not be obvious from summary statistics alone.
+
+While the descriptive statistics of Anscombe's Quartet may appear uniform, the accompanying visualizations reveal distinct patterns, showcasing the necessity of combining statistical analysis with graphical exploration for robust data interpretation.
+
+Pearson correlation other resource:
+
+When we want to build a regression model, which means fitting a straight line on the data to predict future values, we first visualize our data to get an idea of how it looks and to see the patterns and relationships.
+
+The data may appear to show a positive linear relationship, but we confirm it by calculating the Pearson correlation coefficient, which tells us how close our data is to linearity.
+
+We have several assumptions for linear regression to apply, and one of them is linearity.
+We need to check linearity, and for that, we calculate the correlation coefficient.
+
+Before that, we first visualize the data using a scatter plot to get an idea of the relationship between the two variables.
+
+Kendall Rank Correlation Coefficient:
+
+The strength of the association between two variables is known as the correlation test. 
+
+There are mainly two types of correlation:
+
+Parametric Correlation - Pearson correlation(r) : It measures a linear dependence between two variables (x and y) is known as a parametric correlation test because it depends on the distribution of the data.
+Non-Parametric Correlation - Kendall(tau) and Spearman(rho): They are rank-based(sıralamaya dayalı) correlation coefficients, are known as non-parametric correlation.
+
+"C:\Users\bulut\Desktop\ProgressML\kendalRank.png"
+
+
+Note:
+
+The pair for which
+x1 = x2
+and
+y1 = y2
+are not classified as concordant or discordant and are ignored.
+
+https://www.geeksforgeeks.org/python/python-kendall-rank-correlation-coefficient/
+
+Kendall's tau is a correlation coefficient and therefore measures the relationship between two variables.
+
+In contrast to Pearson correlation, Kendall's rank correlation is a non-parametric test procedure. For Kendall's tau, the data do not need to be normally distributed and the two variables need only be ordinal.
+
+The same is true for Spearman rank correlation. Kendall's tau is very similar to Spearman's rank correlation coefficient.
+
+However, Kendall's tau should be preferred over Spearman's correlation when the dataset is small and there are many rank ties.
+
+We want to know whether there is a correlation between the two assessments using Kendall's tau
+
+Kendall’s Tau, denoted as T, is a non-parametric measure (i.e. makes no assumptions of the distribution of the data) and can be used to explore correlation between two ordinal variables. Ordinal variables include categorical data where the categories have a meaningful ranking, such as rating customer experience at the grocery store on a scale of 1 to 10.
+
+To calculate Kendall’s T, we first generate data and assign ranks to the values.
+
+where C represents concordant pairs and D represents discordant pairs. Concordant and discordant pairs help explain the relationship between observations and are determined from ranked values, not the raw data.
+
+Correlation is not slope
+It’s important to remember that correlation is not slope! Slope, denoted by m, tells us how steep a line is by measuring the rate of change between two variables. Slope tells us how much y increases or decreases for every one-unit increase in x and is defined by:
+m = (y2-y1)/)x2-x1)
+Correlation tells us how much two variables move together, regardless of units or scale. Therefore, variables can have the same correlation coefficient and different slope values.
+
+***
+Eğer ilişki lineer (linear) ve veri yaklaşık normal dağılımlı ise, Pearson correlation yeterlidir ve tercih edilir. Çünkü Pearson doğrudan lineer ilişkiyi ölçer ve değişkenler arasındaki doğrusal bağı en doğru şekilde yakalar.
+Ancak şu durumlarda Spearman coefficient tercih edilir:
+Veri normal dağılmıyorsa
+Aykırı değerler (outliers) varsa
+İlişki lineer değil ama monotonic ise
+Veri ordinal ise
+Spearman, değerlerin kendisini değil sıralarını (rank) kullanır. Bu yüzden outlier’lara daha dayanıklıdır.
+Özetle:
+Gerçekten lineer ilişki arıyorsanız → Pearson yeterlidir.
+Lineerlikten emin değilseniz veya veri problemliyse → Spearman daha güvenlidir.
+Linear relationship için Pearson temel yöntemdir. Spearman lineerliği test etmek için değil, monotonic ilişkiyi ölçmek için kullanılır.
+***
+
+Spearman's Rank Correlation
+
+Spearman’s Rank Correlation is a statistical measure used to find the strength and direction of association between two ranked variables. It checks how well the relationship between two variables can be described using a monotonic function.
+
+Works on ranks instead of actual values
+Used when data is not normally distributed
+Suitable for ordinal data
+Measures monotonic relationships, not just linear ones
+
+Spearman’s Rank Correlation, denoted by ρ (rho), measures the strength and direction of association between two variables based on their ranks instead of actual values. Values range from -1 to +1
+
++1: perfect positive monotonic relationship i.e if one variable increases as the other increases
+-1: perfect negative monotonic relationship i.e if one increases while the other decreases
+0: no monotonic relationship
+Monotonic Relationship means a relationship where variables move in one direction only.
+
+"C:\Users\bulut\Desktop\ProgressML\SpearmanCorr.png"
+
+When to Use Spearman’s Rank Correlation
+Works with non-linear data
+Data follows a monotonic trend
+Variables contain ranks or scores
+Does not assume normal distribution
+Handles ordinal data
+Dataset contains outliers
+
+If values are tied, the average rank is assigned
+
+Bu ifade, rank (sıralama) temelli yöntemlerde (örneğin Spearman correlation) aynı değere sahip gözlemler olduğunda ne yapıldığını açıklar.
+
+Normalde verileri küçükten büyüğe sıraladığınızda her değere bir sıra numarası (1, 2, 3, …) verirsiniz. Ancak iki veya daha fazla gözlem aynı değere sahipse (tie durumu), bunlara farklı sıra vermek adil olmaz. Bu durumda o gözlemlerin kaplayacağı sıra numaralarının ortalaması (average rank) atanır.
+
+Örneğin veri şu olsun:
+
+10, 20, 20, 40
+
+Sıralarsak:
+
+10 → 1. sıra
+20 → 2. sıra
+20 → 3. sıra
+40 → 4. sıra
+
+Ama iki tane 20 var. Bunlar 2. ve 3. sırayı “paylaşıyor”.
+Bu nedenle her ikisine de (2 + 3) / 2 = 2.5 atanır.
+
+Sonuç:
+
+10 → 1
+20 → 2.5
+20 → 2.5
+40 → 4
+
+İşte “If values are tied, the average rank is assigned” cümlesi tam olarak bunu ifade eder. Aynı değere sahip gözlemler, kapladıkları sıra pozisyonlarının ortalamasını alır.
+
+Bu yöntem özellikle Spearman ve Kendall hesaplamalarında kullanılır ve sıralama adaletini korur.
+
+
+Kendall’s Tau’da klasik anlamda “rank numarası atama” işlemi yapmayız.
+Spearman’da önce rank verilir, sonra rank’ler üzerinden Pearson hesaplanır.
+Kendall’da ise doğrudan çift karşılaştırması (pairwise comparison) yapılır.
+
+Kendall’ın mantığı şudur:
+
+Her iki gözlem çifti için:
+(x₁, y₁) ve (x₂, y₂)
+şu soruyu sorarız:
+Eğer x artarken y de artıyorsa → concordant (uyumlu)
+Eğer x artarken y azalıyorsa → discordant (uyumsuz)
+Sonra:
+Tau = (Concordant − Discordant) / Toplam çift sayısı
+Yani Kendall doğrudan sıralı çiftlerin yön tutarlılığına bakar.
+Bu yüzden “rank verelim sonra korelasyon hesaplayalım” adımı yoktur.
+Peki tied (eşit değer) konusu neden geçiyor?
+Çünkü eğer iki x değeri veya iki y değeri eşitse, o çift:
+Ne concordant
+Ne discordant
+olarak sayılır.
+Bu yüzden Kendall’ın farklı versiyonları vardır:
+Tau-a (tie düzeltmesi yok)
+Tau-b (tie düzeltmeli)
+Tau-c (farklı tablo boyutları için)
+Özet:
+Spearman → Önce rank verilir (tie varsa average rank atanır).
+Kendall → Rank ataması yapmaz, çift karşılaştırması yapar; tie durumunda özel düzeltme kullanır.
+Bu yüzden “average rank assigned” ifadesi Spearman için doğrudan geçerlidir, Kendall için ise dolaylı olarak tie düzeltmesi anlamına gelir.
+
+Aspect				Pearson Correlation	Spearman Correlation
+Data type			Continuous		Ordinal or continuous
+Uses actual values		Yes			No
+Uses ranks			No			Yes
+Assumes normal distribution	Yes			No
+Relationship type		Linear			Monotonic
+
+Spearman correlation can be used with either continuous or ordinal data, and it is relatively robust to outliers.
+it does need to remain consistent in one direction—either increasing or decreasing, but not both.
+
+Kendall’s ve spearman arasındaki fark ne hocam neredeyse aynı şeylerden bahsediyorlar 
+
+Evet, ikisi de non-parametric rank correlation yöntemidir ve ikisi de monotonic ilişkiyi ölçer. Bu yüzden benzer görünürler. Ancak hesaplama mantıkları ve davranışları farklıdır.
+
+Spearman’s Rho, değişkenlerin değerlerini sıralar (rank) ve sonra bu sıralar üzerinden klasik Pearson korelasyonunu hesaplar. Yani temelde “rank edilmiş verilerle Pearson” gibidir. İlişkinin gücünü ölçer ve −1 ile +1 arasında değer alır. Büyük örneklemlerde oldukça yaygındır ve hesaplaması görece daha pratiktir.
+
+Kendall’s Tau ise sıralı çiftlerin uyumuna (concordant) ve uyumsuzluğuna (discordant) bakar. İki gözlem çifti aynı yönde sıralanıyorsa uyumlu, ters yönde sıralanıyorsa uyumsuz kabul edilir. Tau katsayısı bu uyumlu–uyumsuz oranına dayanır. Yani mantığı sıraların farkından değil, sıraların karşılaştırılmasından gelir.
+
+Temel farklar şunlardır:
+Spearman farkların büyüklüğüne daha duyarlıdır, Kendall daha olasılık temellidir.
+Kendall küçük örneklemlerde genellikle daha kararlı sonuç verir.
+Kendall yorum açısından daha sezgiseldir: “iki rastgele gözlemin aynı sırayı koruma olasılığı” gibi düşünülebilir.
+Spearman genelde biraz daha büyük mutlak değerler üretir.
+
+Özetle:
+İkisi de monotonic ilişkiyi ölçer. Spearman rank-Pearson yaklaşımıdır; Kendall ise çiftlerin uyumuna dayalı olasılıksal bir ölçüdür. Büyük veri setlerinde Spearman yaygınken, küçük ve daha hassas sıralama analizlerinde Kendall tercih edilebilir.
+
+Spearman korelasyonunun monotonic olmayan (yani yönü sürekli aynı kalmayan) ilişkiler için teknik olarak hesaplanabileceğini, ancak sonuçların dikkatli yorumlanması gerektiğini anlatır. Spearman katsayısı sıralara dayalı olduğu için monotonic (sürekli artan ya da sürekli azalan) ilişkileri ölçmede etkilidir. Ancak ilişki örneğin kuadratik (quadratic) ise, yani U-şekilli ya da ters U-şekilli bir yapıdaysa, değişkenler arasında güçlü bir matematiksel ilişki olmasına rağmen monotonic bir yapı olmadığı için Spearman katsayısı sıfıra yakın çıkabilir. Verilen örnekte kuadratik bir ilişki üretilmiş ve Spearman katsayısı −0.006 bulunmuştur; bu değer pratik olarak 0’a eşittir. Bu durum, Spearman’ın neredeyse hiç monotonic ilişki tespit edemediğini gösterir. Oysa gerçekte değişkenler arasında açık bir kuadratik ilişki vardır. Yani sonuç, değişkenlerin bağımsız olduğu anlamına gelmez; sadece monotonic bir ilişki olmadığını gösterir. Bu nedenle Spearman korelasyonu yorumlarken ilişkinin yapısı mutlaka görselleştirme ile desteklenmelidir.
+
+Eğer ilişki monotonic değilse, yani:
+X artarken Y bazen artıyor bazen azalıyor
+Yön değişiyor
+Eğri U-şekilli veya ters U-şekilli
+o zaman Pearson, Spearman ve Kendall üçü de doğru ölçüm yapmaz.
+Çünkü:
+Pearson → sadece lineer ilişkiyi ölçer
+Spearman & Kendall → sadece monotonic ilişkiyi ölçer
+Monotonic değilse (örneğin parabol gibi), korelasyon katsayısı sıfıra yakın çıkabilir ama aslında güçlü bir ilişki vardır.
+Diyelim:
+X = −3, −2, −1, 0, 1, 2, 3
+Y = X²
+Bu U-şekilli bir ilişki.
+Pearson ≈ 0
+Spearman ≈ 0
+Kendall ≈ 0
+Ama açıkça güçlü bir ilişki var!
+🔥 Peki ne yapacağız?
+1️⃣ Önce görselleştirme
+Scatter plot zorunlu.
+2️⃣ Non-monotonic ilişkiler için yöntemler
+✅ Mutual Information
+Nonlinear ve non-monotonic ilişkileri yakalar.
+ML feature selection’da kullanılır.
+✅ Polynomial Regression
+Eğer ilişki U-şekilli ise ikinci dereceden model kurulur.
+✅ Distance Correlation
+Sıfır ise gerçekten bağımsızdır.
+Nonlinear ilişkileri yakalayabilir.
+✅ Kernel methods
+Özellikle ML tarafında kullanılır.
+
