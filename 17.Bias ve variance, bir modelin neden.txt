@@ -1,0 +1,96 @@
+Bias ve variance, bir modelin neden hata yaptığını anlamanın en temel çerçevesidir; ikisi birbirinin zıttı gibi çalışır ve aralarındaki denge modelin başarısını belirler. Sezgiyle kuralım, çünkü bu konu sezgi oturmadan formülle anlaşılmaz.
+
+Önce **bias (yanlılık).** Bias, modelin fazla basit olması yüzünden gerçek ilişkiyi sistematik olarak kaçırma eğilimidir. Model veriyi yeterince öğrenemiyor, çok kaba varsayımlar yapıyordur. Sezgisel örnek: kıvrımlı, eğri bir veriye düz bir çizgi uydurmaya çalışmak. Düz çizgi o kıvrımı asla yakalayamaz, hep yanından geçer; ne kadar veri versen de bu basit model gerçeği temsil edemez. Yüksek bias'lı bir model hem eğitim verisinde hem test verisinde kötüdür, çünkü veriyi en baştan öğrenememiştir. Buna **underfitting** (yetersiz öğrenme) denir. Model "az çalışmış, konuyu kavrayamamış öğrenci" gibidir.
+
+Şimdi **variance (varyans).** Variance, modelin fazla karmaşık olması yüzünden eğitim verisine aşırı duyarlı olmasıdır. Model o kadar esnektir ki, eğitim verisindeki her küçük dalgalanmayı, hatta gürültüyü bile ezberler. Sezgisel örnek: aynı kıvrımlı veriye, her noktanın tam üstünden geçen çok kıvrımlı, oynak bir eğri uydurmak. Bu eğri eğitim verisini mükemmel ezberler ama yeni bir veri geldiğinde çuvallar, çünkü gerçek deseni değil, o spesifik eğitim örneklerinin rastgele tuhaflıklarını öğrenmiştir. Yüksek variance'lı model eğitimde mükemmel, testte kötüdür. Buna **overfitting** (aşırı öğrenme) denir. Model "soruları ezberlemiş ama konuyu anlamamış, biraz farklı soru gelince çakılan öğrenci" gibidir.
+
+İşte asıl mesele, **bias-variance tradeoff (ödünleşimi).** Bu ikisi genelde birbirine zıt hareket eder: modeli basitleştirirsen bias artar variance azalır (underfitting'e gidersin), modeli karmaşıklaştırırsan variance artar bias azalır (overfitting'e gidersin). İkisini aynı anda sıfıra indiremezsin; amacın, toplam hatayı en aza indiren dengeyi bulmaktır. Ne çok basit (gerçeği kaçıran) ne çok karmaşık (gürültüyü ezberleyen), arada tatlı bir nokta. Toplam hata kabaca bias'ın karesi + variance + giderilemez gürültü olarak düşünülür; sen bias ve variance'ı dengeleyerek bu toplamı minimize edersin.
+
+Bunu nasıl tespit edersin? Eğitim ve test performansını kıyaslarsın. Hem eğitimde hem testte kötüyse: yüksek bias, underfitting (model çok basit, karmaşıklaştır). Eğitimde çok iyi ama testte belirgin kötüyse: yüksek variance, overfitting (model çok karmaşık, basitleştir ya da daha çok veri/regularizasyon ekle). İkisi de iyi ve birbirine yakınsa: dengeyi bulmuşsun.
+
+Tek paragrafta toparlayayım: Bias, modelin fazla basit olup gerçek ilişkiyi kaçırması (underfitting; hem eğitimde hem testte kötü), variance ise modelin fazla karmaşık olup eğitim verisini gürültüsüyle ezberlemesidir (overfitting; eğitimde iyi testte kötü). İkisi genelde zıt hareket eder, bu yüzden bias-variance tradeoff'u toplam hatayı en aza indiren dengeyi bulmaktır: ne gerçeği kaçıracak kadar basit, ne gürültüyü ezberleyecek kadar karmaşık bir model. Bias-variance'ı eğitim ve test performansını kıyaslayarak teşhis eder, modelin karmaşıklığını buna göre ayarlarsın.
+
+Bias and Variance are two fundamental concepts that help explain a model’s prediction errors in machine learning. Bias refers to the error caused by oversimplifying a model while variance refers to the error from making the model too sensitive to training data.
+
+Understanding this balance is essential for building models that generalize well to unseen data.
+
+Bias
+Bias is the error that occurs when a model is too simple to capture the true patterns in the data.
+
+High bias: The model oversimplifies, misses patterns and underfits the data.
+Low bias: The model captures patterns well and is closer to the true values.
+
+Example: A neural network with too few layers or neurons fails to capture complex patterns, producing consistently inaccurate outputs. This is called underfitting.
+
+(formülünü ezberle)
+
+How to Reduce Bias?
+Some methods to lower bias in models are:
+
+Use More Complex Models: Use models capable of capturing non-linear relationships such as neural networks or ensemble methods.
+Add Relevant Features: Include additional informative features in the training data to give the model for capturing underlying patterns.
+*********
+Adjust Regularization Strength: Reduce regularization to allow the model more flexibility in fitting the data.
+
+Regularizasyon, modeli aşırı karmaşıklaşmaktan alıkoymak için ona ceza uygulayan bir frendir. Hatırla, overfitting'de (yüksek variance) model eğitim verisini gürültüsüyle ezberliyordu; regularizasyon tam da bunu engellemek için modelin katsayılarını küçük tutmaya zorlar, yani modeli sadeleştirir, esnekliğini kısar. Ridge, Lasso gibi yöntemler bunu yapar. Kısacası regularizasyon "modeli fazla serbest bırakma, sade kalsın" baskısıdır.
+
+Şimdi mantık şöyle işliyor. Regularizasyon ne kadar güçlüyse, model o kadar kısıtlanır, o kadar basitleşir. Ama hatırla, model fazla basitleşince ne oluyordu? Bias artıyor, underfitting'e kayıyordu. Yani çok güçlü regularizasyon, modeli gereğinden fazla sadeleştirip gerçek ilişkiyi bile kaçırmasına yol açabilir. İşte bu durumda model yüksek bias'lı olur: veriye uyum sağlayacak esnekliği kalmamıştır.
+
+O yüzden bias'ı azaltmak istiyorsan, bu freni gevşetirsin. Regularizasyonu azaltmak (cezayı düşürmek), modele "biraz daha serbest ol, veriye daha fazla uyum sağla" demektir. Esnekliği artan model, daha önce kaçırdığı örüntüleri yakalayabilir hale gelir, böylece bias düşer ve underfitting hafifler. Cümledeki "allow the model more flexibility in fitting the data" (modele veriye uyum sağlamada daha fazla esneklik tanımak) tam bunu kastediyor.
+
+Pratikte bu, regularizasyon parametresini ayarlamak demektir. Mesela Ridge/Lasso'da bu parametre `alpha`'dır; alpha büyükse ceza güçlü (model kısıtlı), küçükse ceza zayıf (model serbest). Bias yüksekse alpha'yı küçültürsün. Lojistik regresyon/SVM'de ise tam tersi yönde çalışan `C` parametresi vardır; orada C'yi büyütmek regularizasyonu azaltır. İsim ve yön kütüphaneye göre değişir ama mantık aynı: freni gevşet, model esnesin.
+
+Ama dikkat, çünkü bu bir denge oyunu (bias-variance tradeoff). Regularizasyonu azaltıp bias'ı düşürürken, çok abartırsan ters tarafa kaçarsın: model fazla serbest kalır, bu sefer variance artar ve overfitting'e geçersin. Yani amaç regularizasyonu sıfırlamak değil, bias ile variance arasındaki tatlı noktayı bulacak şekilde ayarlamak. Genelde bunu farklı değerleri deneyip (mesela cross-validation ile) eğitim ve test performansına bakarak yaparsın.
+
+Tek paragrafta: Regularizasyon modeli sadeleştiren bir frendir; çok güçlü olduğunda modeli aşırı kısıtlayıp basitleştirir ve yüksek bias'a (underfitting) yol açar. Bias'ı azaltmak için regularizasyonu azaltırsın (Ridge/Lasso'da alpha'yı küçültmek, lojistik regresyon/SVM'de C'yi büyütmek gibi), böylece modele veriye daha çok uyum sağlama esnekliği verir ve kaçırdığı örüntüleri yakalamasını sağlarsın; ama fazla gevşetirsen bu sefer variance artıp overfitting'e kayacağın için, amaç bias ile variance arasındaki dengeyi bulmaktır.
+***************
+
+Variance
+Variance arises when a model becomes too sensitive to training data and it captures noises in data too. It fails to give prediction on unseen new data.
+
+High variance: The model is too sensitive to small changes and may overfit.
+Low variance: The model is more stable but might miss some patterns.
+Example: A deep decision tree that memorizes the training data perfectly but performs poorly on new data shows high variance, this is known as overfitting.
+
+How to Reduce Variance?
+Some methods to lower variance are:
+
+Simplify the Model: Use a simpler model or prune overly deep decision trees to avoid overfitting.
+Increase Training Data: Collect more data to stabilize learning and make the model generalize better.
+Apply Regularization: Use L1 or L2 regularization to constrain model complexity and prevent overfitting.
+Use Ensemble Methods: Implement techniques like bagging or random forests to combine multiple models and balance bias–variance trade-offs.
+
+A simple way to understand bias and variance is with a dartboard analogy:
+
+High Bias: Darts are clustered together but far from the target center.
+High Variance: Darts are scattered all over the board.
+Low Bias and Low Variance: Darts are tightly grouped near the center, showing accurate and consistent predictions.
+
+Standart sapma, bir veri kümesindeki değerlerin ortalamadan ne kadar uzağa yayıldığını ölçen bir sayıdır. Yani verinin "ne kadar dağınık ya da ne kadar toplu" olduğunu söyler. 
+Ortalama sana merkezi söyler, standart sapma o merkez etrafındaki yayılımı söyler.
+
+Nasıl hesaplandığına sezgisel bakalım. Önce her değerin ortalamadan ne kadar uzakta olduğunu bulursun (her değer eksi ortalama). Sonra bu uzaklıkların karesini alırsın; kare almanın iki sebebi var: negatifleri pozitife çevirip birbirini götürmesini engellemek, ve büyük sapmaları daha fazla cezalandırmak. Bu karelerin ortalamasını alırsın (buna varyans denir). En son karekökünü alırsın ki sonuç tekrar verinin orijinal birimine dönsün.
+
+Varyans ile ilişkisini netleştireyim, çünkü ikisi sık karışır: varyans, standart sapmanın karesidir (σ2). Yani standart sapma = varyansın karekökü. İkisi de yayılımı ölçer ama standart sapma daha kullanışlıdır, çünkü verinin orijinal birimindedir. Mesela boy verisinde varyans "santimetre kare" gibi tuhaf bir birimde çıkar, standart sapma ise doğrudan "santimetre" cinsindendir, o yüzden yorumlaması kolaydır.
+
+Senin son günlerde işlediğin konularla bağlayayım, çünkü standart sapma her yerde karşına çıktı. Standardization'da (x−μ)/(σ) böldüğün σ tam buydu; veriyi standart sapmasına bölerek yayılımını 1'e indiriyordun. Bias-variance'daki variance da kavramsal olarak bu yayılım fikrinden gelir (modelin tahminlerinin ne kadar savrulduğu). Z-score outlier tespitinde "±3 standart sapma" derken de bunu kullanıyordun. Yani standart sapma, dağılımın yayılımını ölçen ve bu konuların hepsinin altında yatan temel kavram.
+
+Tek paragrafta: Standart sapma, değerlerin ortalamadan ortalama olarak ne kadar uzağa yayıldığını gösteren, verinin dağınıklığını ölçen bir sayıdır; küçükse veri ortalama etrafında toplu, büyükse savrulmuş demektir. Her değerin ortalamadan farkının karesi alınıp ortalaması bulunur (varyans), sonra karekökü alınır (standart sapma), böylece sonuç verinin orijinal birimine döner. Varyansın kareköküdür ve standardization, z-score, bias-variance gibi son işlediğin konuların hepsinin temelinde yatan yayılım ölçüsüdür.
+
+Soru:Şimdi bizim elimizde standart sapma var . varyan da bunun karesi . Neden böyle bir şeye ihtiyaç duyulmuş ?
+
+Çok yerinde bir soru: "madem standart sapma var ve daha yorumlanabilir, neden bir de karesini alıp varyans diye ayrı bir şey tutuyoruz?" Cevap şu: varyans, standart sapmanın sadece "ham" hali değil; matematiksel olarak öyle güzel özelliklere sahip ki birçok yerde standart sapmadan daha kullanışlı oluyor. Sebepleri tek tek vereyim.
+
+Birinci ve en önemli sebep: **varyans toplanabilir, standart sapma toplanamaz.** Bağımsız iki rastgele değişkeni topladığında, sonucun varyansı, tek tek varyansların toplamına eşittir ($Var(X+Y) = Var(X) + Var(Y)$). Bu çok güçlü ve temiz bir özellik. Ama aynı şey standart sapma için geçerli değil; standart sapmaları doğrudan toplayamazsın. Yani birden fazla kaynaktan gelen belirsizliği birleştirmen gerektiğinde varyans dümdüz toplanır, standart sapma ise bu güzelliği sunmaz. İstatistik ve olasılık teorisinin büyük kısmı bu toplanabilirlik üzerine kurulu olduğu için varyans temel taş haline gelmiş.
+
+İkinci sebep: **varyans matematiksel olarak çok daha kolay işlenir.** Karekök içeren ifadelerle uğraşmak (türev almak, denklem çözmek) zordur ve çirkindir. Varyans karekök içermediği için (zaten karelerin ortalaması), formüller, ispatlar ve optimizasyonlar onunla çok daha pürüzsüz ilerler. Mesela bir modelin hatasını minimize ederken kareli ifadelerle çalışmak, karekökle çalışmaktan çok daha temizdir; türevi alınır, sıfıra eşitlenir, çözülür. Standart sapmayla aynı işi yapmaya kalksan karekök yüzünden matematik karmaşıklaşır.
+
+Üçüncü sebep, ikinciyle bağlantılı: **makine öğrenmesindeki birçok şey zaten "kareli" yapıda.** Hatırla, regresyonda hatayı ölçerken MSE (Mean Squared Error, kareli hata ortalaması) kullanıyorduk; bu tam olarak varyans mantığıdır. Modeller hatanın karesini minimize edecek şekilde eğitilir, çünkü kareli hata hem matematiksel olarak güzeldir hem büyük hataları daha çok cezalandırır. Yani varyans, ML'in temel hata fonksiyonlarının doğal dilidir; standart sapma değil.
+
+Peki o zaman standart sapma neden var, neden hep varyans kullanmıyoruz? İşte burada rolleri ayrışıyor. Standart sapmanın tek ama çok değerli bir avantajı var: **verinin orijinal biriminde olması.** Boy verisinde varyans "cm kare" gibi anlamsız bir birimde çıkar, ama standart sapma doğrudan "cm" cinsindendir, o yüzden insana bir şey ifade eder ("ortalama 5 cm sapma var" dersin, anlarsın). Yani varyans hesaplama ve teori için, standart sapma ise yorumlama ve sunum için kullanılır.
+
+Tek paragrafta: Varyans, standart sapmanın karesi olmasına rağmen ayrı bir kavram olarak tutulur çünkü matematiksel olarak çok daha kullanışlıdır; bağımsız değişkenlerin varyansları toplanabilir (standart sapmalar toplanamaz), karekök içermediği için formüller ve optimizasyonlar onunla çok daha temiz ilerler, ve makine öğrenmesindeki kareli hata fonksiyonları (MSE gibi) doğrudan varyans mantığına dayanır. Standart sapma ise verinin orijinal biriminde olduğu için yorumlanması kolaydır; yani kabaca varyans hesaplama ve teori için, standart sapma sonucu insana anlatma için kullanılır.
+
+
+
+
