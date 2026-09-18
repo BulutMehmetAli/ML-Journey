@@ -1,0 +1,197 @@
+Regularization:
+
+Regularization (düzenlileştirme), bir makine öğrenmesi modelinin eğitim verisini fazla ezberleyip (overfitting) görülmemiş veride kötü performans göstermesini engellemek amacıyla, modelin kayıp fonksiyonuna ek bir "ceza terimi" (penalty term) ekleyen tekniklerin genel adıdır. Sezgisel olarak şöyle düşünebilirsin: bir model, eğitim verisindeki her küçük gürültüyü (noise) bile yakalamaya çalışırsa, katsayıları (weights) aşırı büyük ve karmaşık değerler alır; bu da modelin eğitim verisine aşırı uyum sağlayıp genelleme yeteneğini kaybetmesine yol açar. Regularization, işte bu katsayıların büyümesini sınırlayarak modeli daha "basit" ve "sade" tutmaya zorlar — yani model, veriyi mükemmel şekilde ezberlemek yerine, genel örüntüyü yakalamaya yönlendirilir. En yaygın iki türü **L1 (Lasso)** ve **L2 (Ridge)** regularization'dır: L2, katsayıların karelerinin toplamını cezalandırarak hepsini sıfıra yaklaştırır ama tam sıfır yapmaz (Ridge Regression'da gördüğümüz gibi), L1 ise katsayıların mutlak değerlerinin toplamını cezalandırarak bazı katsayıları tamamen sıfıra indirebilir, yani otomatik olarak özellik seçimi (feature selection) de yapmış olur. Ceza teriminin gücü genelde bir hiperparametre (genelde $\lambda$ veya $\alpha$ ile gösterilir) ile kontrol edilir; bu değer çok küçükse regularization'ın etkisi az olur ve model hâlâ overfit edebilir, çok büyükse model aşırı basitleşip underfitting'e düşebilir, bu yüzden doğru dengeyi bulmak (genelde cross-validation ile) kritik önem taşır.
+
+**Regularization Neden Gerekli?**
+
+Bir ML modelini eğitirken temel amaç, sadece eğitim verisinde değil, daha önce hiç görmediği (test/production) verilerde de iyi performans gösteren bir model elde etmektir. Ancak model çok karmaşık hale gelirse (çok fazla parametre, çok yüksek derece polinom, çok derin bir ağaç vs.), eğitim verisindeki gürültüyü (noise) bile "ezberlemeye" başlar — buna **overfitting** denir. Overfitting yapan bir model, eğitim verisinde neredeyse mükemmel skor alırken, yeni veride ciddi şekilde başarısız olur. İşte regularization, tam olarak bu sorunu çözmek için geliştirilmiş bir tekniktir; modelin karmaşıklığını kısıtlayarak onu daha genellenebilir hale getirir.
+
+**Nasıl Çalışır?**
+
+Regularization'ın mantığı, modelin öğrenme sürecinde optimize ettiği loss (kayıp) fonksiyonuna ekstra bir "ceza terimi" eklemektir. Normalde model sadece tahmin hatasını (örneğin mean squared error) minimize etmeye çalışır. Regularization ile birlikte, bu hataya ek olarak modelin ağırlıklarının (weights) büyüklüğü de cezalandırılır. Böylece model, hem veriye iyi uyum sağlamaya hem de ağırlıklarını mümkün olduğunca küçük/sade tutmaya zorlanır. Mantık şudur: büyük ağırlıklar genelde modelin belirli özelliklere aşırı önem verdiğinin, yani veriye fazla bağımlı hale geldiğinin işaretidir; ağırlıkları küçültmek modeli daha "dengeli" ve daha az hassas hale getirir.
+
+**Başlıca Regularization Türleri**
+
+En yaygın kullanılan iki yöntem **L1 (Lasso)** ve **L2 (Ridge)** regularization'dır. L1 regularization, ağırlıkların mutlak değerlerinin toplamını cezalandırır ve ilginç bir özelliği vardır: bazı ağırlıkları tamamen sıfıra indirebilir, bu da otomatik olarak özellik seçimi (feature selection) yapmış olur — yani modele göre önemsiz olan değişkenler tamamen devre dışı kalır. L2 regularization ise ağırlıkların karelerinin toplamını cezalandırır; ağırlıkları sıfıra yaklaştırır ama tam olarak sıfırlamaz, bunun yerine hepsini daha küçük ve dengeli değerlere çeker. Bu iki yöntem bazen birlikte de kullanılır, buna **Elastic Net** denir ve her iki yaklaşımın avantajlarını birleştirmeye çalışır.
+
+Bunların dışında, özellikle derin öğrenmede kullanılan başka regularization teknikleri de vardır: **Dropout**, eğitim sırasında rastgele nöronları geçici olarak devre dışı bırakarak modelin belirli nöronlara aşırı bağımlı hale gelmesini engeller; **early stopping**, modelin eğitim sürecini, validation performansı kötüleşmeye başladığı anda durdurarak overfitting'i önler; **data augmentation** ise doğrudan loss fonksiyonuna dokunmasa da, veri çeşitliliğini artırarak modelin daha genellenebilir örüntüler öğrenmesine yardımcı olur.
+
+**λ (Lambda) ve Denge**
+
+Daha önce konuştuğumuz gibi, λ bu cezanın şiddetini kontrol eden hiperparametredir. Yüksek λ, modeli aşırı basitleştirip underfitting'e sürükleyebilir; düşük λ ise cezayı zayıflatıp overfitting riskini artırır. Bu yüzden λ'yı doğru seçmek, regularization'ın en kritik pratik adımıdır ve genellikle **cross-validation** kullanılarak, farklı λ değerleri denenip hangisinin validation setinde en iyi performansı verdiğine bakılarak belirlenir.
+
+**Özetle Bias-Variance Trade-off ile İlişkisi**
+
+Regularization aslında istatistikteki ünlü **bias-variance trade-off** kavramıyla doğrudan bağlantılıdır. Regularization olmadan model düşük bias ama yüksek variance'a sahip olabilir (overfitting). Çok fazla regularization ise yüksek bias ama düşük variance'a yol açar (underfitting). Amaç, bu ikisi arasında en optimal dengeyi bulmaktır — ne çok karmaşık ne çok basit, veriyi iyi temsil eden ama gürültüye takılmayan bir model.
+
+So, you’ve trained a model that gets every training example nearly perfect, but fails on new data? We’ve all been there(hepimiz bu durumu yaşadık)
+
+That's a high-level definition of overfitting. Your model didn't learn the actual pattern, but instead, it memorized the training data. In a production environment with new and unseen data, the model would make predictions you wouldn’t trust. The more that real-world data drifts from training samples, the worse this gets.
+
+Regularization fixes this by adding a penalty to the loss function. That penalty discourages complex models. In other words, it's the mechanism that keeps your model from fitting every data point and forces it to generalize instead.( Başka bir deyişle, bu mekanizma, modelinizin her veri noktasına uymasını engelleyerek onu genelleştirmeye zorlar)
+
+What is Regularization in Machine Learning
+
+Regularization is a technique that adds a 
+penalty term to your model's loss function to discourage complexity.
+
+Without this penalty term, a model is flexible enough to fit the training data as closely as it wants. That includes the noise and outliers. Regularization adds a cost on that flexibility. The more complex the model wants to be, the higher the penalty it gets.
+
+Your model's loss function normally measures the difference between predicted and actual values. Regularization adds an extra term to that equation, one that grows as the model's coefficients grow. The model now has to balance two competing objectives: fit the training data, and keep the coefficients small.
+
+Son derece esnek bir model, eğitim verilerine uyum sağlamak için herhangi bir şekle bürünebilir. Regularization , modeli daha basit bir şekle geri getirir; bu şeklin, modelin daha önce görmediği veriler üzerinde de geçerliliğini koruma olasılığı daha yüksektir.
+
+Why Regularization Is Needed
+Every model you train sits somewhere between two unusable models: one that’s too simple and one that’s too complex.
+
+A model that's too simple doesn't “get” the real patterns in your data. It misses the signal. That's underfitting - the model performs poorly on training data and on new data.
+
+A model that's too complex does the opposite. It fits every detail in your training data, including the noise. That's overfitting - the model performs great on training data, but fails on new data because it memorized the wrong things.
+
+Take polynomial regression as a concrete example. A degree-3 polynomial fit through data that shows a gentle curve means you’ll likely fit to a correct pattern. But a degree-15 polynomial through the same data leads overfit - the curve goes through every data point, but makes random predictions in between.
+
+
+
+Buradaki diagrama bknz:
+https://www.datacamp.com/tutorial/regularization-in-machine-learning
+Just-right versus too complex model
+
+Simple models have high bias - they make strong assumptions that miss real patterns. Complex models have high variance - they're too sensitive to the specific training samples they saw, and small changes in the data produce very different models.
+
+Regularization is what helps you get the best of both. It doesn't eliminate complexity, but it penalizes it. As a result, your model learns has a better chance to learn the real signal.
+
+How Regularization Works
+
+Every model learns by minimizing a loss function - a measure of how wrong its predictions are. Without regularization, the model's only job is to minimize that error. It'll do whatever it takes, including growing large coefficients that fit the training data but don’t generalize.
+
+Regularization changes the objective. Instead of minimizing error alone, the model now minimizes this:
+
+Loss + λ * penalty
+
+The penalty term is a function of the model's coefficients. Large coefficients bring the penalty up. To keep the total cost low, the model is forced to keep its coefficients small - which means simpler, more generalizable solutions.
+
+The λ (lambda) controls how much the penalty matters. A higher λ adds more pressure on the model to stay simple. A lower λ lets the model focus more on fitting the data. You'll see how to tune this in the Choosing the Regularization Strength section below.
+
+Tabii hocam, regularization konusundaki bu kısmı açayım.
+
+Regularization'da amaç, modelin sadece eğitim verisine aşırı uyum sağlamasını (overfitting) engellemek ve daha genellenebilir (generalize edebilen) bir model elde etmektir. Bunun için loss fonksiyonuna bir "ceza terimi" (penalty term) eklenir; bu terim, modelin ağırlıklarının (weights) çok büyük değerler almasını cezalandırır, çünkü büyük ağırlıklar genelde modelin veriye aşırı uyum sağladığının bir işaretidir. İşte burada devreye giren **λ (lambda)**, bu cezanın ne kadar "ciddiye alınacağını" belirleyen bir hiperparametredir (hyperparameter).
+
+Eğer λ değeri yüksek seçilirse, model üzerindeki "basit kal" baskısı artar; yani model ağırlıklarını küçük tutmaya zorlanır, bu da modelin daha az karmaşık, daha genel ama bazen veriye yeterince uyum sağlayamayan (underfitting) bir hale gelmesine yol açabilir. Tam tersine, λ değeri düşük seçilirse, ceza terimi zayıflar ve model daha çok veriye odaklanıp onu olabildiğince iyi fit etmeye çalışır — bu da fazla esnek bir model ve potansiyel overfitting riski demektir.
+
+Yani özünde λ, modelin "veriye ne kadar sadık kalacağı" ile "ne kadar sade/basit kalacağı" arasındaki dengeyi ayarlayan bir kadran (dial) gibi düşünülebilir. Bu dengeyi doğru bulmak (yani λ'yı doğru tune etmek) regularization'ın en kritik pratik adımıdır ve genelde cross-validation gibi yöntemlerle en uygun λ değeri deneme yanılmayla bulunur.
+
+Types of Regularization In Machine Learning
+There are a couple of ways to penalize model complexity. Each one puts pressure on the coefficients in a different way, which means they're suited to different situations.
+
+L2 regularization (Ridge regression)
+
+L2 regularization penalizes the squared value of each coefficient. The larger a coefficient, the more it contributes to the penalty - and the harder the model works to shrink it.
+
+Loss + λ * [toplam işareti j den başlayacak wj'nin karesi]
+
+The key word here is shrink. L2 pushes all coefficients toward zero, but never quite reaches zero. Every feature stays in the model, just with a smaller weight. That makes Ridge a good default when you believe most of your features are relevant and you want a stable, well-behaved model.
+
+L1 regularization (Lasso regression)
+L1 regularization penalizes the absolute value of each coefficient instead of the square.
+
+Loss + λ * [toplam işareti j den başlayacak  mutlak değer içinde wj]
+
+That small difference has a big consequence. L1 can push coefficients all the way to exactly zero, which means it removes features from the model. You can think of this as automatic feature selection. In other words, Lasso regularization can simplify your model by removing features.
+
+L1 vs. L2 regularization
+The core difference comes down to sparsity. L1 produces sparse models - only a subset of features get through. L2 produces dense models - all features remain, with smaller weights.
+
+That affects interpretability too. A Lasso model with 5 active features is easier to explain than a Ridge model with 50 features all contributing a little. But Ridge tends to be more stable when features are correlated with each other , çünkü ağırlığı rastgele birini seçmek yerine bunların arasına dağıtır.
+
+L1(lasso):
+Shrink some to exatly zer
+Perform feature selection
+When have many irrelevant features best
+Model interpretability higher(sparse)
+
+L2(ridge)
+
+Shrinks all , none reach zero
+Dont perform feature selection
+When most features are relevant is best.
+
+
+Tabii hocam, bu tabloyu da paragraf halinde açıklayayım.
+
+Bu tablo, daha önce konuştuğumuz **L1 (Lasso)** ve **L2 (Ridge)** regularization yöntemlerini birebir karşılaştırıyor. Ceza (penalty) açısından bakıldığında, L1 ağırlıkların mutlak değerlerini cezalandırırken, L2 ağırlıkların karelerini cezalandırır — bu matematiksel fark, aslında iki yöntemin davranışındaki tüm farklılıkların temel kaynağıdır.
+
+Katsayılar (coefficients) üzerindeki etkiye baktığımızda, L1 bazı katsayıları tam olarak sıfıra indirebilirken, L2 tüm katsayıları küçültür ama hiçbirini tam olarak sıfıra ulaştırmaz — hepsi küçük de olsa bir şekilde "hayatta kalır". Bu doğrudan **feature selection** (özellik seçimi) yeteneğine yansır: L1 gerçek anlamda özellik seçimi yapabilir çünkü önemsiz gördüğü değişkenleri modelden tamamen çıkarabilir, L2 ise bunu yapamaz, sadece etkilerini azaltır ama hepsini modelde tutar.
+
+Bu özellik, hangi yöntemin ne zaman tercih edileceğini de belirler: eğer elinizde çok sayıda alakasız/gereksiz özellik varsa L1 daha uygundur, çünkü otomatik olarak gereksizleri eler. Ama elinizdeki özelliklerin çoğu zaten anlamlı ve modele katkı sağlıyorsa, L2 daha iyi çalışır çünkü hiçbir bilgiyi tamamen atmadan hepsini dengeli şekilde kullanır.
+
+Korelasyonlu (birbiriyle ilişkili) özellikler söz konusu olduğunda da davranışları farklıdır: L1, birbiriyle yüksek korelasyonlu birkaç özellik arasından genelde sadece birini seçip diğerlerini sıfırlar; L2 ise böyle bir seçim yapmaz, ağırlığı korelasyonlu tüm özellikler arasında dağıtır.
+
+Son olarak, model yorumlanabilirliği (interpretability) açısından L1 genelde daha avantajlıdır çünkü ürettiği model "sparse" (seyrek) yapıdadır — yani az sayıda aktif özellik içerir ve bu da modelin hangi değişkenlere dayandığını anlamayı kolaylaştırır. L2 ise "dense" (yoğun) bir model üretir, yani tüm özellikler bir şekilde modelde yer aldığı için yorumlanabilirliği L1'e göre daha düşüktür.
+
+in detail:
+
+https://www.datacamp.com/tutorial/tutorial-lasso-ridge-regression
+
+Elastic Net regularization
+
+Elastic Net regularization
+
+Elastic Net combines L1 and L2 into a single penalty term.
+
+The idea is to get the best of both: feature selection of L1 and stability of L2. This is handy when you have correlated features and still want some of them dropped. Lasso alone tends to pick one feature from a correlated group and ignore the rest. Elastic Net is more likely to keep a few of them while still removing irrelevant ones.
+
+Regularization in Different Models
+Regularization shows up across many machine learning models, but in different forms. Let me show you what these are.
+
+Linear regression is where most people first see regularization. When you add L2 regularization to linear regression and you get Ridge regularization. Likewise, adding L1 gets  you Lasso regression. The math is the same as described above - a penalty term added to the least squares loss.
+
+Regularization in Different Models
+Regularization shows up across many machine learning models, but in different forms. Let me show you what these are.
+
+Linear regression is where most people first see regularization. When you add L2 regularization to linear regression and you get Ridge regularization. Likewise, adding L1 gets  you Lasso regression. The math is the same as described above - a penalty term added to the least squares loss.
+
+Logistic regression works the same way. The loss function changes - it's cross-entropy instead of squared error - but the penalty term is identical. Most machine learning libraries apply L2 regularization to logistic regression by default, which is why you'll see a parameter called C in scikit-learn. It's the inverse of λ, so a smaller C means stronger regularization.
+
+Neural networks use a couple of different approaches:
+
+	Weight decay: L2 regularization applied to the network's weights - it works the same way, just at a much larger scale
+	Dropout: During training, it randomly disables a fraction of neurons in each pass, which prevents the network from relying too heavily on any single path through the layers.
+
+oth reduce overfitting, but through different means.
+
+Tree-based models don't use loss penalties at all. Instead, they control complexity through pruning - limiting how deep a tree can grow, or removing branches that don't improve predictions enough to justify their existence. Hyperparameters like max_depth and min_samples_split in scikit-learn are regularization parameters, even if they're not called that.
+
+Regularization and the Bias-Variance Tradeoff
+Regularization is all about compromises.
+
+When you add a penalty term, you're restricting what the model can do. It can no longer fit the training data as closely as it wants. That constraint introduces bias - the model makes slightly wrong assumptions by design, because you've told it to stay simple.
+
+But that same constraint reduces variance. A model that can't fit every data point is less sensitive to the specific samples it was trained on. When you train it on a slightly different dataset, you'll get a similar result. That stability is really what you want, so your model doesn’t fail in production.
+
+Without regularization, you get a highly flexible model that has low bias (makes few assumptions and fits the training data well) and high variance (small changes in the training data produce very different models, which means it can't be trusted on new data).
+
+Regularization is all about shifting the balance. A little more bias in exchange for a lot less variance usually leads to better performance on data the model hasn't seen. That's the compromise, and it's almost always worth making.
+
+
+Choosing the Regularization Strength
+As a machine learning practitioner, you’ll have to set the regularization strength after you pick the regularization type.
+
+That strength is controlled by a hyperparameter - usually called lambda (λ) in math notation, or alpha in scikit-learn. It's the multiplier in front of the penalty term. When you change it ,modelin basitliğe doğru ne kadar zorlandığını değiştirirsiniz.
+
+If you get it wrong in either direction, you’ll have a problem in production:
+
+Too low: the penalty is too weak to even matter. The model overfits, same as if you had no regularization at all.
+Too high: the penalty is the dominant factor. The model is so constrained that it can't understand real patterns in the data. That's underfitting.
+
+The right value sits somewhere in between, and there's no universal answer. It depends on your data, your model, and how much noise you're dealing with.
+
+The standard way to find it is cross-validation. You split your training data into folds, train the model on each combination of folds, and measure validation performance across a range of alpha values. The value that gives the best average validation score is the one you use.
+
+Conclusion
+Regularization is how you stop a model from being too smart for its own good.
+
+It penalizes complexity, which forces the model to find solutions that generalize rather than just memorize training data. L2 will keep all your features and reduce their influence. L1 will remove irrelevant features. Elastic Net combines both. And across linear models, logistic regression, neural networks, and ensamble models, the same idea shows up in different forms, and it’s not always called “regularization.”
+
+Extra  website:
+
+https://www.ibm.com/think/topics/regularization
