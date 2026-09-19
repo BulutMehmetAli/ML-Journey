@@ -1,0 +1,285 @@
+Cross Validation:
+
+Cross Validation 
+
+Cross-validation is a technique used to check how well a machine learning model performs on unseen data while preventing overfitting. It works by:
+
+Splitting the dataset into several parts.
+Training the model on some parts and testing it on the remaining part.
+Repeating this resampling process multiple times by choosing different parts of the dataset.
+Averaging the results from each validation step to get the final performance.
+
+Types of Cross-Validation
+There are several types of cross-validation techniques which are as follows:
+
+1. Holdout Validation
+In Holdout Validation method typically 50% data is used for training and 50% for testing. Making it simple and quick to apply. The major drawback of this method is that only 50% data is used for training, the model may miss important patterns in the other half which leads to high bias.
+
+2. LOOCV (Leave One Out Cross Validation)
+In this method the model is trained on the entire dataset except for one data point which is used for testing. This process is repeated for each data point in the dataset.
+
+All data points are used for training, resulting in low bias.
+Testing on a single data point can cause high variance, especially if the point is an outlier.
+It can be very time-consuming for large datasets as it requires one iteration per data point.
+
+3. Stratified Cross-Validation
+It is a technique that ensures each fold of the cross-validation process has the same class distribution as the full dataset. This is useful for imbalanced datasets where some classes are underrepresented.
+
+The dataset is divided into k folds, keeping class proportions consistent in each fold.
+In each iteration, one fold is used for testing and the remaining folds for training.
+This process is repeated k times so that each fold is used once as the test set.
+It helps classification models generalize better by maintaining balanced class representation.
+
+Normal K-Fold'da veriyi bölerken rastgele böleriz. Bu bazen bir fold'da çok fazla, diğerinde çok az belirli sınıf olmasına yol açar. Stratified CV ise her fold'un orijinal veriyle aynı sınıf dağılımına sahip olmasını garanti eder.
+100 kişilik bir sınıfta 90 erkek, 10 kız var. 5 gruba bölüyorsun.
+❌ Normal K-Fold: Bir grupta hiç kız olmayabilir!
+✅ Stratified K-Fold: Her grupta 18 erkek, 2 kız olur. Dağılım korunur!
+
+DurumTercihSınıflar dengesizse (fraud, hastalık tespiti)✅ StratifiedSınıflar dengeliyseNormal K-Fold yeterliSınıflandırma problemi✅ StratifiedRegresyon problemiNormal K-Fold
+
+Kfold Cross Validation:
+
+K-Fold Cross Validation splits the dataset into k equal-sized folds. The model is trained on k-1 folds and tested on the remaining fold. This process is repeated k times each time using a different fold for testing.
+
+Note: It is always suggested that the value of k should be 10 as the lower value of k takes towards validation and higher value of k leads to LOOCV method.
+
+K-Fold Cross Validation kullanırken en kritik kararlardan biri k değerinin ne olacağıdır. Bu değer aslında bir denge noktası arayışıdır. K değeri çok küçük olduğunda, yani k=2 gibi, model her seferinde çok az veriyle eğitilir ve sonuçlar şansa bağlı hale gelir — bu durum neredeyse basit bir validation işlemine benzemeye başlar ve güvenilirlik düşer. K değeri çok büyük olduğunda ise, yani k=n'e yaklaştığında, her fold neredeyse aynı veriyle oluşturulur, hesaplama maliyeti astronomik şekilde artar ve LOOCV'ye dönüşmeye başlar.
+İşte tam bu yüzden k=10 altın standart olarak kabul edilir. Çünkü k=10, iki önemli kavram arasında en iyi dengeyi kurar: bias ve variance. Bias, modelin ne kadar yanlış öğrendiğini; variance ise sonuçların ne kadar değişken olduğunu ifade eder. K değeri küçüldükçe bias artar, büyüdükçe variance artar. K=10 ise ikisinin tam ortasında, ne çok az ne çok fazla — dengeli, güvenilir ve makul bir hesaplama maliyetiyle çalışan bir değerdir.
+Bunu şöyle hayal edebilirsin: Bir öğrencinin gerçek bilgisini ölçmek için 2 sınav yapmak yeterli değildir, şans faktörü çok yüksektir. 100 sınav yapmak ise çok güvenilir ama gereksiz yorucudur. 10 sınav ise hem güvenilir hem de makul bir çabadır. K=10 tam olarak bu noktadır. 
+
+K-Fold Cross-Validation
+Lower bias, more reliable performance estimate and variance depends on k	
+Best use case Small to medium datasets where accuracy estimation is important
+Holdout Method
+Higher bias if the split is not representative and results can vary significantly
+Best use case Very large datasets or when quick evaluation is needed
+
+Advantages
+Better performance estimate: Provides a more reliable evaluation than a single train-test split.
+Reduces overfitting: Helps ensure the model generalizes well to unseen data.
+Efficient use of data: All data points are used for both training and testing at different iterations.
+Flexible: Works with different types of datasets and models.
+
+Disadvantages
+Computationally Expensive: It can be computationally expensive especially when the number of folds is large.
+Time-consuming: Methods like LOOCV can take a long time for datasets with many data instances.
+Bias-Variance Tradeoff: Few folds may result in high bias while too many folds may result in high variance.
+
+K-Fold Extra Info 
+
+K-Fold Cross Validation is a statistical technique to measure the performance of a machine learning model by dividing the dataset into K subsets of equal size (folds). The model is trained on K − 1 folds and tested on the last fold. This process is repeated K times, with each fold being used as the testing set exactly once. The performance of the model is then averaged over all K iterations to provide a robust estimate of its generalization ability.
+
+
+What is Cross Validation
+Cross-validation serves multiple purposes:
+
+Avoids Overfitting: Ensures that the model does not perform well only on the training data but generalizes to unseen data.
+Provides Robust Evaluation: Averages results over multiple iterations, reducing bias and variance in the performance metrics.
+Efficient Use of Data: Maximizes the utilization of the dataset, especially when the data size is limited.
+
+K-Fold Cross Validation
+The process can be broken into the following steps:
+
+1. Split Data into K Folds: Divide the dataset into K subsets or folds.
+
+2. Train-Test Iterations: For each fold:
+
+Use K −1 folds for training the model.
+Use the remaining fold as the test set to evaluate the model.
+
+3. Aggregate Results: Calculate the performance metric (e.g., accuracy, precision, recall, etc.) for each fold and average the results.
+
+Choosing the Value of K
+The choice of K affects the trade-off between bias and variance:
+
+Small K (e.g., K =2 or K=5): Faster computation with increased variance in performance estimates.
+Large K (e.g., K =10 or K =n, where n is the size of the dataset): Lower variance but higher computational cost. K =n corresponds to Leave-One-Out Cross Validation (LOOCV).
+
+A standard choice is 10-Fold Cross Validation that is a good trade-off between bias and variance in most situations.
+
+Variants of K-Fold Cross Validation
+
+1-Stratified K Fold Cross Validation
+
+Stratified K-Fold Cross Validation is a technique used for evaluating a model. It is particularly useful for classification problems in which the class labels are not evenly distributed i.e data is imbalanced. It is a enhanced version of K-Fold Cross Validation. Key difference is that it uses stratification which allows original distribution of each class to be maintained across each fold.
+
+For example, if your original dataset had 80% Class 0 and 20% Class 1 your folds would reflect the same proportion of classes in your data. This creates improved and more reliable accuracy metrics.
+
+Problem with Random Splitting
+Random splitting techniques like train_test_split() or regular K-Fold can create problem if they produce imbalanced class proportions in the training and test sets. For example imagine a binary classification dataset with 100 samples where:
+
+80 samples are Class 0
+20 samples are Class 1
+
+Using random sampling in an 80:20 split then all 80 Class 0 in the training set and all 20 Class 1 in the test set. In this case model will never learn to classify Class 1 and would give misleading accuracy.
+
+Now, let’s use stratified sampling on same dataset:
+
+1. Training Set (80 samples):
+
+64 from Class 0 (80% of 80)
+16 from Class 1 (80% of 20)
+2. Test Set (20 samples):
+
+16 from Class 0 (20% of 80)
+4 from Class 1 (20% of 20)
+
+This ensures that both training and test sets provide an accurate representation of the full dataset's class proportions and better generalization in the evaluation set.
+
+In real-world classification tasks distribution of observations per class is often imbalanced like in a medical dataset it could be the case that 90% of patients are healthy (Class 0) and 10% have a disease (Class 1). If we randomly split this data there may be some training/test sets that have very few sample or even no samples for the minority class that where Stratified K Fold Cross Validation becomes important.
+
+
+Repeated K-Fold Cross Validation, normal K-Fold işlemini birden fazla kez tekrarlar. Her tekrarda veri farklı şekilde bölünür ve sonunda tüm tekrarların ortalaması alınır. Örneğin 5-Fold işlemini 10 kez tekrarlarsanız toplamda 50 farklı değerlendirme yapılmış olur. Bu yöntemin asıl gücü kararlılık sağlamasıdır. Normal K-Fold'da rastgele bölünme bazen şanslı bazen şanssız sonuçlar doğurabilir. Repeated K-Fold ise bu şans faktörünü ortadan kaldırarak modelin gerçek performansını çok daha güvenilir bir şekilde ortaya koyar. Ancak hesaplama maliyeti tekrar sayısıyla doğru orantılı artar, yani 10 tekrar yaparsanız 10 kat daha uzun sürer.
+LOOCV (Leave-One-Out Cross Validation) ise K değerinin veri setindeki toplam satır sayısına eşit olduğu özel bir durumdur. Yani 1000 satır veriniz varsa 1000 fold oluşturulur ve her seferinde sadece 1 veri noktası test olarak ayrılır, geri kalan 999 satır eğitim için kullanılır. Bu yöntem teorik olarak en güvenilir değerlendirmeyi sunar çünkü model neredeyse tüm veriyle eğitilir. Ancak büyük veri setlerinde son derece yavaştır ve hesaplama maliyeti çok yüksektir. Bu yüzden yalnızca veri seti gerçekten çok küçük olduğunda tercih edilir.
+
+Repeated K-Fold sonuçları kararlı hale getirir — aynı işlemi farklı bölünmelerle tekrarlar.
+LOOCV ise her veri noktasını tek tek test eder — maksimum veri kullanımı sağlar ama çok yavaştır.
+
+Veri yeterliyse → Repeated K-Fold
+Veri çok azsa → LOOCV 
+
+Kararsızlık Senaryosu:
+📋 Durum:
+Bir hastanede çalışıyorsun. Senden kanser tespiti yapan bir model geliştirmeni istediler.
+Elimizdeki veri:
+
+150 satır veri var
+%85 sağlıklı, %15 kanserli
+Sonuç hayat kurtarıyor — yani güvenilirlik kritik!
+
+LOOCV mi demeliyim?
+
+Veri az (150 satır) → LOOCV mantıklı görünüyor
+Her satırı tek tek test eder → Maksimum veri kullanımı ✅
+Ama... 150 fold = yavaş ⚠️
+Ve sınıf dağılımını korumaz! %15 kanserli az zaten ❌
+
+Repeated K-Fold mı demeliyim?
+
+Sonuçlar kararlı olur → Güvenilirlik için iyi ✅
+Farklı bölünmeler → Şans faktörü ortadan kalkar ✅
+Ama... Veri az olduğu için her bölünmede kanserli hastalar farklı fold'lara düşebilir ⚠️
+Sınıf dağılımı garanti değil! ❌
+
+Stratified K-Fold mı demeliyim?
+
+Sınıf dağılımını korur → Her fold'da %85/%15 ✅
+Ama... Tek bir bölünme — şans faktörü hâlâ var ⚠️
+
+Bazen tek bir method yetmez. "Veri az + Dengesiz + Güvenilirlik kritik" gibi birden fazla kısıt aynı anda varsa, iki methodu birleştiren RepeatedStratifiedKFold en akıllıca çözümdür
+
+from sklearn.model_selection import RepeatedStratifiedKFold
+✅ Dengesiz veri + Güvenilirlik gerektiğinde
+
+from sklearn.model_selection import RepeatedKFold
+✅ Dengeli veri ama sonuçlar tutarsızsa
+
+from sklearn.model_selection import StratifiedShuffleSplit
+✅ Büyük ve dengesiz veri setlerinde
+
+from sklearn.model_selection import TimeSeriesSplit
+# Zamana özel bölünme
+# Geçmişten geleceği tahmin et
+✅ Zaman bağımlı verilerde
+
+Fold 1: %92 ← Çok yüksek
+Fold 2: %71 ← Çok düşük
+Fold 3: %88
+Fold 4: %69 ← Çok düşük
+Fold 5: %90
+
+Ortalama: %82
+Ortalama %82 görünüyor ama fold'lar arasında çok büyük farklar var! Bu tutarsızlık demek. 
+✅ RepeatedKFold Bunu Nasıl Çözüyor?
+Her tekrarda veri farklı şekilde bölünüyor. Şanslı ve şanssız bölünmelerin etkisi zamanla birbirini dengeliyor!
+
+Tutarsızlık = Fold'lar arasındaki büyük performans farkı
+Sebebi = Şansa bağlı bölünme
+Çözümü = RepeatedKFold → Farklı bölünmeleri tekrarlayarak şans faktörünü ortadan kaldırır! 
+
+Genel Yaklaşım:
+Adım 1️⃣ — Önce Veriye Bak
+Koda geçmeden önce şu soruları sor:
+
+
+Veri kaç satır?
+    ├── Çok az (< 100)     → LOOCV düşün
+    ├── Orta (100 - 10k)   → K-Fold düşün
+    └── Büyük (10k+)       → Data Splitting düşün
+
+Sınıflar dengeli mi?
+    ├── Hayır (fraud, kanser) → Stratified şart!
+    └── Evet                  → Normal K-Fold yeterli
+
+Zaman bağımlı mı?
+    ├── Evet  → TimeSeriesSplit şart!
+    └── Hayır → Devam et
+
+Adım 2️⃣ — Basit Başla
+
+# Önce basit K-Fold uygula
+kf = KFold(n_splits=10)
+scores = cross_val_score(pipeline, X, y, cv=kf)
+print(scores)
+# [0.92, 0.71, 0.88, 0.69, 0.90, ...]
+```
+
+---
+
+### Adım 3️⃣ — Sonuçlara Bak
+```
+Fold sonuçları tutarlı mı?
+    ├── Evet → K-Fold yeterli, devam et ✅
+    └── Hayır (büyük farklar var) → RepeatedKFold dene
+
+Sınıf dağılımı her fold'da korunuyor mu?
+    ├── Evet → Devam et ✅
+    └── Hayır → Stratified ekle
+
+Hâlâ tutarsızlık var mı?
+    └── Evet → RepeatedStratifiedKFold'a geç ⭐
+
+Adım 4️⃣ — Karşılaştır
+
+# Basit K-Fold
+kf_scores = cross_val_score(pipeline, X, y, cv=KFold(10))
+
+# Repeated K-Fold
+rkf_scores = cross_val_score(pipeline, X, y, cv=RepeatedKFold(10, 5))
+
+print(f"K-Fold Std:          {kf_scores.std():.3f}")
+print(f"Repeated K-Fold Std: {rkf_scores.std():.3f}")
+#                                          ↑
+#                          Bu küçüldüyse Repeated daha kararlı!
+```
+
+---
+
+## 🎯 Gerçek Dünya Akışı:
+```
+Veriye bak
+    ↓
+Basit K-Fold ile başla
+    ↓
+Sonuçlar tutarsız mı?
+    ├── Hayır → Bitti ✅
+    └── Evet
+         ↓
+    Veri dengesiz mi?
+         ├── Evet → RepeatedStratifiedKFold ⭐
+         └── Hayır → RepeatedKFold ⭐
+
+Önce veriye bak → Sonra basit başla → Sonuçlara göre karmaşıklaştır.
+Gereksiz yere karmaşık method kullanmak hem zaman kaybı hem de hesaplama maliyeti demek!
+"Önce basit, gerekirse karmaşık" — bu altın kural! 
+
+20k veri → Zaten büyük bir veri seti
+↓
+Sınıflar dengesiz mi?
+    ├── Evet → Stratified K-Fold mantıklı ✅
+    └── Hayır → Data Splitting bile yeterli!
+
+Limitations of K-Fold Cross Validation
+Data Leakage Risk: Care must be taken to ensure that no data preprocessing (e.g., scaling, encoding) leaks information from the test set into the training set
+Computational Cost: Re-training the model k times can be time-consuming, especially for large datasets or complex models
+
