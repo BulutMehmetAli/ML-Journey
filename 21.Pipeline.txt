@@ -1,0 +1,372 @@
+Pipeline:
+
+Pipeline, kelime anlamıyla "boru hattı" demek ve mantığı da tam olarak buna benzer. Bir su borusunu düşün: su bir uçtan girer, borunun içinden geçer, diğer uçtan çıkar. Pipeline da veriyi alır, içindeki adımlardan sırayla geçirir ve sonunda bir çıktı verir. Yani birden fazla işlemi arka arkaya dizdiğin bir zincirdir.
+
+Şöyle somutlaştırayım. Şu ana kadar veriyle çalışırken hep aynı sırayı izledin: önce eksik değerleri doldurdun, sonra veriyi ölçekledin, sonra modele verdin. Bu üç işlem hep aynı sırada, hep birbiri ardına gidiyor. Pipeline işte bu adımları tek tek elle yapmak yerine, hepsini tek bir zincire bağlamanı sağlar. Bir kere kuruyorsun, sonra "bu zinciri çalıştır" diyorsun ve veri otomatik olarak doldurma → ölçekleme → model sırasıyla baştan sona akıyor.
+
+Bir benzetme daha: Pipeline bir fabrika montaj hattı gibidir. Hammadde (ham veri) hattın başından girer, her istasyonda bir işlem görür (bir istasyon temizler, biri boyar, biri paketler), sonunda bitmiş ürün (tahmin) çıkar. Sen her istasyonu tek tek elle çalıştırmak yerine, hattın düğmesine basıyorsun ve ürün baştan sona kendiliğinden işleniyor.
+
+Neden buna ihtiyaç var, yani elle tek tek yapmak yerine niye zincire bağlıyoruz? İki temel sebep. Birincisi düzen: üç-dört işlemi her seferinde ayrı ayrı, doğru sırada yazmak yerine tek bir yapıda topluyorsun, kodun temiz ve tekrar kullanılabilir oluyor. İkincisi ve asıl önemlisi, daha önce konuştuğumuz data leakage'i otomatik engellemesi; ama o tarafa girmeden önce bu temel "zincir" fikrinin kafanda oturduğundan emin olmak isterim.
+
+Tek cümlede: Pipeline, veri ön işleme adımlarını ve modeli belirli bir sırayla tek bir zincire bağlayan, böylece tüm bu işlemleri tek bir nesne gibi çalıştırmanı sağlayan yapıdır.
+
+Soru:Peki ya pipeline kurmadığımız takdirde data leakage nasıl meydana gelebilir ?
+
+Çok iyi bir soru, çünkü Pipeline'ın değerini ancak onsuz neyin ters gittiğini görünce tam anlarsın. Somut bir senaryoyla, adım adım nasıl sızıntı olduğunu göstereyim.
+
+En klasik ve en sinsi hata şu: ön işlemeyi train/test ayrımından **önce**, tüm veriye birden uygulamak. Şöyle bir kod düşün:
+
+```python
+# YANLIŞ
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)   # tüm veriye fit + transform
+
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y)
+```
+
+Burada hata şu: `fit_transform`'u tüm `X` üzerinde yaptın, yani ölçekleme parametrelerini (ortalama, std) hesaplarken test verisi de işin içindeydi. Hatırla, `fit` ortalamayı ve std'yi hesaplıyordu; bu hesaba test verisinin değerleri de katıldı. Sonra bölme yaptın ama iş işten geçti: train'i ölçeklerken kullandığın ortalama, içinde test verisinin izini taşıyor. Model dolaylı yoldan test seti hakkında bilgi edinmiş oldu. İşte data leakage tam olarak bu.
+
+İkinci yaygın hata, ayrı ayrı yapıyormuş gibi görünüp yine de test'e `fit` uygulamak:
+
+```python
+# YANLIŞ
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)   # doğru
+X_test_scaled  = scaler.fit_transform(X_test)    # YANLIŞ! test'e de fit
+```
+
+Burada bölmeyi doğru yaptın ama son satırda test'e de `fit_transform` dedin. Bu, scaler'ın test'in kendi ortalamasını öğrenmesi demek; test kendi parametreleriyle ölçeklendi, train'inkiyle değil. Hem leakage var hem de train ile test artık farklı ölçeklerde, model kafası karışır. Doğrusu test'e sadece `transform` demekti.
+
+Aynı tuzak imputation'da da var, hatta daha sinsi:
+
+```python
+# YANLIŞ
+imputer = SimpleImputer(strategy='mean')
+X_imputed = imputer.fit_transform(X)   # tüm veride ortalama hesaplandı
+```
+
+Eksikleri doldururken ortalamayı tüm veriden (test dahil) hesapladın. Yani train'deki eksik bir hücreyi, içinde test verisi de olan bir ortalamayla doldurdun. Test bilgisi train'e sızdı.
+
+Şimdi asıl önemli nokta: bu hatalar tek bir scaler'da bile kolayken, gerçek bir akışta üç-dört adım var (imputer, scaler, encoder, belki feature selection). Her birini elle, doğru sırayla, her birinde "fit sadece train'de, transform her ikisinde" kuralını takip ederek yazman gerekiyor. Bir tanesinde bile şaşırırsan sızıntı olur ve en kötüsü, hata vermez; kod sorunsuz çalışır, sadece modelin sahte yüksek bir skor verir. Sen "modelim %95" diye sevinirsin, gerçekte canlıya alınca çakılır. Sessiz olduğu için en tehlikeli hata türüdür.
+
+Bir de en sinsi leakage türü: feature selection ya da herhangi bir kararı tüm veriye bakarak vermek. Mesela "hangi özellikler hedefle en çok korele" diye tüm veride bakıp özellik seçersen, bu seçim test verisinin bilgisini kullanmış olur; train/test ayrımından önce yapılan her "öğrenme" sızıntıdır.
+
+Soru: Hocam "(imputer, scaler, encoder, belki feature selection)" Buradaki scaler dediğimiz şey aslında feature selection olmuyor mu ? [Ben karıştırmışım okurken anladım. feature selection'ı bir an feature scaling olarak algıladım ama gene de cavabı oku]
+
+Hayır, ikisi tamamen farklı şeyler; isimlerinin biraz benzemesi (ikisi de veriyle bir şey yapıyor) kafa karıştırmış olabilir ama yaptıkları iş bambaşka. Ayrımı net koyayım.
+
+Scaler (ölçekleyici), sütunların **değerlerini değiştirir** ama sütunları korur. Hatırla, StandardScaler her özelliği ortalama 0 std 1 olacak şekilde dönüştürüyordu. Yani 10 sütunla girersin, yine 10 sütunla çıkarsın; sadece içlerindeki sayılar yeni ölçeğe çevrilmiştir. Hiçbir sütun atılmaz, sadece değerleri yeniden ayarlanır. Scaler'ın derdi "değerler karşılaştırılabilir olsun".
+
+Feature selection (özellik seçimi) ise tam tersi: **sütunların kendisini eler.** Yani "bu özellikler işe yarıyor, şunlar gereksiz" diye karar verip gereksiz olanları veriden atar. 10 sütunla girersin, mesela 6 sütunla çıkarsın; 4 tanesi tamamen silinmiştir. Kalan sütunların değerlerine dokunmaz, sadece hangi sütunların kalacağına karar verir. Feature selection'ın derdi "hangi özellikler gerekli".
+
+Neden ikisi de gerekli olabilir? Çünkü farklı problemleri çözüyorlar. Scaler, büyük sayılı özelliğin küçüğü ezmesini engeller (adalet). Feature selection ise alakasız ya da gereksiz özellikleri atarak modeli sadeleştirir, gürültüyü azaltır, hızlandırır ve bazen doğruluğu artırır. Bir akışta önce eksikleri doldurur (imputer), sonra ölçekler (scaler), sonra belki gereksiz sütunları eler (feature selection), sonra modele verirsin; her biri ayrı bir görev.
+
+Tek cümlede: Scaler sütunların değerlerini standartlaştırır ama hepsini tutar; feature selection ise sütunların hangilerinin kalacağına karar verip gereksizleri tamamen atar. Biri "nasıl görünsünler"i, diğeri "hangileri kalsın"ı çözer.
+*************************************************************
+İşte Pipeline tam da bunu çözüyor. Tüm adımları zincire koyduğunda, `pipe.fit(X_train)` her adımı otomatik olarak sadece train'de fit eder, `pipe.predict(X_test)` her adımı otomatik olarak test'e sadece transform uygular. Sen "fit sadece train'de olsun" diye tek tek uğraşmazsın; Pipeline bu disiplini yapısal olarak garanti eder, yani yanlışlıkla bile leakage yapamazsın. Cross-validation'da bu daha da kritik: orada veri defalarca bölünür ve elle ön işleme yaparsan her bölünmede sızıntı olur, ama Pipeline her fold'da ön işlemeyi o fold'un train'ine yeniden fit eder.
+
+Tek paragrafta: Pipeline olmadan data leakage en sık, ön işlemeyi (scaling, imputation) train/test ayrımından önce tüm veriye uygulayarak ya da test setine yanlışlıkla `fit`/`fit_transform` çağırarak meydana gelir; her iki durumda da test verisinin istatistikleri (ortalama, std, doldurma değeri) eğitim sürecine sızar ve model sahte bir yüksek skor verir. Bu hata sessizdir, kod hata vermez, sadece sonuç yanıltıcı olur; ve adım sayısı arttıkça elle doğru yönetmek zorlaşır. Pipeline, her adımı otomatik olarak yalnızca train'de fit edip test'e sadece transform uygulayarak bu sızıntıyı yapısal olarak imkânsız kılar.
+
+Pipeline, makine öğrenmesindeki en pratik ve en çok hayat kurtaran yapılardan biri; özellikle data leakage'i otomatik engellediği için. Sıfırdan, sezgiyle kuralım.
+
+## Sorun: Pipeline neden var?
+
+Şu ana kadar yaptığın akışı düşün. Önce eksikleri dolduruyorsun (imputer), sonra ölçekliyorsun (scaler), sonra modeli eğitiyorsun. Bunları tek tek, ayrı ayrı yaptığında iki büyük sorun çıkıyor.
+
+Birincisi, data leakage riski. Hatırla, her adımda (imputer, scaler) `fit`'i sadece train'de yapman, test'e sadece `transform` uygulaman gerekiyordu. Bunu üç-dört adımda elle takip etmek hata kaldırmaz; bir yerde yanlışlıkla test'e `fit` uygularsan sızıntı olur ve farkına bile varmazsın. İkincisi, dağınıklık: train için ayrı, test için ayrı, sonra yeni gelen veri için ayrı ayrı aynı adımları tekrar yazmak hem yorucu hem hataya açık.
+
+Pipeline tam da bunu çözer: tüm adımları (imputer → scaler → model) tek bir nesnede zincirler. Sen `fit` dediğinde, her adımı doğru sırayla ve sadece train'de fit eder; `predict` dediğinde, aynı zinciri test'e doğru şekilde (sadece transform) uygular. Yani leakage'i yapısal olarak imkânsız hale getirir.
+
+## Temel mantık: zincir
+
+Pipeline'ı bir ir uçtan girer, sırayla her istasyondan (adımdan) geçer, en montaj hattı gibi düşün. Veri bsonunda model çıktısı verir. Her adım bir isim ve bir nesneden oluşur. Kritik kural: son adım hariç tüm adımlar transformer olmalı (yani `transform`'u olan: imputer, scaler, encoder), son adım ise genelde bir model (`predict`'i olan) olur.
+
+## Basit bir Pipeline
+
+```python
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+pipe = Pipeline([
+    ('imputer', SimpleImputer(strategy='mean')),
+    ('scaler', StandardScaler()),
+    ('model', LogisticRegression())
+])
+```
+
+Burada üç adım var, her biri (isim, nesne) çifti. İsimleri sen veriyorsun ('imputer', 'scaler', 'model'); bunlar sonradan adımlara erişmek için kullanılır. Sıra önemli: önce doldur, sonra ölçekle, sonra modele ver. Pipeline bu sırayı aynen takip eder.
+
+Kullanımı son derece basit:
+
+```python
+pipe.fit(X_train, y_train)      # tüm zinciri train'de eğitir
+predictions = pipe.predict(X_test)   # tüm zinciri test'e uygular
+```
+
+İşte sihir burada. `pipe.fit(X_train, y_train)` dediğinde Pipeline şunu yapar: imputer'ı X_train'de fit edip transform eder, çıkan sonucu scaler'da fit edip transform eder, onun çıktısını da modele fit eder. `pipe.predict(X_test)` dediğinde ise: imputer'ı X_test'e sadece transform eder (train'de öğrendiği ortalamayla), scaler'ı sadece transform eder (train'de öğrendiği parametreyle), sonucu modele verip tahmin alır. Yani test'e hiçbir adımda `fit` uygulanmaz; leakage otomatik engellenir. Sen tek satır yazdın, Pipeline tüm leakage disiplinini senin için hallediyor.
+
+## Farklı sütunlara farklı işlem: ColumnTransformer
+
+Gerçek veride bir sorun var: sayısal ve kategorik sütunlara aynı işlemi yapamazsın. Sayısalı ortalamayla doldurup ölçeklersin ama kategoriği mode'la doldurup encode edersin (sayıya çevirirsin). İşte burada ColumnTransformer devreye girer; farklı sütun gruplarına farklı pipeline'lar uygular.
+
+```python
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+
+# Sayısal sütunlar için pipeline
+numeric_pipe = Pipeline([
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())
+])
+
+# Kategorik sütunlar için pipeline
+categoric_pipe = Pipeline([
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('encoder', OneHotEncoder(handle_unknown='ignore'))
+])
+
+# İkisini sütunlara göre birleştir
+preprocessor = ColumnTransformer([
+    ('num', numeric_pipe, ['yas', 'gelir', 'sicaklik']),
+    ('cat', categoric_pipe, ['sehir', 'cinsiyet'])
+])
+```
+
+Burada ColumnTransformer'a diyorsun ki: 'yas', 'gelir', 'sicaklik' sütunlarına numeric_pipe'ı uygula (medyanla doldur, ölçekle); 'sehir', 'cinsiyet' sütunlarına categoric_pipe'ı uygula (mode'la doldur, one-hot encode et). Her sütun grubu kendi yolundan geçer.
+
+## Hepsini birleştiren tam yapı
+
+Şimdi ColumnTransformer'ı (ön işleme) bir modelle birleştirip eksiksiz bir Pipeline kuralım:
+
+```python
+full_pipe = Pipeline([
+    ('preprocessor', preprocessor),
+    ('model', LogisticRegression())
+])
+
+full_pipe.fit(X_train, y_train)
+predictions = full_pipe.predict(X_test)
+```
+
+Bu tek nesne artık her şeyi içeriyor: sayısal doldurma, kategorik doldurma, ölçekleme, encoding ve model. Yeni bir veri geldiğinde sadece `full_pipe.predict(yeni_veri)` dersin; tüm ön işleme otomatik, doğru parametrelerle, leakage olmadan uygulanır. Bu, dağınık koddan tek satırlık temiz bir iş akışına geçiş demektir.
+
+## Pipeline'ın diğer büyük faydaları
+
+Cross-validation ile mükemmel çalışır. Hatırla, cross-validation'da veri farklı parçalara bölünüp tekrar tekrar eğitiliyor. Eğer ön işlemeyi elle yaparsan, her fold'da leakage olur (çünkü tüm veriyi bir kez ölçeklersin). Pipeline kullanırsan, her fold'da ön işleme o fold'un sadece train kısmında fit edilir; leakage her katmanda otomatik engellenir. Bu yüzden cross-validation'da Pipeline neredeyse zorunludur.
+
+Hiperparametre aramada da (GridSearchCV) adımlara isimleriyle erişebilirsin; mesela `'model__C'` diyerek modelin parametresini, `'imputer__strategy'` diyerek doldurma stratejisini aynı anda optimize edebilirsin (çift alt çizgi adım ismiyle parametreyi bağlar).
+
+Pipeline, ön işleme adımlarını (imputer, scaler, encoder) ve modeli tek bir zincirde birleştiren yapıdır; `fit` dediğinde her adımı sırayla ve sadece train'de fit eder, `predict` dediğinde aynı zinciri test'e sadece transform uygulayarak geçirir, böylece data leakage'i yapısal olarak imkânsız kılar. Sayısal ve kategorik sütunlara farklı işlemler gerektiğinde ColumnTransformer ile her sütun grubuna ayrı bir pipeline atarsın, sonra bunu modelle birleştirip tek bir tam Pipeline elde edersin. En büyük faydaları leakage'i otomatik önlemesi, kodu dağınıklıktan kurtarması, cross-validation'da her fold'da doğru davranması ve hiperparametre aramada tüm adımları birlikte optimize edebilmendir; kısacası dağınık ve riskli elle işlemeden profesyonel, güvenli bir iş akışına geçişin anahtarıdır.
+
+ColumnTransformer:
+
+ColumnTransformer, Pipeline'ı gerçek veride kullanılabilir kılan kritik parçadır; o yüzden mantığını sağlam kuralım. Önce neden gerektiğini görelim, sonra nasıl çalıştığını.
+
+## Sorun: tek bir işlem tüm sütunlara uymaz
+
+Şimdiye kadarki Pipeline örneklerinde tüm veriye aynı işlemi uyguladık (hepsini ortalamayla doldur, hepsini ölçekle). Ama gerçek veride bu mümkün değil, çünkü sütunlar farklı türde. Düşün: bir veride hem "yaş", "gelir" gibi sayısal sütunlar var, hem "şehir", "cinsiyet" gibi kategorik sütunlar.
+
+Bu ikisine aynı işlemi yapamazsın. Sayısal sütunu ortalamayla doldurup ölçeklersin, ama kategorik sütunda bunların hiçbiri çalışmaz: "şehir" sütununun ortalaması alınmaz (İstanbul + İzmir'in ortalaması diye bir şey yok), onu en sık değerle (mode) doldurursun. Ölçekleme de kategoride anlamsız; onun yerine sayıya çevirmen (encoding) gerekir, çünkü model metni anlamaz. Yani sayısal ve kategorik sütunların tamamen farklı muameleye ihtiyacı var.
+
+İşte ColumnTransformer bu sorunu çözer: **farklı sütun gruplarına farklı işlemler uygulamanı sağlar.** Her sütun grubu kendi yolundan geçer.
+
+Nasıl çalışır
+ColumnTransformer'a bir liste verirsin ve her eleman üç şeyden oluşur: bir isim, uygulanacak işlem (bir transformer ya da pipeline), ve bu işlemin uygulanacağı sütunlar. Şöyle:
+
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+# Sayısal sütunlar için işlem zinciri
+numeric_pipe = Pipeline([
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())
+])
+
+# Kategorik sütunlar için işlem zinciri
+categoric_pipe = Pipeline([
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('encoder', OneHotEncoder(handle_unknown='ignore'))
+])
+
+# ColumnTransformer: hangi işlem hangi sütunlara
+preprocessor = ColumnTransformer([
+    ('num', numeric_pipe, ['yas', 'gelir', 'sicaklik']),
+    ('cat', categoric_pipe, ['sehir', 'cinsiyet'])
+])
+
+Bunu okuyalım. ColumnTransformer'a iki kural verdin. Birincisi ('num' adıyla): 'yas', 'gelir', 'sicaklik' sütunlarına numeric_pipe'ı uygula, yani medyanla doldur ve ölçekle. İkincisi ('cat' adıyla): 'sehir', 'cinsiyet' sütunlarına categoric_pipe'ı uygula, yani mode'la doldur ve one-hot encode et. İsimler ('num', 'cat') senin verdiğin etiketler, sonradan erişim için.
+
+## İçeride ne oluyor
+
+ColumnTransformer veriyi aldığında, sütunları belirttiğin gruplara böler, her grubu kendi işleminden ayrı ayrı geçirir, sonra çıkan sonuçları yan yana birleştirip tek bir matris olarak döndürür. Yani sayısal sütunlar kendi yolundan (doldur+ölçekle), kategorik sütunlar kendi yolundan (doldur+encode) geçer, ikisinin çıktısı sonunda tek bir tabloda birleşir. Bu birleşmiş tablo da modele gider.
+
+Önemli bir nokta: OneHotEncoder kategorik bir sütunu birden fazla sütuna çevirir (mesela "şehir" 3 şehir içeriyorsa 3 ayrı 0/1 sütununa dönüşür), o yüzden çıkıştaki sütun sayısı girişten farklı olur. Bu normaldir.
+
+Modelle birleştirip tam Pipeline
+ColumnTransformer kendi başına sadece ön işleme yapar; onu bir modelle birleştirince akış tamamlanır:
+
+from sklearn.linear_model import LogisticRegression
+
+full_pipe = Pipeline([
+    ('preprocessor', preprocessor),
+    ('model', LogisticRegression())
+])
+
+full_pipe.fit(X_train, y_train)
+predictions = full_pipe.predict(X_test)
+
+Şimdi tek bir nesnen var: `full_pipe`. İçinde sayısal doldurma+ölçekleme, kategorik doldurma+encoding ve model var. `fit` dediğinde hepsi sırayla ve sadece train'de fit edilir; `predict` dediğinde test'e doğru şekilde uygulanır. Hatırla, leakage tartışması; ColumnTransformer da bu disiplini korur, her sütun grubunun işlemi yalnızca train'de fit edilir.
+
+## Pratik kolaylıklar
+
+Sütunları tek tek yazmak yerine tipine göre otomatik seçebilirsin:
+
+from sklearn.compose import make_column_selector
+
+preprocessor = ColumnTransformer([
+    ('num', numeric_pipe, make_column_selector(dtype_include='number')),
+    ('cat', categoric_pipe, make_column_selector(dtype_include='object'))
+])
+
+Bu, "tüm sayısal sütunları num'a, tüm metin sütunlarını cat'e yönlendir" der; sütun isimlerini elle yazmaktan kurtarır.
+
+Bir de `remainder` parametresi var: belirtmediğin sütunlara ne olacağını söyler. Varsayılan `'drop'`tır (belirtmediğin sütunlar atılır). Eğer kalan sütunları olduğu gibi tutmak istersen `remainder='passthrough'` dersin.
+
+## Tek paragrafta toparlama
+
+ColumnTransformer, farklı sütun gruplarına farklı ön işleme adımları uygulamanı sağlayan yapıdır; gerçek veride sayısal sütunlar (ortalama/medyanla doldur, ölçekle) ile kategorik sütunlar (mode'la doldur, encode et) tamamen farklı muamele gerektirdiği için zorunludur. Her sütun grubuna bir isim, bir işlem (genelde küçük bir pipeline) ve uygulanacak sütunlar verirsin; ColumnTransformer her grubu kendi yolundan geçirip çıktıları tek bir matriste birleştirir. Onu bir modelle birleştirince eksiksiz, leakage'siz ve tek satırla çalıştırılabilen bir iş akışı elde edersin; sütunları tipine göre otomatik seçmek için make_column_selector, belirtmediğin sütunları yönetmek için remainder parametresini kullanırsın.
+
+Constructing Complex Pipelines with ColumnTransformer
+
+Chaining multiple preprocessing and modeling steps is a common practice in machine learning. Datasets frequently contain different types of features, such as numerical, categorical, and text, each requiring distinct preprocessing techniques. For instance, applying a single scaling method to both numerical and categorical columns is inappropriate. When transformations are applied sequentially, each step typically processes the entire output of the preceding operation. This approach becomes unsuitable when different transformations are needed for various subsets of the original features.
+
+This is where Scikit-learn's ColumnTransformer comes into play. It allows you to apply different transformers to different columns of your input data in parallel. The results from applying each transformer are then concatenated horizontally to form the final transformed dataset, which can then be passed to the next step in a larger pipeline, typically an estimator.
+
+This is where Scikit-learn's ColumnTransformer comes into play. It allows you to apply different transformers to different columns of your input data in parallel. The results from applying each transformer are then concatenated horizontally to form the final transformed dataset,bu veriler daha sonra daha geniş bir iş akışındaki bir sonraki adıma, genellikle bir tahminciye aktarılabilir.
+
+
+How ColumnTransformer Works
+The core idea is to specify which transformers should be applied to which columns. You provide ColumnTransformer with a list of tuples, where each tuple contains:
+
+A name: A unique string identifying the transformation step (e.g., 'numerical_scaling', 'categorical_encoding').
+
+A transformer: An instantiated Scikit-learn transformer (e.g., StandardScaler(), OneHotEncoder()) or even a Pipeline itself.
+
+Columns: A specification of the columns the transformer should be applied to. This can be a list of column names, column indices, a slice, a boolean mask, or commonly, the output of make_column_selector.
+
+('num', numeric_pipe, ['yas', 'gelir', 'sicaklik'])
+
+Bu tek bir kural ve üç parçadan oluşuyor; metindeki üç maddenin tam karşılığı.
+
+Birinci parça, name (isim): 'num'. Bu, o adıma verdiğin benzersiz etiket. Sadece senin seçtiğin bir isim, herhangi bir şey olabilir ('num', 'sayisal_islem', 'numerical_scaling' gibi). Ne işe yarar? Sonradan o adıma erişmek için. Mesela hiperparametre ararken ya da adımın içine bakmak istediğinde bu isimle ulaşırsın. Metindeki örnekte 'numerical_scaling', 'categorical_encoding' de aynı şey, sadece daha açıklayıcı isimler.
+
+İkinci parça, transformer (işlem): numeric_pipe. Bu, o sütunlara uygulanacak gerçek işlem. Metnin dediği gibi iki şey olabilir: ya tek bir scikit-learn transformer (mesela doğrudan StandardScaler() ya da OneHotEncoder()), ya da bir Pipeline'ın kendisi. Bizim örnekte numeric_pipe bir Pipeline'dı (içinde imputer + scaler vardı), yani birden fazla adımı zincirlemiştik. Ama istersen tek bir transformer da koyabilirdin:
+
+('num', StandardScaler(), ['yas', 'gelir', 'sicaklik'])
+
+Bu da geçerli; sadece ölçekleme yapar, doldurma yapmaz. Yani işlem basitse tek transformer, birden fazla adım gerekiyorsa Pipeline koyarsın.
+
+Bu da geçerli; sadece ölçekleme yapar, doldurma yapmaz. Yani işlem basitse tek transformer, birden fazla adım gerekiyorsa Pipeline koyarsın.
+
+Üçüncü parça, columns (sütunlar): ['yas', 'gelir', 'sicaklik']. Bu, işlemin hangi sütunlara uygulanacağını söyler. Metin burada birkaç farklı yazım yolu olduğunu anlatıyor. En yaygını bizim kullandığımız gibi sütun isimlerinden oluşan bir liste. Ama alternatifler de var:
+Sütun indeksleri ile (isim yerine pozisyon): [0, 1, 5] yani 0., 1. ve 5. sütunlar.
+
+Ve metnin "commonly" (yaygın olarak) dediği yol, make_column_selector ile otomatik seçim:
+
+('num', numeric_pipe, make_column_selector(dtype_include='number'))
+
+Bu, sütun isimlerini tek tek yazmak yerine "tüm sayısal sütunları seç" der. Veride çok sütun varsa hepsini elle yazmak yorucu olacağı için pratikte en sık bu kullanılır; o yüzden metin "commonly" demiş.
+
+Toparlayan örnek: tüm parçaları birleştirince bir ColumnTransformer kuralı şöyle okunur, "şu isimli ('num') adımda, şu işlemi (numeric_pipe) şu sütunlara (['yas','gelir','sicaklik']) uygula". İki kuralı yan yana koyunca da sayısal ve kategorik sütunlar ayrı ayrı kendi işlemlerinden geçer:
+
+preprocessor = ColumnTransformer([
+    ('num', numeric_pipe, ['yas', 'gelir', 'sicaklik']),       # isim, işlem, sütunlar
+    ('cat', categoric_pipe, ['sehir', 'cinsiyet'])             # isim, işlem, sütunlar
+])
+
+Handling Remaining Columns: The remainder Parameter
+What happens to columns that are not selected by any of the transformers specified in the transformers list? This is controlled by the remainder parameter of ColumnTransformer:
+
+remainder='drop' (Default): Any columns not explicitly selected by any transformer are dropped from the dataset. Be careful with this default, as you might unintentionally lose features.
+
+remainder='passthrough': Any columns not selected are kept and appended to the output of the specified transformations. Their values remain unchanged. 
+This is useful if you have columns that don't require preprocessing or are handled by a later step.
+
+remainder=<estimator>: You can also specify a transformer (like SimpleImputer or StandardScaler) to be applied to all remaining columns.
+
+Choosing the correct remainder setting is important for ensuring all necessary features are processed correctly and make it to the final estimator.
+
+Bu metin, az önce değindiğim `remainder` parametresini detaylandırıyor: ColumnTransformer'da hiçbir kurala dahil etmediğin sütunlara ne olacağını kontrol eder. Üç seçeneği örnekle netleştireyim.
+
+Senaryoyu kuralım. Diyelim veride beş sütun var: 'yas', 'gelir', 'sehir', 'cinsiyet' ve bir de 'id' (kayıt numarası). ColumnTransformer'ında sadece dördünü işledin:
+
+preprocessor = ColumnTransformer([
+    ('num', numeric_pipe, ['yas', 'gelir']),
+    ('cat', categoric_pipe, ['sehir', 'cinsiyet'])
+])
+
+Burada 'id' sütununu hiçbir kurala koymadın. İşte `remainder` tam da bu "artakalan" 'id'ye ne olacağını belirler.
+
+**`remainder='drop'` (varsayılan).** Hiçbir transformer'a dahil etmediğin sütunlar tamamen atılır. Yani yukarıdaki kodda 'id' sütunu çıktıda hiç olmaz, silinir. Metnin uyarısı çok yerinde: bu varsayılan olduğu için dikkatli ol, çünkü farkında olmadan işlemeyi unuttuğun bir sütunu kaybedebilirsin. Mesela önemli bir özelliği yanlışlıkla kurallara yazmayı unutursan, sessizce silinir ve modelin o bilgiden mahrum kalır, üstelik hata da almazsın.
+
+**`remainder='passthrough'`.** Dahil etmediğin sütunlar olduğu gibi, hiç değiştirilmeden çıktıya eklenir. Yani 'id' sütunu, değerlerine dokunulmadan, sonuca olduğu gibi geçer.
+
+preprocessor = ColumnTransformer([
+    ('num', numeric_pipe, ['yas', 'gelir']),
+    ('cat', categoric_pipe, ['sehir', 'cinsiyet'])
+], remainder='passthrough')
+
+Bu, ön işleme gerektirmeyen (zaten temiz, zaten sayısal) ya da başka bir adımda halledilecek sütunların için kullanışlı. Ama dikkat: 'id' gibi modele hiçbir katkısı olmayan bir sütunu passthrough ile geçirirsen, model onu bir özellik sanıp gereksiz yere kullanabilir; o yüzden passthrough'u bilerek, gerçekten tutmak istediğin sütunlar için kullan.
+
+**`remainder=<estimator>`.** Artakalan tüm sütunlara belirttiğin bir işlemi uygularsın. Mesela:
+
+preprocessor = ColumnTransformer([
+    ('num', numeric_pipe, ['yas', 'gelir']),
+    ('cat', categoric_pipe, ['sehir', 'cinsiyet'])
+], remainder=SimpleImputer(strategy='mean'))
+
+Burada 'id' (ve adı geçmeyen diğer tüm sütunlar) ortalamayla doldurulur. Yani "tek tek kural yazmadığım ama yine de bir işlemden geçsin istediğim" sütunlar için toplu bir çözüm.
+
+Metnin son cümlesi de özü veriyor: doğru `remainder` ayarını seçmek önemlidir, çünkü gerekli tüm özelliklerin doğru işlenip modele ulaşmasını bu belirler. Yani yanlış ayarla ya istemeden sütun kaybedersin (drop), ya da işlenmemiş/gereksiz bir sütunu modele sokarsın (dikkatsiz passthrough).
+
+Tek cümlede: `remainder`, kurallara dahil etmediğin sütunların kaderini belirler; `'drop'` onları siler (varsayılan, dikkatli ol), `'passthrough'` değiştirmeden geçirir, bir estimator verirsen de hepsine o işlemi uygular.
+
+Using make_column_selector is often preferred as it's less brittle to changes in column order or additions/removals compared to using integer indices.
+
+Burada make_column_selector'ın neden elle indeks yazmaktan daha güvenli olduğunu anlatıyor. "Brittle" kelimesi anahtar: "kırılgan, kolay bozulan" demek. Yani metin diyor ki, indeks kullanmak kırılgandır, make_column_selector ise bu kırılganlığa karşı dayanıklıdır. Sebebini örnekle açayım.
+
+Diyelim sütunlarını indeks (pozisyon numarası) ile seçtin:
+
+('num', StandardScaler(), [0, 1, 2])   # 0., 1., 2. sütunlar
+
+Bu, "ilk üç sütunu ölçekle" der ve şu an doğru çalışıyor olabilir. Ama sorun şu: bu seçim sütunların sırasına ve sayısına sıkı sıkıya bağlı. Eğer veri setine sonradan bir değişiklik gelirse her şey kayar. Mesela veriye en başa yeni bir sütun eklersen, eski 0. sütun artık 1. sıraya kaymıştır; senin `[0, 1, 2]` kuralın artık yanlış sütunları seçer, üstelik hata bile vermeden. Sessizce yanlış sütunlara işlem uygular. Aynı şekilde bir sütun silersen ya da sıralama değişirse, indeksler kayar ve kodun bozulur.
+
+İşte "brittle" tam bu: indeksle yazılmış kod, en küçük bir sütun değişikliğinde kırılır, çünkü pozisyona güveniyor ve pozisyonlar oynak.
+
+make_column_selector ise pozisyona değil, **özelliğe** bakar:
+
+('num', StandardScaler(), make_column_selector(dtype_include='number'))
+
+Bu "hangi sıradaysa olsun, tüm sayısal sütunları seç" der. Şimdi veriye yeni bir sütun eklersen, bir sütun silersen ya da sırayı değiştirsen hiç fark etmez; o yine gider tüm sayısal sütunları bulur. Çünkü "2. sıradaki" değil, "sayısal olan" diyor; sıralama değişse de tip değişmediği için doğru seçim yapar. Bu yüzden değişikliklere karşı dayanıklı (less brittle).
+
+Tek cümlede: Metin diyor ki, indeks (pozisyon) ile sütun seçmek kırılgandır çünkü sütun eklenir/silinir ya da sıra değişirse indeksler kayar ve kod sessizce yanlış sütunları işler; make_column_selector ise pozisyon yerine sütunun tipine/özelliğine baktığı için bu tür değişikliklerden etkilenmez, o yüzden tercih edilir.
+
+Aşağıdaki web sitesindeki diagrama bak:
+
+https://apxml.com/courses/getting-started-with-scikit-learn/chapter-6-building-pipelines/columntransformer-pipelines
+
+
+
+
+
+
+
+
+
+
