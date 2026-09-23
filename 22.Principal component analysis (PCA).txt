@@ -1,0 +1,246 @@
+Principal component analysis (PCA)
+
+varyans — istatistikte bildiğimiz, bir değişkenin ortalamadan ne kadar saptığını ölçen o klasik varyans kavramı. Yani her bir özelliğin (feature) kendi ortalaması etrafında ne kadar "yayıldığını", ne kadar değişkenlik gösterdiğini ifade eder. PCA'da fark şu: tek bir değişkenin varyansına değil, verinin genel olarak hangi yönde en çok yayıldığına/saçıldığına bakılır. Yani PCA, orijinal eksenler (x, y, z gibi tek tek özellikler) yerine, verideki noktaların en fazla dağılım gösterdiği (en çok "saçıldığı") yeni bir doğrultu bulur ve bunu birinci temel bileşen olarak seçer.
+Bunun arkasındaki mantık şu: eğer bir yönde veri çok yayılıyorsa (yüksek varyans), o yön veri hakkında çok bilgi taşıyor demektir — noktalar birbirinden ayırt edilebiliyor, çeşitlilik var. Ama bir yönde veri çok az yayılıyorsa (düşük varyans), o yön neredeyse sabit bir değer gibi davranıyor demektir ve pek bilgi taşımaz, çünkü tüm noktalar o yönde birbirine çok benziyor. İşte bu yüzden PCA, "en fazla varyansı açıklayan yön = en fazla bilgiyi taşıyan yön" mantığıyla çalışır ve düşük varyanslı yönleri (bilgi açısından "önemsiz" kabul edip) atarak boyut indirgemesi yapar.
+Matematiksel olarak da bu, verinin kovaryans matrisi (covariance matrix) üzerinden hesaplanır — kovaryans matrisinin özvektörleri (eigenvectors) temel bileşenlerin yönlerini, özdeğerleri (eigenvalues) ise her bileşenin ne kadar varyans açıkladığını verir. Yani evet, temelde aynı istatistiksel varyans kavramı, sadece tek bir değişken için değil, çok boyutlu veri uzayında farklı yönler için hesaplanıyor.
+
+**Principal Component Analysis (PCA)**, temelde bir **boyut indirgeme (dimensionality reduction)** tekniğidir ve matematiksel olarak bir **matris faktörizasyonu (matrix factorization)** işlemine dayanır. PCA'nın amacı, elimizdeki veri setini, birbirine dik (orthogonal) yeni eksenler kümesine ayırıştırmaktır; bu yeni eksenler öyle seçilir ki, verideki mümkün olan en fazla varyansı (bilgiyi) açıklarlar. Yani PCA, orijinal özelliklerin (features) yerine, verideki değişkenliği en iyi yakalayan yepyeni, birbirinden bağımsız eksenler üretir.
+
+Bu işlem şöyle ilerler: PCA önce veri için yeni eksenler (bunlara **principal component**, yani temel bileşen denir) belirler ve bu eksenleri, yakaladıkları varyans miktarına göre sıralar — yani **birinci temel bileşen**, verideki en büyük varyansı (değişkenliği) açıklayan eksendir, **ikinci temel bileşen** ondan sonra en fazla varyansı açıklayan (ve birinciye dik olan) eksendir, bu şekilde devam eder. Buradaki kritik fikir şudur: genelde verideki bilginin büyük bir kısmı, ilk birkaç temel bileşen tarafından zaten yakalanabilir; bu yüzden sonraki, daha az varyans açıklayan bileşenleri atarak, veri setinin boyutunu önemli ölçüde azaltabiliriz — bunu yaparken de bilgi kaybı minimum düzeyde kalır. Pratik faydası, yüzlerce hatta binlerce özelliğe sahip bir veri setini, çok daha az sayıda (örneğin 2-3) bileşene indirgeyip hem hesaplama yükünü azaltmak hem de görselleştirmeyi mümkün kılmaktır.
+
+Bunun yanında, boyut indirgeme alanında PCA'ya alternatif veya onu tamamlayıcı başka güçlü teknikler de vardır. **t-SNE (t-distributed Stochastic Neighbor Embedding)**, PCA'nın aksine **doğrusal olmayan (non-linear)** bir tekniktir ve özellikle yüksek boyutlu veriyi 2 veya 3 boyuta indirip **görselleştirmek** için çok başarılıdır; birbirine yakın olan noktaların düşük boyutlu uzayda da yakın kalmasını sağlamaya odaklanır, bu yüzden küme yapılarını görsel olarak ortaya çıkarmakta PCA'dan daha etkilidir (ama genelde sadece görselleştirme amaçlı kullanılır, PCA gibi genel amaçlı bir ön işleme adımı olarak değil).
+
+**Autoencoder**'lar ise bir sinir ağı (neural network) türüdür ve boyut indirgemeyi öğrenme yoluyla yapar: ağ, veriyi önce düşük boyutlu bir "sıkıştırılmış temsile" (encoding) dönüştürmeyi, ardından bu sıkıştırılmış temsilden orijinal veriyi olabildiğince doğru şekilde yeniden inşa etmeyi (reconstruct) öğrenir. Bu yapı, PCA'nın doğrusal sınırlamalarının aksine, verideki karmaşık ve doğrusal olmayan örüntüleri de yakalayabildiği için, özellikle görüntü ve karmaşık veri türlerinde PCA'dan daha güçlü bir boyut indirgeme sağlayabilir.
+
+What is principal component analysis (PCA)?
+
+Principal component analysis, or PCA, reduces the number of dimensions in large datasets to principal components that retain(sürdürmek) most of the original information. It does this by transforming potentially correlated variables into a smaller set of variables, called principal components.
+
+PCA’nın 1901 yılında Karl Pearson tarafından geliştirildiği kabul edilir; ancak bu yöntem, çok değişkenli istatistiksel hesaplamaların¹ büyük ölçekte yapılmasına imkân tanıyan bilgisayarların yaygınlaşmasıyla popülerlik kazanmıştır.
+
+PCA is very effective for visualizing and exploring high-dimensional datasets, or data with many features, as it can easily identify trends, patterns, or outliers.
+
+PCA is commonly used for data preprocessing for use with machine learning algorithms. It can extract the most informative features from large datasets while preserving the most relevant information from the initial dataset. This reduces model complexity as the addition of each new feature negatively impacts model performance, which is also commonly referred to as the “curse of dimensionality.” 
+
+By projecting a high-dimensional dataset into a smaller feature space, PCA also minimizes, or altogether eliminates, common issues such as multicollinearity and overfitting. Multicollinearity occurs when two or more independent variables are highly correlated with one another, which can be problematic for causal modeling. Overfit models will generalize poorly to new data, diminishing their value altogether. PCA is a commonly used approach within regression analysis but it is also leveraged for a variety of use cases, such as pattern recognition, signal processing, image processing, and more.
+
+While there are other variations of PCA, such as principal component regression and kernel PCA, the scope of this article will focus on the primary method within current literature.
+
+****************************************************
+Soru:
+
+PCA breaks down variables into a subset of linearly independent principal components. Bana bu ifadeyi açar mısın ?
+
+Elcevap:
+
+Bu ifade, PCA'nın temelde ne yaptığını çok özlü şekilde anlatıyor: elimizdeki orijinal değişkenleri (variables/features) alıp, bunları **doğrusal olarak bağımsız (linearly independent)** yeni bir bileşenler (principal components) kümesine dönüştürüyor. Burada "doğrusal bağımsızlık" kavramı kritik: orijinal veri setindeki değişkenler genelde birbiriyle **korelasyonlu (correlated)** olabilir — yani bir değişkendeki değişim, kısmen başka bir değişkenin de bilgisini taşıyabilir, bu da veride bir tür "fazlalık" (redundancy) yaratır. PCA'nın yaptığı iş, bu korelasyonlu/örtüşen bilgiyi ortadan kaldırıp, her biri birbirinden tamamen bağımsız, yani birbiriyle hiçbir korelasyona sahip olmayan yeni eksenler (principal component'ler) üretmektir.
+
+Bu bağımsızlık, geometrik olarak **dikliğe (orthogonality)** karşılık gelir — yani her bir temel bileşen, diğerlerine dik açıyla konumlanır. Bunun pratik anlamı şudur: birinci temel bileşenin taşıdığı bilgiyle ikinci temel bileşenin taşıdığı bilgi arasında hiçbir örtüşme (overlap) yoktur; her bileşen, veri hakkında kendine özgü, tekrar etmeyen bir bilgi parçası taşır. Orijinal değişkenlerde ise böyle bir garanti yoktur — örneğin bir veri setinde "boy" ve "kilo" değişkenleri birbiriyle yüksek korelasyona sahip olabilir, yani bu iki değişken kısmen aynı bilgiyi tekrarlıyor olabilir.
+
+"Subset" (alt küme) kelimesi de burada önemli: PCA teorik olarak orijinal değişken sayısı kadar temel bileşen üretebilir, ama pratikte bizim seçtiğimiz sadece bir **alt kümesi** — genelde en yüksek varyansı açıklayan ilk birkaç bileşen — kullanılır. Yani PCA hem "bilgiyi sıkıştırıp gereksiz tekrarları temizliyor" hem de "bu temizlenmiş bilginin en değerli kısmını seçip geri kalanını atıyor" şeklinde iki işi birden yapıyor diyebiliriz.
+
+****************************************************
+
+PCA vs. LDA vs. factor analysis
+
+PCA is a dimension reduction technique like linear discriminant analysis (LDA). In contrast to LDA, PCA is not limited to supervised learning tasks. For unsupervised learning tasks, this means PCA can reduce dimensions without having to consider class labels or categories. PCA is also closely related to factor analysis. They both reduce the number of dimensions or variables in a dataset while minimizing information loss. PCA breaks down variables into a subset of linearly independent principal components. Factor analysis, however, is generally used to understand underlying data structures, focusing on latent variables, or unmeasured factors, that capture a variable’s spread.
+
+****************************************************
+
+Soru:
+
+Diyelim ki elimizde 100 farklı feature 'a sahip bir datset var. Bu 100 feature'dan 50'sinin varyansı  çok düşük. Yani gereksiz bunları atacağız. Geri kalan 50 sinin de 20 feature'ı correlated. Yani 30 tane independent feature'a sahibiz. Buradan yola çıkarsak bizim 31 tane mi orthogonal olacak biçimde componentimiz mi olur. Ben bu kısmı çok idrak edemedim detaylı açıklar mısın ?
+
+Elcevap:
+
+Öncelikle şunu netleştirelim: PCA, senin tarif ettiğin gibi "önce düşük varyanslı feature'ları at, sonra korelasyonluları at, geriye kalanları kullan" şeklinde **manuel bir eleme süreci değildir**. PCA aslında elindeki **100 feature'ın hepsini birden** alır ve matematiksel olarak (kovaryans matrisi üzerinden) bunları **100 tane yeni, birbirine dik (orthogonal) eksene** dönüştürür. Yani PCA'ya "bu feature'ları at, bunları tut" demezsin — PCA, orijinal 100 feature'ın **hepsinin doğrusal kombinasyonlarından** oluşan yepyeni eksenler üretir ve bu eksen sayısı, prensipte orijinal feature sayısıyla aynıdır (100 tane). Senin manuel olarak "düşük varyanslıları atayım, korelasyonluları atayım, geriye 30 independent feature kaldı" şeklinde saydığın işlem, PCA'nın kendi içinde yaptığı işin **senin elinle, önceden ve kabaca** yapmaya çalışman gibi bir şey — ama PCA bunu çok daha kesin ve matematiksel bir şekilde otomatik olarak yapıyor zaten.
+
+Şimdi senin örneğine PCA mantığıyla bakalım: 100 feature'ın var, bunların 50'si çok düşük varyanslı (yani bilgi taşımıyor, neredeyse sabit) ve kalan 50'nin 20'si birbiriyle korelasyonlu (yani bilgi tekrarı var). Bu durumda verinin **gerçek/etkin boyutu (intrinsic dimensionality)** aslında 100'den çok daha az — senin sezgine göre aşağı yukarı 30 civarı bağımsız bilgi kaynağı var. İşte PCA çalıştırdığında olacak şey şu: PCA yine 100 tane component üretecek (matematiksel olarak eksen sayısı feature sayısıyla sınırlıdır), ama bu 100 component'in **varyans açıklama oranları çok eşitsiz dağılacak**. İlk ~30 component, verideki neredeyse tüm anlamlı varyansı (bilgiyi) yakalayacak, geri kalan ~70 component ise neredeyse sıfıra yakın varyans açıklayacak — çünkü onlar zaten düşük varyanslı ya da korelasyon yüzünden "fazladan/tekrarlı" olan bilgiyi temsil ediyor.
+
+Yani senin "31 mi olur" sorunda cevap şu: **hayır, tam olarak 31 gibi net bir sayı çıkmaz**, çünkü bu bir "sayma" işlemi değil, bir "varyans dağılımı" işlemidir. PCA sana 100 component verir ama sen pratikte bunların **kaçını tutacağına**, kümülatif açıklanan varyans oranına bakarak karar verirsin — örneğin "ilk kaç component, toplam varyansın %95'ini açıklıyor?" diye sorup, cevap 28 de çıkabilir, 32 de, 35 de. Senin manuel sayımın (30 independent feature) sadece **kabaca bir tahmin/sezgi** verir, ama PCA'nın gerçek çıktısı bu sezgiyle birebir eşleşen kesin bir sayı değildir — çünkü varyans ve korelasyon ilişkileri pratikte senin düşündüğün gibi kesin siyah-beyaz (ya tamamen bağımsız ya tamamen korelasyonlu) değil, sürekli bir spektrum üzerindedir.
+
+Özetle: PCA'da "önce eleme yap, sonra PCA uygula" mantığı yanlış bir sıralama; doğrusu "PCA'yı tüm feature'lara uygula, sonra çıkan component'lerin varyans katkısına bakarak kaçını tutacağına karar ver" şeklindedir. Senin tarif ettiğin düşük varyans/korelasyon temizliği, PCA'nın **sonucunda zaten kendiliğinden** ortaya çıkan bir şey, senin PCA'dan önce elle yapman gereken bir ön adım değil.
+
+****************************************************
+
+PCA vs. K-means clustering
+PCA and k-means clustering are both unsupervised machine learning techniques used for data analysis, but they have different goals and methods. PCA is used to reduce the dimensionality of the data, while k-means clustering groups data points together based on similarity. The technique you select depends on the specific dataset and goals of your analysis.
+
+PCA creates new variables, such as principal components, that are linear combinations of the original variables. PCA takes a dataset with multiple variables as input, and it produces a dataset into a lower subspace, that is, a reduced dataset with fewer variables. It is often used in exploratory data analysis for building predictive models, but it is also used in data preprocessing for dimensionality reduction.
+
+K-means is a clustering algorithm that assigns data points to clusters based on their distance from the cluster centers. It takes a dataset with one or more variables as input, and it produces a set of clusters with similar data points. It is often used to cluster data for a variety of use cases, such as image segmentation, customer segmentation, and anomaly detection.
+
+***************************************************
+Soru:
+
+Hocam şöyle bir şey yapalım mı ben nedense idrak edemedim. Sen sanki elinde 100 feature olan bir datasetin varmış gibi düşün. PCA'nın da neler yapacağını detaylıca anlat. Baştan sona anlat ki aklımda bir şey kalmasın.
+
+Elcevap:
+
+Tabii hocam, çok iyi bir fikir, hadi elimizde gerçekten 100 feature'lı bir dataset varmış gibi düşünüp PCA'yı baştan sona, adım adım anlatayım.
+
+**Başlangıç Noktası: Elimizdeki Veri**
+
+Diyelim ki elimizde 1000 tane gözlem (satır) ve 100 tane feature (sütun) olan bir veri seti var. Bunu bir matris gibi düşünebilirsin: 1000 satır, 100 sütun. Her bir satır bir örneği (örneğin bir müşteri, bir hasta, bir görüntü), her sütun ise o örneğin bir özelliğini temsil ediyor (yaş, gelir, boy, kilo gibi 100 tane farklı ölçüm). Şu ana kadar PCA'ya hiç dokunmadık, elimizde sadece ham 100 boyutlu veri var.
+
+**Adım 1: Standardizasyon (Ölçek Eşitleme)**
+
+PCA'ya başlamadan önce genelde ilk yapılan şey, tüm feature'ları aynı ölçeğe getirmektir (standardization/scaling). Bunun sebebi şu: diyelim ki feature'lardan biri "yaş" (0-100 arası değerler alıyor), diğeri "gelir" (0-1.000.000 arası değerler alıyor). Eğer standardize etmezsen, gelir feature'ı sırf sayısal değeri çok büyük olduğu için yapay olarak çok daha "yüksek varyanslı" görünür ve PCA yanlışlıkla onu daha önemli sanır — oysa bu gerçek bir bilgi farkı değil, sadece birim/ölçek farkıdır. Bu yüzden her feature, ortalaması 0, standart sapması 1 olacak şekilde yeniden ölçeklenir. Bu adımdan sonra hâlâ 100 feature'ımız var, hiçbir şey atılmadı, sadece hepsi aynı "adil" ölçeğe getirildi.
+
+**Adım 2: Kovaryans Matrisinin Hesaplanması**
+
+Şimdi PCA'nın kalbine geliyoruz. Elimizdeki 100 feature'ın birbirleriyle nasıl ilişkili (korelasyonlu) olduğunu gösteren bir **kovaryans matrisi** hesaplanır. Bu matris 100x100 boyutundadır — her hücre, iki feature arasındaki ilişkiyi (kovaryansı) gösterir. Örneğin (boy, kilo) hücresindeki değer, boy ve kilonun birlikte ne kadar değiştiğini gösterir; eğer bu iki değişken güçlü şekilde birlikte hareket ediyorsa (biri artınca diğeri de artıyorsa), bu hücredeki değer yüksek çıkar. Matrisin köşegeni (diagonal) ise her feature'ın kendi varyansını gösterir. Bu adımda, senin bahsettiğin "20 tanesi korelasyonlu" durumu tam olarak burada kendini gösterir — o 20 feature arasındaki hücrelerde yüksek kovaryans değerleri görürüz. Ama dikkat et, biz henüz hiçbir şeyi atmadık, sadece 100 feature arasındaki tüm ilişkileri tek bir matris içinde topladık.
+
+**Adım 3: Özdeğer ve Özvektör Hesabı (Eigendecomposition)**
+
+Bu 100x100 kovaryans matrisi üzerinde matematiksel bir işlem yapılır: **eigendecomposition**. Bu işlem bize iki şey verir: **özvektörler (eigenvectors)** ve **özdeğerler (eigenvalues)**. Özvektörler, verinin en fazla yayıldığı yönleri (doğrultuları) temsil eder — işte bunlar bizim **principal component'lerimiz** olacak. Özdeğerler ise her bir özvektörün (her bir yönün) ne kadar varyans/bilgi taşıdığını sayısal olarak söyler. Matematiksel olarak, 100 feature'lı bir kovaryans matrisinden tam olarak **100 tane özvektör-özdeğer çifti** çıkar — yani PCA sana burada 100 tane potansiyel component üretir, ne 31, ne 30, tam 100 tane. Ama bunların önemi birbirinden çok farklı olacak, birazdan göreceğiz.
+
+**Adım 4: Component'lerin Sıralanması**
+
+Elde ettiğimiz 100 component, özdeğerlerine (yani açıkladıkları varyansa) göre büyükten küçüğe sıralanır. Birinci principal component (PC1), en yüksek özdeğere sahip olandır — yani veride en fazla yayılımı/varyansı yakalayan yöndür. İkinci principal component (PC2), PC1'e dik (orthogonal) olacak şekilde, kalan en yüksek varyansı yakalayan yöndür. Bu böyle devam eder, PC100'e kadar. Senin örneğindeki durumda (50 feature düşük varyanslı, 20 tanesi korelasyonlu, 30 tanesi gerçekten bağımsız), şunu gözlemleriz: **ilk 30 civarı component çok yüksek özdeğerlere sahip çıkar**, çünkü verideki gerçek/anlamlı varyans zaten o kadar bağımsız bilgi kaynağından geliyor. Geriye kalan yaklaşık 70 component ise **çok küçük, neredeyse sıfıra yakın özdeğerlere** sahip olur — çünkü onlar ya zaten düşük varyanslı feature'lardan kaynaklanan "gürültü" yönlerini, ya da korelasyon yüzünden zaten tekrar eden bilgiyi temsil ediyorlar. Ama yine vurgulamak isterim: bu "30 civarı" net bir kesim değil, kademeli bir azalma — bazı component'ler orta düzeyde varyans açıklayabilir, tam olarak siyah-beyaz bir sınır yoktur.
+
+**Adım 5: Kaç Component Tutulacağına Karar Verme**
+
+İşte burada senin sorduğun "31 mi olur" sorusunun cevabı netleşiyor. Elimizde artık 100 component var, her biri belirli bir varyans yüzdesi açıklıyor. Genelde bir **"cumulative explained variance" (kümülatif açıklanan varyans)** grafiği çizilir: x ekseninde component sayısı, y ekseninde "ilk N component toplamda verinin yüzde kaçını açıklıyor" bilgisi olur. Sonra pratik bir eşik belirlenir — mesela "%95 varyansı açıklayan minimum component sayısını tutalım" denir. Senin örneğinde, bu sayı muhtemelen 28-32 arası bir yerde çıkar (yani senin sezgin olan ~30'a yakın olur, ama tam 30 veya 31 gibi kesin bir sayı olacağının garantisi yok) — çünkü düşük varyanslı ve korelasyonlu feature'lar zaten kendiliğinden çok düşük özdeğerli component'lere dönüşmüş oluyor.
+
+**Adım 6: Boyut İndirgeme (Projeksiyon)**
+
+Son adımda, seçtiğimiz bu az sayıdaki component'i (diyelim 30 tane) kullanarak orijinal 1000x100'lük veriyi, 1000x30'luk yeni bir veri setine dönüştürürüz (buna **projection** denir). Yani her bir orijinal gözlem, artık 100 boyutlu değil, 30 boyutlu yeni bir uzayda temsil edilir. Bu yeni 30 sütun artık "yaş", "gelir" gibi anlamlı isimlere sahip orijinal feature'lar değildir — bunlar, orijinal 100 feature'ın matematiksel kombinasyonlarından oluşan, birbirine tamamen dik, yapay yeni eksenlerdir (PC1, PC2, ... PC30 gibi adlandırılırlar).
+
+**Özetle Zihninde Kalması Gereken Ana Fikir**
+
+PCA, senin yaptığın gibi "önce kötü feature'ları elle ayıkla, sonra geri kalanları kullan" şeklinde çalışmıyor. Tam tersine, 100 feature'ın **hepsini aynı anda** matematiksel bir işleme sokuyor, bu işlem sonucunda 100 tane yeni eksen (component) üretiyor, ve bu eksenlerin bazıları çok değerli (yüksek varyans) bazıları neredeyse değersiz (düşük varyans) çıkıyor. Senin "düşük varyanslı feature" ve "korelasyonlu feature" diye ayırdığın şeyler, PCA'nın sonucunda **otomatik olarak düşük özdeğerli component'ler** şeklinde kendini gösteriyor — biz bunları elle önceden ayıklamıyoruz, PCA'nın çıktısına bakıp hangi component'lerin değersiz olduğunu **sonradan** görüyoruz ve onları atıyoruz.
+
+
+How principal component analysis works
+
+PCA summarizes the information content of large datasets into a smaller set of uncorrelated variables known as principal components. These principal components are linear combinations of the original variables that have the maximum variance compared to other linear combinations. These components capture orijinal veri kümesinden mümkün olduğunca fazla bilgi.
+
+This statistical technique involves both linear algebra and matrix operations, and it transforms the original dataset into a new coordinate system that is structured by the principal components. The eigenvectors and eigenvalues from the covariance matrix that underpin(destekler) the principal components allow for the analysis of these linear transformations.
+
+Imagine you have mapped out a dataset with multiple features, resulting in a multi-dimensional scatterplot. Eigenvectors provide the direction of variance in the scatterplot. Eigenvalues are the coefficients of the eigenvectors; these denote the importance of this directional data. Therefore, a high eigenvalue means that the corresponding eigenvector is more critical. Since principal components represent the directions of maximum variance in the data, they are also the eigenvectors of the covariance matrix.
+
+Two major components are calculated in PCA: the first principal component (PC1) and the second principal component (PC2).
+
+First principal component
+The first principal component (PC1) is the direction in space along which the data points have the highest or most variance. It is the line that best represents the shape of the projected points. The larger the variability captured in the first component, the larger the information retained from the original dataset. No other principal component can have a higher variability
+
+Second principal component
+We calculate the second principal component (PC2) in the same way as PC1. PC2 accounts for the next highest variance in the dataset and must be uncorrelated with PC1. That is, PC2 must be orthogonal, that is perpendicular, to PC1. This relationship can also be expressed as the correlation between PC1 and PC2 equals zero.
+
+A scatterplot is typically used to show the relationship between PC1 and PC2 when PCA is applied to a dataset. PC1 and PC2 axis will be perpendicular to each other.
+
+If there are any subsequent(sonraki) components, then they would also retain the same properties, where they would not be correlated with other components and explain any remaining variation.
+
+
+****************************************************
+**PCA (Principal Component Analysis)**, çok boyutlu (yani çok sayıda feature'a sahip) bir veri setini, içindeki bilgiyi mümkün olduğunca koruyarak daha az boyuta indirgemeyi sağlayan bir **boyut indirgeme (dimensionality reduction)** tekniğidir. Elimizde örneğin 100 feature'lı bir veri seti varsa, bu 100 boyutu görselleştirmek, işlemek veya modellemek hem zor hem de hesaplama açısından maliyetlidir; PCA burada devreye girip bu 100 boyutu, çok daha az sayıda (örneğin 10-20) yeni boyuta indirgemeye çalışır, ama bunu yaparken elinden geldiğince az bilgi kaybetmeye özen gösterir.
+
+PCA'nın bunu nasıl başardığını anlamak için önce **varyans** kavramına odaklanmak gerekir. PCA'nın temel mantığı şudur: bir veri setinde "bilgi", verinin **yayılımı/dağılımı (varyans)** ile doğrudan ilişkilidir. Eğer bir yönde veri çok yayılıyorsa, o yön veri noktalarını birbirinden ayırt etmemizi sağlar, yani değerli bilgi taşır. Eğer bir yönde veri neredeyse hiç yayılmıyorsa (herkes birbirine çok benziyorsa), o yön bize ayırt edici bir bilgi vermez. PCA işte bu mantıkla, orijinal feature eksenlerini (yaş, gelir, boy gibi) bir kenara bırakıp, verinin **en fazla yayıldığı yeni yönleri (eksenleri)** matematiksel olarak bulur — bu yeni eksenlere **principal component (temel bileşen)** denir.
+
+Bu yeni eksenler rastgele değildir, belirli bir sıraya göre bulunur: **birinci temel bileşen (PC1)**, verideki en fazla varyansı açıklayan yöndür; **ikinci temel bileşen (PC2)**, PC1'e tamamen dik (orthogonal) olacak şekilde, kalan varyansın en fazlasını açıklayan yöndür; bu şekilde devam edilir. Her yeni component, bir öncekine dik olduğu için, her biri veri hakkında **birbirinden bağımsız, tekrarsız** bir bilgi taşır — yani PC1'in açıkladığı bilgiyle PC2'nin açıkladığı bilgi arasında örtüşme yoktur. Bu component'ler, orijinal feature'ların matematiksel kombinasyonlarından (ağırlıklı toplamlarından) oluşur; yani PC1 aslında "biraz yaş, biraz gelir, biraz boy..." gibi orijinal feature'ların bir karışımı olabilir.
+
+Component'ler bulunduktan sonra, her birinin ne kadar varyans açıkladığı sayısal olarak bilinir (buna **açıklanan varyans oranı** denir). İşte burada boyut indirgeme gerçekleşir: genelde ilk birkaç component (örneğin ilk 10-15 tanesi), verideki toplam varyansın büyük çoğunluğunu (mesela %90-95'ini) zaten yakalamış olur; geri kalan component'ler ise çok az varyans açıkladığı için "önemsiz" kabul edilip atılır. Böylece 100 boyutlu veri, bilgi kaybı minimumda tutularak örneğin 15 boyuta indirgenmiş olur.
+
+Bunun pratikteki faydaları birkaç noktada toplanır: birincisi, **hesaplama maliyetini düşürmek** — daha az boyutla çalışmak, sonraki ML modellerinin eğitimini hızlandırır. İkincisi, **görselleştirme** — özellikle veriyi 2 veya 3 boyuta indirgeyip grafikte görmek, veri hakkında sezgi kazanmayı kolaylaştırır. Üçüncüsü, **gürültüyü azaltmak ve overfitting'i engellemek** — düşük varyanslı, anlamsız component'leri attığımız için, model daha az "gürültülü" bir veriyle çalışır. Dördüncüsü ise **korelasyonlu feature'ların yarattığı çoklu doğrusal bağlantı (multicollinearity) sorununu çözmek** — çünkü PCA sonrası elde edilen component'ler, tanım gereği birbirinden tamamen bağımsızdır (korelasyonsuzdur).
+
+Son olarak şunu vurgulamak isterim: PCA, orijinal feature'ları **seçmez veya atmaz**, onları **dönüştürür**. Yani PCA sonrası elde ettiğin yeni eksenler (component'ler), artık "yaş" veya "gelir" gibi anlamlı, yorumlanabilir isimlere sahip değildir — bunlar, orijinal feature'ların matematiksel karışımlarından oluşan, soyut yeni eksenlerdir. Bu yüzden PCA, yorumlanabilirlikten biraz feragat ederek, boyut ve karmaşıklık açısından ciddi bir kazanç sağlar.
+
+****************************************************
+
+Çok daha detaylı bilgi için bknz:
+
+https://www.ibm.com/think/topics/principal-component-analysis
+
+At geeksforgeeks:
+
+PCA (Principal Component Analysis) is a dimensionality reduction technique and helps us to reduce the number of features in a dataset while keeping the most important information. It changes complex datasets by transforming correlated features into a smaller set of uncorrelated components.
+
+How Principal Component Analysis Works
+PCA uses linear algebra to transform data into new features called principal components. It finds these by calculating eigenvectors (directions) and eigenvalues (importance) from the covariance matrix. PCA selects the top components with the highest eigenvalues and projects the data onto them simplify the dataset.
+
+Note: It prioritizes the directions where the data varies the most because more variation = more useful information.
+
+Imagine you’re looking at a messy cloud of data points like stars in the sky and want to simplify it. PCA helps you find the "most important angles" to view this cloud so you don’t miss the big patterns
+
+https://www.geeksforgeeks.org/data-analysis/principal-component-analysis-pca/
+
+Soru:
+
+Peki ilk başta standardize mi etmemiz gerek ?
+
+Elcevap:
+
+Evet hocam, genellikle ilk adım olarak standardizasyon (scaling) yapılması önerilir, ama bunun nedenini ve ne zaman şart olduğunu biraz açalım.
+
+PCA'nın çalışma mantığı, hatırlarsan, **varyansa** dayanıyor — en fazla varyansı açıklayan yönleri buluyor. Ancak burada kritik bir sorun var: varyans, feature'ın **ölçeğine (birim/skalaya)** çok duyarlıdır. Örneğin elimizde "yaş" (0-100 arası) ve "gelir" (0-1.000.000 arası) gibi iki feature olsun. Gelirin sayısal değerleri yaştan çok daha büyük olduğu için, gelirin varyansı da doğal olarak yaşınkinden **yapay olarak** çok daha büyük çıkar — bu, gelirin gerçekten daha "bilgi dolu" veya "önemli" olduğu anlamına gelmez, sadece birim farkından kaynaklanan bir yanılsamadır. Eğer standardize etmeden PCA uygularsan, algoritma yanlışlıkla gelir feature'ını çok daha önemli sanır ve ilk principal component neredeyse tamamen gelir tarafından domine edilir — bu da gerçek veri yapısını yansıtmayan, yanıltıcı bir sonuç verir.
+
+Standardizasyon işlemi basittir: her feature'dan kendi ortalamasını çıkarıp, kendi standart sapmasına bölersin (buna **z-score normalization** da denir). Bu işlemden sonra tüm feature'lar ortalaması 0, standart sapması 1 olan, aynı "adil" ölçekte değerler haline gelir. Böylece PCA, hangi feature'ın gerçekten daha fazla **bilgi/değişkenlik** taşıdığına bakar, hangi feature'ın sırf büyük sayılarla ölçüldüğü için öyle göründüğüne değil.
+
+Şunu da belirtmek gerekir: eğer elindeki tüm feature'lar zaten **aynı birimde ve benzer ölçekte** ise (örneğin hepsi 0-1 arasına normalize edilmiş piksel değerleri gibi), standardizasyon o kadar kritik olmayabilir. Ama pratikte, özellikle farklı birimlerdeki (yaş, gelir, mesafe, sıcaklık gibi) karışık feature'lardan oluşan gerçek dünya veri setlerinde, standardizasyon **neredeyse her zaman** yapılması gereken bir ön adımdır — çünkü aksi halde PCA'nın çıkardığı component'ler, verinin gerçek yapısını değil, feature'ların ölçek farklarını yansıtır.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
