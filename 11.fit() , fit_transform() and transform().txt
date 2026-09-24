@@ -2,7 +2,7 @@
 
 .fit() method
 
-`fit()` makine öğrenmesinin en temel kavramlarından biri ve hem scaler'larda hem modellerde karşına çıkacak; o yüzden mantığını sağlam kuralım.
+`fit()` makine öğrenmesinin en temel kavramlarından biri ve hem scaler'larda hem modellerde karşına çıkacak; o yüzden mantığını sağlam kuralım
 
 `fit()` kelime anlamıyla "uydurmak, oturtmak" demek ve yaptığı iş tam olarak budur: veriye bakıp ondan gerekli parametreleri öğrenmek. Yani `fit()`, bir nesnenin "veriyi inceleyip kendine lazım olan sayıları hesapladığı" andır. Hiçbir şeyi dönüştürmez, sadece öğrenir ve o öğrendiklerini kendi içinde saklar.
 
