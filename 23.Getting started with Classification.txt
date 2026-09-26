@@ -1,0 +1,301 @@
+Getting started with Classification
+
+Classification, gözetimli öğrenme ailesine giriyor çünkü modeli eğitirken her örneğin doğru etiketini ona veriyorsun. Nadal örneğinde olduğu gibi, 14 günlük veri var ve her günün sonunda "Play" mı "Stay" mı olduğunu biliyorsun. Model bu etiketlerden örüntü öğreniyor, sonra etiketsiz yeni bir örnek geldiğinde tahmin yapabiliyor.
+
+Target değişkenin kategorik ve ayrık olması onu Regression'dan ayıran temel nokta. Ev fiyatı tahmini yapıyorsan çıktı 250.000 ile 300.000 arasında herhangi bir sayı olabilir, sürekli bir değer. Ama "bu e-posta spam mı?" soruyorsan çıktı ya spam ya değil, arada bir seçenek yok. İşte bu ayrıklık Classification'ı tanımlıyor.
+
+Binary ile Multi-class ayrımı da buradan geliyor. Binary'de iki sınıf var, bir örneğin olasılığını hesapladığında diğeri zaten 1 - p. Multi-class'ta üç veya daha fazla sınıf var, mesela bir meyveyi elma, armut veya muz olarak sınıflandırıyorsun. Bu durumda her sınıf için ayrı olasılık hesaplıyorsun ve en yüksek olasılıklı sınıfı seçiyorsun.
+
+Classification is a supervised machine learning technique used to predict labels or categories from input data. It assigns each data point to a predefined class based on learned patterns.
+
+Predict categories: Determines the class of new data points.
+Uses labeled data: Trained on datasets where the correct class is known.
+Common examples: Spam vs non spam emails, diseased vs. healthy patients.
+
+For example: A classification model might be trained on dataset of images labeled as either dogs or cats and it can be used to predict the class of new and unseen images as dogs or cats based on their features such as colour, texture or shape.
+
+Types of Classification
+Classification in machine learning involves sorting data into categories based on their features or characteristics. The type of classification problem depends on how many classes exist and how the categories are structured.
+
+What is Binary Classification?
+Binary classification, bir makine öğrenmesi modelinin her örneği iki sınıftan birine atadığı sınıflandırma problemidir.
+"Binary" kelimesi zaten ikili demek — yani sonuç her zaman 0 ya da 1, evet ya da hayır, hasta ya da sağlıklı şeklinde çıkar.
+İyi huylu , kötü huylu / spam , spam değil / normal , dolandırıcı etc.
+
+In a medical diagnosis, a binary classifier for a specific disease could take a patient's symptoms as input features and predict whether the patient is healthy or has the disease. The possible outcomes of the diagnosis are positive and negative.
+
+How Binary Classification work
+Binary Classification works by using a set of training data to learn a model that can then be used to predict outcomes. The data used to train the model contains features (variables) and labels (categories). The model will then use these features to identify patterns and make predictions based on the labeled data. The model is then evaluated based on its ability to accurately predict the correct labels for new data.
+
+Why Binary Classification is important
+Binary Classification is important because it allows businesses to make predictions based on data, which can lead to better decision making. It can help businesses to identify customers who are most likely to buy their products, predict which financial transactions are fraudulent, and prevent equipment failure in manufacturing. It is also useful in natural language processing, sentiment analysis, and image classification.
+Binary Classification is a widely used machine learning technique for predicting binary outcomes. It has many important use cases in various industries and can help businesses make data-driven decisions.
+
+Ensemble Learning
+Ensemble learning is a method where multiple models are combined instead of using just one. Even if individual models are weak, combining their results gives more accurate and reliable predictions.
+
+Uses multiple models together to improve overall accuracy.
+Reduces errors by balancing mistakes across models.
+Works on a simple idea similar to combining opinions from a group.
+
+Types of Ensemble Learning
+There are three main types of ensemble methods:
+
+Bagging (Bootstrap Aggregating): Models are trained independently on different random subsets of the training data. Their results are then combined—usually by averaging (for regression) or voting (for classification). This helps reduce variance and prevents overfitting.
+
+Boosting, Bagging'in tam tersi bir mantıkla çalışır: Bagging'de (Random Forest'ta olduğu gibi) tüm ağaçlar birbirinden bağımsız, paralel ve eş zamanlı eğitilir, sonunda oylarının ortalaması alınır. Boosting'de ise modeller sıralı (sequential) eğitilir — her yeni model, kendinden öncekinin yaptığı hataları düzeltmeye odaklanır. Örneğin AdaBoost'ta, önceki modelin yanlış sınıflandırdığı örneklerin ağırlığı artırılır, böylece bir sonraki model o zor örneklere daha çok dikkat eder; Gradient Boosting (ve XGBoost/LightGBM gibi türevleri) ise doğrudan önceki modelin hata (residual) miktarını tahmin etmeye çalışan yeni bir model ekler. Sonuçta zayıf öğrenicilerin (weak learner — genelde küçük, basit ağaçlar) sıralı bir zinciri, tek başına güçlü bir model haline gelir. Bagging temelde varyansı düşürürken (çünkü bağımsız modellerin ortalaması gürültüyü söndürür), Boosting temelde bias'ı düşürür (çünkü sürekli kalan hatayı hedef alır) — ama bu yüzden dikkatli regularize edilmezse (öğrenme oranı, ağaç derinliği, iterasyon sayısı sınırlanmazsa) train verisindeki hataları da fazla iyi öğrenip overfit etme riski taşır.
+
+Stacking ise yapısal olarak tamamen farklı bir fikre dayanır: aynı algoritmanın çoklu kopyası (Bagging/Boosting'deki gibi) değil, birbirinden farklı algoritma türlerinin (mesela KNN, Decision Tree, Logistic Regression'ı aynı anda) bir arada kullanılmasıdır. Bu farklı "base model"lar veriyi paralel olarak öğrenir, her biri kendi tahminini üretir; ardından bu tahminler, ikinci katmanda yer alan bir "meta-model"in (genelde basit bir Logistic Regression) girdisi (feature'ı) haline gelir — meta-model, hangi base model'in hangi durumda daha güvenilir olduğunu öğrenir ve nihai kararı verir. Leakage'a karşı dikkatli olmak gerekir: meta-model'in girdisi olan tahminler, base modellerin kendi eğitim verisi üzerindeki tahminleri olmamalı (aksi halde meta-model gerçek performansı değil, ezberlemeyi öğrenir) — bu yüzden genelde cross-validation mantığıyla (senin zaten bildiğin K-Fold gibi) "out-of-fold" tahminler kullanılır. Stacking, farklı algoritmaların birbirini tamamlayan güçlü yanlarını birleştirdiği için genelde ekstra bir performans kazancı sağlar, ama uygulaması Bagging/Boosting'den daha karmaşık ve hesaplama açısından daha maliyetlidir — bu yüzden çoğunlukla Kaggle yarışmaları gibi "son %1'lik performansın bile önemli olduğu" senaryolarda görülür, üretim ortamında (basitlik/hız gerektiren yerlerde) daha az tercih edilir.
+
+
+
+
+
+
+LightGBM (Light Gradient Boosting Machine)
+Elinde bir veri seti var ve "bu e-posta spam mı değil mi?" diye sormak istiyorsun. Bunu tek bir karar ağacıyla yapabilirsin ama tek ağaç genellikle ya çok basit kalır ya da overfit eder. Bunun yerine yüzlerce ağaç inşa edip hepsinin oyunu toplarsan çok daha güçlü bir model elde edersin, buna ensemble yöntemi denir.
+Gradient Boosting da bu ensemble ailesinin bir üyesi, ama ağaçları paralel değil sıralı eğitir. İlk ağaç tahmin yapar, hata yapar. İkinci ağaç bu hatayı düzeltmeye odaklanır. Üçüncü ağaç ikincinin hatasını düzeltir. Bu zincirleme süreç, her adımda artık hatayı (residual) hedef alarak ilerler. Matematiksel olarak her adımda kayıp fonksiyonunun gradyanını minimize ediyorsun, bu yüzden "gradient" boosting deniyor.
+LightGBM ise Microsoft'un geliştirdiği, bu gradient boosting fikrinin hızlandırılmış versiyonu. Klasik implementasyonlardan iki kritik farkı var. Birincisi Leaf-wise (best-first) tree growth kullanır; standart ağaçlar satır satır büyürken LightGBM en çok kaybı azaltacak yaprağı seçip onu büyütür, bu sayede daha az işlemle daha derin öğrenim elde edilir. İkincisi GOSS (Gradient-based One-Side Sampling) ve EFB (Exclusive Feature Bundling) teknikleri sayesinde veriyi ve özellikleri akıllıca örnekler, böylece hem bellek kullanımı hem de eğitim süresi dramatik biçimde düşer.
+Binary classification için özellikle tercih edilmesinin sebebi şu: çıktı katmanında sigmoid aktivasyonu uygulayarak 0-1 olasılığına dönüştürüyor ve kayıp fonksiyonu olarak binary cross-entropy kullanıyor. Yani temel mekanizma karar ağaçlarına dayanıyor ama çıktı bir sınıflandırma kararı olarak veriliyor.
+
+Evaluation of binary classifiers
+If the model successfully predicts the patients as positive, this case is called True Positive (TP). If the model successfully predicts patients as negative, this is called True Negative (TN). The binary classifier may misdiagnose some patients as well. If a diseased patient is classified as healthy by a negative test result, this error is called False Negative (FN). Similarly, If a healthy patient is classified as diseased by a positive test result, this error is called False Positive(FP).
+LightGBM (Light Gradient Boosting Machine) is an open-source gradient boosting framework designed for efficient and scalable machine learning. It is widely used for classification tasks, including binary classification and is optimized for speed and memory usage.
+
+Confusion Matrix:
+
+Confusion matrix is a simple table used to measure how well a classification model is performing. It compares the predictions made by the model with the actual results and shows where the model was right or wrong. This helps you understand where the model is making mistakes so you can improve it. It breaks down(bölmek) the predictions into four categories:
+
+True Positive (TP): The model correctly predicted a positive outcome i.e the actual outcome was positive.
+True Negative (TN): The model correctly predicted a negative outcome i.e the actual outcome was negative.
+False Positive (FP): The model incorrectly predicted a positive outcome i.e the actual outcome was negative. It is also known as a Type I error.(Yanlış tahmin etmiş ve yanlış tahim ettiği için de pozitif olmuş)
+False Negative (FN): The model incorrectly predicted a negative outcome i.e the actual outcome was positive. It is also known as a Type II error.(Yanlış tahmin etmiş ve yanlış tahmini değeri de negatif olmuş)
+
+It also helps calculate key measures like accuracy, precision and recall which give a better idea of performance especially when the data is imbalanced.
+
+Temel mantık
+Bir hastayı test ediyorsun. Modelin iki şey söyleyebilir: "hasta" (Positive) ya da "sağlıklı" (Negative). Gerçekte de hasta ya da sağlıklı. Bu iki boyutun kesişimi 4 durum ortaya çıkarır.
+
+4 durum
+			Gerçekte Hasta		Gerçekte Sağlıklı
+Model: Hasta dedi	TP — doğru tahmin	FP — yanlış alarm
+Model: Sağlıklı dedi	FN — tehlikeli hata	TN — doğru tahmin
+
+Hasta olması pozitif bir durum.
+
+True Positive (TP): Hasta gerçekten hasta, model de hasta dedi. Doğru teşhis.
+True Negative (TN): Hasta gerçekten sağlıklı, model de sağlıklı dedi. Doğru teşhis.
+False Positive (FP): Hasta aslında sağlıklı ama model "hasta" dedi. Gereksiz yere tedaviye gönderildi. "Yanlış alarm" denir.
+False Negative (FN): Hasta aslında hasta ama model "sağlıklı" dedi. Hasta teşhis edilemedi, eve gönderildi. Tıpta en tehlikeli hata budur.
+
+FP'de en kötü ihtimalle sağlıklı biri gereksiz yere birkaç test daha yaptırır. FN'de ise gerçekten hasta biri teşhis edilemeden eve gider, hastalık ilerler. Bu yüzden sağlık alanında modeller FN'yi minimize etmeye öncelik verir.
+
+After obtaining these values, we can compute the accuracy score of the binary classifier as follows:
+
+accuracy = (TP + TN )/ (TP + FP + TN + FN)
+
+Metrics based on Confusion Matrix Data
+
+1. Accuracy
+Accuracy shows how many predictions the model got right out of all the predictions. It gives idea of overall performance but it can be misleading when one class is more dominant over the other. For example a model that predicts the majority class correctly most of the time might have high accuracy but still fail to capture important details about other classes. It can be calculated using the below formula:
+
+accuracy = (TP + TN )/ (TP + FP + TN + FN)
+
+2. Precision
+Precision focus on the quality of the model’s positive predictions. It tells us how many of the "positive" predictions were actually correct. It is important in situations where false positives need to be minimized such as detecting spam emails or fraud. The formula of precision is:
+
+Precision = TP / (TP + FP)
+
+3. Recall
+Recall measures how how good the model is at predicting positives. It shows the proportion of true positives detected out of all the actual positive instances. High recall is essential when missing positive cases has significant consequences like in medical tests.
+
+Recall = TP / (TP + FN)
+
+4. F1-Score
+F1-score combines precision and recall into a single metric to balance their trade-off. It provides a better sense of a model’s overall performance particularly for imbalanced datasets. It is helpful when both false positives and false negatives are important though it assumes precision and recall are equally important but in some situations one might matter more than the other.
+
+F1-Score = (2*Precision*Recall)/(Precision + Recall)
+
+Somut bir örnek üzerinden gidelim. 100 hastanız var, 40'ı gerçekten hasta, 60'ı sağlıklı. Modeliniz şu kararları verdi: 35 kişiyi doğru hasta (TP), 50 kişiyi doğru sağlıklı (TN), 10 kişiyi yanlış hasta (FP), 5 kişiyi yanlış sağlıklı (FN) olarak sınıflandırdı.
+
+Accuracy — "Genel olarak ne kadar doğruyum?"
+Accuracy = (TP + TN) / (TP + TN + FP + FN)
+Örneğimizde: (35 + 50) / 100 = 0.85 yani %85.
+Kulağa iyi geliyor ama tehlikeli bir metrik. Eğer verideki 100 hastanın 95'i sağlıklıysa ve model herkese "sağlıklı" dese %95 accuracy alır, ama tek bir hastayı bile yakalamamış olur. Class imbalance durumunda accuracy seni yanıltır.
+
+Precision — "Pozitif dediklerimin kaçı gerçekten pozitif?"
+Precision = TP / (TP + FP)
+Örneğimizde: 35 / (35 + 10) = 35 / 45 = 0.778 yani %77.8.
+Precision'ın düşük olması demek modelin çok fazla yanlış alarm üretmesi demek. Spam filtresinde önemli: önemli bir maili spam klasörüne atmak istemiyorsun, yani FP'yi minimize etmek istiyorsun, bu da Precision'ı yüksek tutmak demek.
+
+Recall — "Gerçek pozitiflerin kaçını yakaladım?"
+Recall = TP / (TP + FN)
+Örneğimizde: 35 / (35 + 5) = 35 / 40 = 0.875 yani %87.5.
+Recall'un düşük olması demek gerçek pozitifleri kaçırıyor olmak demek. Kanser tespitinde kritik: hasta birini "sağlıklı" diye göndermek istemiyorsun, yani FN'yi minimize etmek istiyorsun, bu da Recall'ı yüksek tutmak demek.
+
+F1 Score — "Precision ve Recall arasında dengeli bir ölçüm istiyorum."
+F1 = 2 × (Precision × Recall) / (Precision + Recall)
+Örneğimizde: 2 × (0.778 × 0.875) / (0.778 + 0.875) = 2 × 0.681 / 1.653 = 0.824 yani %82.4.
+F1 harmonik ortalama kullanır, aritmetik ortalama değil. Bunun önemi şu: Precision 1.0, Recall 0.0 olsa aritmetik ortalama 0.5 verirdi ama F1 sıfır verir. Yani birinin çok düşük olmasını sert biçimde cezalandırır. Class imbalance durumunda accuracy yerine F1 kullanmak çok daha güvenilir bir değerlendirme sağlar.
+
+Hangi metriği ne zaman kullanacağını özetlersek: sınıflar dengeliyse accuracy yeterli, dengesizse F1'e geç. FP maliyeti yüksekse Precision'a odaklan, FN maliyeti yüksekse Recall'a odaklan.
+
+*********************
+
+Karar eşiği (threshold) — Sınıflandırıcı çıktısı aslında bir olasılık, mesela 0.73. Bunu 0 ya da 1'e dönüştürmek için varsayılan eşik 0.5 ama bu değiştirilebilir. Eşiği değiştirmek Precision ve Recall'u doğrudan etkiler, buna Precision-Recall tradeoff denir. bunu detaylandırır mısın ?
+
+Elinde bir kanser tespit modeli var. Model her hasta için 0 ile 1 arasında bir olasılık üretiyor, mesela 0.73. Bu "bu hastanın kanserli olma olasılığı %73" demek. Bunu bir karara dönüştürmek için bir eşik belirliyorsun: eşiğin üzerindeyse "kanserli" (1), altındaysa "sağlıklı" (0) diyorsun.
+
+Varsayılan eşik 0.5 ama bu her zaman doğru tercih değil. İşte burada tradeoff devreye giriyor.
+
+**Eşiği düşürürsen (mesela 0.3)** — Model daha kolay "kanserli" diyor. Gerçekten kanserli olan hastaları kaçırma ihtimalin azalıyor, yani Recall artıyor. Ama aynı zamanda sağlıklı insanları da kanserli olarak işaretlemeye başlıyorsun, yani Precision düşüyor. Tıbbi senaryolarda genellikle bu tercih edilir çünkü hastayı kaçırmak, yanlış alarm vermekten daha tehlikeli.
+
+**Eşiği yükseltirsen (mesela 0.7)** — Model ancak çok emin olduğunda "kanserli" diyor. "Kanserli" dediğinde büyük ihtimalle haklı, yani Precision artıyor. Ama bu sefer bazı gerçek kanserli hastaları gözden kaçırıyorsun, yani Recall düşüyor. Spam filtresinde bu mantıklı olabilir, önemli bir maili spam klasörüne atmak istemiyorsun.
+
+Şimdi matematiksel altyapıya geçelim.
+
+Precision şu soruyu sorar: "Pozitif dediklerimin kaçı gerçekten pozitif?"
+
+`Precision = TP / (TP + FP)`
+
+Recall şu soruyu sorar: "Gerçek pozitiflerimin kaçını yakaladım?"
+
+`Recall = TP / (TP + FN)`
+
+Eşiği düşürdüğünde TP artar ama FP de artar, bu Precision'ı düşürür. Eşiği yükselttiğinde FP azalır ama FN artar, bu Recall'u düşürür. İkisini aynı anda maksimize edemezsin, bu yüzden buna tradeoff deniyor.
+
+İkisini tek bir metrikte birleştirmek istersen **F1-Score** kullanırsın:
+
+`F1 = 2 × (Precision × Recall) / (Precision + Recall)`
+
+F1 harmonik ortalama aldığı için ikisi arasında denge kurar. Precision 1.0 ama Recall 0.0 olsa F1 sıfır çıkar, yani birinin çok düşük olmasını cezalandırır.
+
+Hangi eşiğin optimal olduğunu bulmak için tüm threshold değerlerinde Precision ve Recall'u çizersen **Precision-Recall Curve** elde edersin. Bu eğrinin altındaki alana **AUC-PR** denir ve modelin genel kalitesini özetler.
+
+***************
+
+2. MultiClass Classification
+
+Multiclass classification is a supervised machine learning task in which each data instance is assigned to one class from three or more possible categories.Common multiclass classifiers include Decision Tree, Support Vector Machine (SVM), K-Nearest Neighbors (KNN) and Naive Bayes, each offering a different approach for handling multiple class labels within the data. Real-world examples include digit recognition, species identification and product categorization.
+
+K-Nearest Neighbor Algorithm
+
+K‑Nearest Neighbor (KNN) is a simple and widely used machine learning technique for classification and regression tasks. It works by identifying the K closest data points to a given input and making predictions based on the majority(çoğunluk) class or average value of those neighbors.
+
+Classifies data based on similarity with nearby (yakınında) data points
+Uses distance metrics like Euclidean distance to find nearest neighbors
+Since KNN makes no assumptions about the underlying data distribution, it makes it a non-parametric and instance-based learning method.
+
+KNN is also called as a lazy learner algorithm because it does not learn from the training set immediately instead it stores the entire dataset and performs computations only at the time of classification.
+
+For example, consider two features i.e Category 1 and Category 2:
+
+KNN assigns the category based on the majority of nearby points. The image shows how KNN predicts the category of a new data point based on its closest neighbours.
+The green points represent Category 1 and the red points represent Category 2.
+The new data point checks its closest neighbors (circled points).
+Since the majority of its closest neighbors are red points (Category 2) KNN predicts the new data point belongs to Category 2.
+
+KNN works by using proximity and majority voting to make predictions.
+
+What is 'K' in K Nearest Neighbour?
+In the KNN algorithm k is just a number that tells the algorithm how many nearby points or neighbors to look at when it makes a decision.
+
+Example: Imagine you're deciding which fruit it is based on its shape and size. You compare it to fruits you already know.
+
+If k = 3, the algorithm looks at the 3 closest fruits to the new one.
+If 2 of those 3 fruits are apples and 1 is a banana, the algorithm says the new fruit is an apple because most of its neighbors are apples.
+
+How to choose the value of k for KNN Algorithm?
+The value of k in KNN decides how many neighbors the algorithm looks at when making a prediction.
+Choosing the right k is important for good results.
+If the data has lots of noise or outliers, using a larger k can make the predictions more stable.
+But if k is too large the model may become too simple and miss important patterns and this is called underfitting.
+So k should be picked carefully based on the data.
+
+************
+Önce sezgisel çerçeveyi kuralım.
+
+Yeni bir şehre taşındın ve yakın çevrenizdeki komşularına bakarak o mahallenin nasıl bir yer olduğuna karar veriyorsun. KNN tam olarak bunu yapıyor: yeni bir örnek geldiğinde eğitim verisindeki en yakın K komşusuna bakıyor ve çoğunluğun sınıfını tahmin olarak veriyor. "K-Nearest Neighbors" ismini buradan alıyor.
+
+Kritik nokta şu: KNN bir model eğitmiyor. Eğitim aşamasında sadece veriyi hafızaya alıyor, tahmin anında ise yeni örneğin tüm eğitim verisine olan mesafesini hesaplayıp en yakın K tanesini buluyor. Buna **lazy learner** deniyor, çünkü asıl iş tahmin anında yapılıyor.
+
+**Matematiksel altyapı**
+
+Mesafe hesabı için genellikle Euclidean distance kullanılıyor:
+
+d(x, y) = √(Σ(xi - yi)²)`
+
+K komşuyu bulduktan sonra binary classification için çoğunluk oylaması yapılıyor. Mesela K=5 seçtiysen ve 3 komşu "spam", 2 komşu "değil" diyorsa tahmin "spam" oluyor.
+
+**K nasıl seçilir?**
+
+K değeri KNN'in en kritik hyperparameter'ı ve doğrudan bias-variance tradeoff'u etkiliyor.
+
+**K çok küçük seçilirse (mesela K=1)** model sadece en yakın tek komşuya bakıyor. Bu durumda model eğitim verisindeki her gürültüye, her aykırı değere aşırı duyarlı hale geliyor. Karar sınırları çok pürüzlü ve karmaşık oluyor. Eğitim verisinde mükemmel sonuç veriyor ama test verisinde kötü performans gösteriyor. Buna **overfitting** deniyor, yani model eğitim verisini ezberliyor.
+
+**K çok büyük seçilirse (mesela K=100)** model çok geniş bir çevreye bakıyor ve yerel örüntüleri kaçırıyor. Karar sınırları aşırı düzleşiyor, model çok basit hale geliyor. Her şeyi dominant sınıfa atama eğilimi başlıyor. Buna **underfitting** deniyor, model ne eğitim ne test verisinde iyi performans gösteriyor.
+
+**Optimal K** ikisi arasında bir denge noktasında. Pratikte K'yı bulmak için cross-validation kullanıyorsun: farklı K değerleri için modeli eğitip validation seti üzerindeki hatayı ölçüyorsun, en düşük hatayı veren K'yı seçiyorsun. Genel kural olarak `K = √n` başlangıç noktası olarak kullanılıyor, n eğitim seti büyüklüğü. Ayrıca K'yı tek sayı seçmek iyi pratik çünkü binary classification'da beraberlik durumu ortadan kalkıyor.
+
+**Dikkat edilmesi gereken noktalar**
+
+Feature scaling KNN'de zorunlu. Euclidean distance hesaplarken bir özellik 0-1 arasındaysa, diğeri 0-1000 arasındaysa büyük ölçekli özellik mesafeye hakim oluyor ve küçük özellik neredeyse hiç etki etmiyor. Bu yüzden eğitimden önce **normalization** veya **standardization** uygulamak gerekiyor.
+
+Yüksek boyutlu veride KNN ciddi biçimde bozuluyor. Boyut arttıkça tüm noktalar birbirine eşit uzaklıkta görünmeye başlıyor, "en yakın komşu" kavramı anlamsızlaşıyor. Buna **curse of dimensionality** deniyor.
+
+Tahmin anında tüm eğitim verisiyle mesafe hesaplandığı için büyük veri setlerinde KNN çok yavaş çalışıyor. Eğitim hızlı ama tahmin maliyetli.
+
+K Seçimi için İstatistiksel Yöntemler
+
+Cross-Validation: K'nın en iyi değerini bulmanın iyi bir yolu k-fold cross-validation kullanmaktır. Bu, veri setini k parçaya bölmek anlamına gelir. Model bu parçaların bir kısmı üzerinde eğitilir ve kalanlar üzerinde test edilir. Bu işlem her parça için tekrarlanır. Bu testler sırasında en yüksek ortalama doğruluğu veren k değeri genellikle kullanılacak en iyi değerdir.
+
+Elbow Method: Elbow Metodu'nda farklı k değerleri için hata oranını veya doğruluğu gösteren bir grafik çizilir. K arttıkça hata genellikle önce düşer. Ancak belirli bir noktadan sonra hata hızla düşmeyi bırakır. Eğrinin yön değiştirdiği ve bir "dirsek" gibi göründüğü nokta genellikle k için en iyi seçimdir.
+
+Tek Sayı K Değerleri: K için tek sayı kullanmak iyi bir fikirdir, özellikle sınıflandırma problemlerinde. Bu, komşular arasında en yaygın sınıfa karar verirken beraberliği önlemeye yardımcı olur.
+
+Cross-Validation için şunu düşün: elimde 100 örnek var ve K=3 mü K=7 mi daha iyi sorusunu cevaplamak istiyorum. Veriyi 5 eşit parçaya bölüyorum. Her seferinde 4 parçayla eğitip 1 parçayla test ediyorum, bunu 5 kez tekrarlıyorum. Her K değeri için 5 test skorunun ortalamasını alıyorum. Hangi K daha yüksek ortalama accuracy veriyorsa onu seçiyorum. Bu yöntem tek bir train/test split'e kıyasla çok daha güvenilir çünkü veriyi farklı açılardan test ediyorsun.
+
+Elbow Method daha görsel bir yaklaşım. X eksenine K değerlerini, Y eksenine hata oranını koyup bir grafik çiziyorsun. K=1'den başlayıp artırdıkça hata önce hızla düşüyor çünkü model daha stabil hale geliyor. Ama bir noktadan sonra hata düşmeyi bırakıp düzleşiyor, hatta artmaya başlıyor. Bu kırılma noktası, yani eğrinin dirsek gibi büküldüğü yer optimal K'yı gösteriyor. Daha fazla komşu eklemek artık anlamlı bir iyileşme sağlamıyor demek.
+
+Tek sayı K meselesi ise basit ama önemli. Binary classification'da K=4 seçersen ve 2 komşu "spam", 2 komşu "değil" derse beraberlik çıkıyor, model karar veremiyor. K=5 seçersen en kötü ihtimalle 3-2 oluyor, her zaman bir kazanan var. Bu yüzden tek sayı tercih ediliyor.
+Pratikte Cross-Validation ile Elbow Method'u birlikte kullanmak en sağlıklı yaklaşım. Elbow grafiğiyle aday K değerlerini daraltıyorsun, Cross-Validation ile kesin kararı veriyorsun.
+
+Distance Metrics Used in KNN Algorithm
+KNN uses distance metrics to identify nearest neighbor, these neighbors are used for classification and regression task. To identify nearest neighbor we use below distance metrics:
+
+1. Euclidean Distance
+Euclidean distance is defined as the straight-line distance between two points in a plane or space. You can think of it like the shortest path you would walk if you were to go directly from one point to another.
+
+d(x, y) = √(Σ(xi - yi)²)`
+
+2. Manhattan Distance
+This is the total distance you would travel if you could only move along horizontal and vertical lines like a grid or city streets. It’s also called "taxicab distance" because a taxi can only drive along the grid-like streets of a city.
+
+d(x,y) = √(Σ(|xi - yi|)
+
+3. Minkowski Distance
+
+Working of KNN algorithm
+Thе KNN algorithm operates on the principle of similarity where it predicts the label or value of a new data point by considering the labels or values of its K nearest neighbors in the training dataset.
+
+"KNN tahmin yaptıktan sonra iş bitiyor mu, yoksa arka planda başka bir şey mi oluyor?"
+
+KNN'in çalışma mantığı şu şekilde: eğitim aşamasında model hiçbir şey öğrenmiyor, sadece veriyi hafızaya alıyor. Tahmin aşamasında yeni bir örnek geldiğinde o anki veriyle mesafe hesaplanıyor, en yakın K komşu bulunuyor, çoğunluk oylaması yapılıyor ve sınıf atanıyor. İş burada bitiyor. Model "gruplaşma" oluşturmuyor, bir sınır çizmiyor, bir parametre güncellenmiyor. Her yeni tahmin için bu süreç sıfırdan tekrarlanıyor.
+
+Yani KNN'de "gruplar oluştu, şimdi bu gruplar içinde ne yapacağız?" diye bir aşama yok. Her tahmin bağımsız bir mesafe hesabı operasyonu.
+Ama senin kafanda oluşan karışıklık muhtemelen şuradan geliyor: KNN'i Clustering ile karıştırıyor olabilirsin. K-Means Clustering'de gerçekten gruplar oluşturuluyor, merkezler hesaplanıyor, örnekler bu merkezlere atanıyor ve iteratif bir süreç işliyor. KNN'deki K ile K-Means'teki K aynı harf ama tamamen farklı kavramlar. KNN gözetimli bir sınıflandırıcı, K-Means gözetimsiz bir kümeleme algoritması.
+KNN'in yaptığı tek şey şu: "Bu yeni örneğe en çok hangi mevcut örnekler benziyor, onların çoğunluğu hangi sınıftaysa bu da o sınıftandır." Bunun ötesinde bir mekanizması yok.
+
+KNN'de hiçbir zaman "bu örnek artık şu gruba ait" diye kalıcı bir atama yapılmıyor. Eğitim verisi olduğu gibi hafızada duruyor, hiçbir şey değişmiyor. Yeni bir test örneği geldiğinde mesafe hesaplanıyor, karar veriliyor ve o karar sadece o test örneği için geçerli. Eğitim verisi üzerinde hiçbir güncelleme, hiçbir yeniden düzenleme olmuyor.
+
+Bunu şöyle düşün: bir kütüphanede binlerce kitap var, sen yeni bir kitap getiriyorsun ve "bu kitap hangi rafa ait?" diye soruyorsun. Kütüphaneci mevcut kitaplara bakıyor, en benzer olanları buluyor ve "buraya koy" diyor. Ama mevcut kitaplar yerinden oynamıyor, raflar yeniden düzenlenmiyor. Sadece senin kitabın için bir karar veriliyor.
+
+Kafanda oluşan "gruba atama" fikri yine K-Means Clustering'e ait bir kavram. Orada gerçekten her iterasyonda örnekler yeniden gruplara atanıyor ve merkezler güncelleniyor. KNN'de böyle bir döngü yok.
+
+KNN'in amacı eğitim verisini yeniden düzenlemek değil, **yeni ve görmediğin örnekleri sınıflandırmak**.
+
+Elinde etiketli eğitim verisi var, bu veri sabit ve değişmiyor. Amacın şu: daha önce hiç görmediğin yeni bir örnek geldiğinde ona doğru etiketi vermek. KNN bunu "benzer örneklere bak, çoğunluğun etiketini al" mantığıyla yapıyor.
+
+Nadal örneğine dönelim. 14 günlük verin var, her günün Play mi Stay mi olduğunu biliyorsun. Bu veri eğitim seti. Şimdi sana 15. gün geliyor: Weak, Hot, Sunny, Normal. Bu günün etiketi yok. KNN diyor ki "bu güne en benzer 3 günü eğitim setinde bul, onların çoğunluğu Play diyorsa sen de Play de." İşte bu kadar. Eğitim setine hiçbir şey eklemiyor, hiçbir şeyi değiştirmiyor.
+
+Yani KNN'i kullanma sebebin eğitim verisini gruplamak değil, yeni gelen örneklere etiket tahmin etmek. Eğitim verisi sadece referans noktası olarak duruyor, sen onu kullanarak bilinmeyeni bilinen üzerinden tahmin ediyorsun.
