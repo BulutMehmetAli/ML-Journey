@@ -18,7 +18,7 @@ Contextual outliers: A value might only be abnormal within a certain context. Fo
 Collective outliers: A group of data points may appear normal individually, but collectively, they behave abnormally. For instance, a sudden cluster of high transaction amounts in banking over a short period may indicate fraud.
 
 
-1. Global Outlier (Point Anomaly) — Tüm veri setine göre tek başına aykırı olan nokta. Age = 999 örneğimiz tam olarak bu.
+1. Global Outlier (Point Anomaly) — Tüm veri setine göre tek başına aykırı olan nokta. Age = 999 örneğimiz tam olarak budur.
 
 2. Contextual Outlier — Bağlama göre aykırı olan değer. Yazın 30°C normal ama kışın aykırı — değerin kendisi değişmiyor, hangi bağlamda değerlendirildiği değişiyor.
 
