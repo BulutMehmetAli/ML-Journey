@@ -2,8 +2,7 @@ Data Preprocessing
 
 The quality of your data directly impacts the accuracy of your analysis and model performance. Why? Because raw data often contains inconsistencies, errors, and irrelevant information that can distort results and lead to flawed insights. Data preprocessing is a way to mitigate this problem. Namely, it is the process of transforming raw data into a clean, structured format. 
 
-----------------------------------------------------------------
-
+-------------------------------------------
 1-Inconsistent Data
 
 *****************************
