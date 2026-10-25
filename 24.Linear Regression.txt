@@ -148,25 +148,94 @@ Least squares / gradient descent: cost’u en küçük yapan w ve b’yi bulma y
 y ile ŷ’yi karıştırma. Doğrunun verdiği değer tahmindir, yani ŷ. Gerçek değer y’dir. Notlarında bazen ikisi de “y” yazılmış; ödevde predict() ŷ döndürüyor, y ise veri setindeki gerçek değer.
 Least squares ile MSE aynı hedefi minimize eder. Least squares hataların karelerinin toplamını, MSE ise ortalamasını alır. Toplamı n’e bölmek en iyi w ve b’yi değiştirmez, sadece sayıyı ölçekler.
 
+Cost Function in Linear Regression
+
+Linear Regression is a method used to predict values by drawing the best-fit line through the data. When we first create a model, the predictions may not always match the actual data. To understand how well the model is performing we use a cost function. This function helps us to measure the difference between the predicted values and the actual data.
+
+The cost function measures how well the model’s predictions match the actual data and guides the optimization of parameters to minimize errors and find the best fit.
+
+How Does the Cost Function Work?
+Lets understand it with a example, imagine we are building a linear regression model to predict house prices based on the size of the house (in square feet).
 
 
+Size (sq. ft.)	True Price (in $1000s)
+500	50
+1000	100
+1500	150
+2000	200
+The linear regression equation is:
 
+y[^] = w.x
 
+where,
+y[^] is predicted house price
+x is size of the house (input feature)
+w is weight (slope of the line)
 
+Our goal is to find the weight w that minimizes the difference between the predicted and actual prices. This difference is calculated using the cost function.
 
+Understanding Mean Squared Error (MSE)
 
+Mean Squared Error (MSE) is a metric used to measure how well a model's predictions match the actual values. It calculates the average of the squared differences between predicted and actual values.
+MSE is calculated by taking the average of the squared residuals, where the residual is the difference between the predicted value and the actual value for each data point. 
 
+(1/n) Σ[i=1'den n'e kadar] (yi − ŷi)^2
 
+Where:
 
+n is the number of observations in the dataset.
+yi is the actual value of the observation.
+ŷi is the predicted value of the i'th observation
 
+Example: Suppose we have a dataset consisting of the actual and predicted values for the regression problem
 
+Actual Values: [10, 20, 30, 40, 50]
+Predicted Values: [12, 18, 32, 38, 48]
 
+Solution:
 
+To calculate MSE we first compute the squared differences between the each actual and predicted value:
 
+Squared Differences: [(10-12)2, (20-18)2, (30-32)2, (40-38)2, (50-48)2]
+= [4, 4, 4, 4, 4]
 
+Next, we take the average of these squared differences to the obtain the MSE:
 
+MSE = (4 + 4 + 4 + 4 + 4) / 5
+= 20 / 5
+= 4
 
+Therefore, the MSE for this regression model is 4.
 
+Interpretation
+The Interpreting MSE involves understanding the magnitude of the error and its implications(sonuçları) for the model's performance.
+
+A lower MSE indicates that the model's predictions are closer to the actual values, signifying better accuracy.
+Conversely, a higher MSE suggests that the model's predictions deviate further from the true value, indicating poorer performance.
+
+Significance
+The Mean Squared Error is widely used in various fields, including statistics, machine learning, and econometrics, due to its several important properties:
+
+It provides the quantitative measure of the accuracy of the predictive models.
+It penalizes large errors more heavily than small errors, making it sensitive to the outliers.
+It is mathematically convenient and easy to interpret, making it a preferred choice for evaluating model performance.
+
+Applications
+The Mean Squared Error is extensively used in various applications, including:
+
+Regression analysis: Assessing the goodness of fit of the regression models.
+Model evaluation: Comparing the performance of the different machine learning algorithms.
+Optimization: Minimizing MSE during the model training to improve predictive accuracy.
+Predictive modeling: Evaluating the accuracy of the regression and forecasting models.
+Image processing: Assessing the quality of the image reconstruction and restoration algorithms.
+Financial modeling: Analyzing the performance of the investment strategies and risk models
+
+How to Minimize Mean Squared Error in Model Training
+To minimize Mean Squared Error during the model training, several strategies can be employed, including:
+
+Feature selection: Choosing relevant features that contribute most to reducing prediction errors.
+Model selection: Experimenting with the different algorithms and model architectures to identify the best-performing model.
+Hyperparameter tuning: The Optimizing model hyperparameters such as the learning rate, regularization strength, and network depth to improve predictive accuracy.
 
 
 
