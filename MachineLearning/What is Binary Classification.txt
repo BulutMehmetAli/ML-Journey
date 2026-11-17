@@ -1,0 +1,59 @@
+What is Binary Classification?
+
+In machine learning, binary classification is a supervised learning algorithm that categorizes new observations into one of two classes.
+
+The following are a few binary classification applications, where the 0 and 1 columns are two possible classes for each observation:
+
+Healthy - Diseased
+Spam - Not Spam
+Fraud - Not Fraud
+
+Quick example
+In a medical diagnosis, a binary classifier for a specific disease could take a patient's symptoms as input features and predict whether the patient is healthy or has the disease. The possible outcomes of the diagnosis are positive and negative.
+
+Evaluation of binary classifiers
+If the model successfully predicts the patients as positive, this case is called True Positive (TP). If the model successfully predicts patients as negative, this is called True Negative (TN). The binary classifier may misdiagnose some patients as well. If a diseased patient is classified as healthy by a negative test result, this error is called False Negative (FN). Similarly, If a healthy patient is classified as diseased by a positive test result, this error is called False Positive(FP).
+
+Confusion matrix used to measure how well a classification model is performing.
+
+We can evaluate a binary classifier based on the following parameters:
+
+True Positive (TP): The patient is diseased and the model predicts "diseased"
+False Positive (FP): The patient is healthy but the model predicts "diseased"
+True Negative (TN): The patient is healthy and the model predicts "healthy"
+False Negative (FN): The patient is diseased and the model predicts "healthy"
+
+After obtaining these values, we can compute the accuracy score of the binary classifier as follows:
+
+     		TP + TN
+accuracy = -----------------
+	   TP + TN + FP + FN
+
+In machine learning, many methods utilize binary classification. The most common are:
+
+Support Vector Machines
+Naive Bayes
+Nearest Neighbor
+Decision Trees
+Logistic Regression
+Neural Networks
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
